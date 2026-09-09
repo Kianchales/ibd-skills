@@ -13,4 +13,4 @@
 
 ## 使用铁律
 
-① 动笔前先读内容结构骨架（`doc-structures.md`）；② 确认样式源 docx 存在（`ibd-doc-review` `assets/templates/`）；③ 再读 1-2 份知识库范例对应章节提炼范式；④ 按结构骨架撰写；⑤ 走内容门禁（`ibd-quality-gates`：G1-G4 + 自评 + scripts/check_data.py 数值自洽门，md 即可跑）；⑥ 交 `ibd-doc-review` 套样式 + text/table 组校验。
+① 动笔前先读内容结构骨架（`doc-structures.md`）；② 确认样式源 docx 存在（`ibd-doc-review` `assets/templates/`）；③ 再读 1-2 份知识库范例对应章节提炼范式；④ 按结构骨架撰写；⑤ 走内容校验（`ibd-quality-gates`：G1-G4 + 自评 + scripts/check_data.py 数值自洽核对，md 即可跑）；⑥ 交 `ibd-doc-review` 套样式 + text/table 组校验。
