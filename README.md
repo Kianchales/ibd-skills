@@ -66,7 +66,7 @@
 | [ibd-doc-write](skills/ibd-doc-write/SKILL.md) | 投行文档**写作总入口**：反馈回复五步方法论链路、招股书章节/报告/备忘录结构、投行语言规范 | 0.8.0 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.0 |
 | [ibd-quality-gates](skills/ibd-quality-gates/SKILL.md) | **交付前内容质量门禁**：数字五要素、反模式扫描、五道质量门 G1-G5、数值自洽核对 | 0.8.0 | 零硬依赖（基座之一） |
 | [ibd-finance-review](skills/ibd-finance-review/SKILL.md) | **财务深度复核**：招股书/申报文件 16 维清单，锚定企业会计准则与监管审核口径 | 0.8.3 | 零硬依赖（纯规范清单包） |
-| [ibd-doc-review](skills/ibd-doc-review/SKILL.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验门禁 | 0.15.3 | 零外部 skill 依赖（基座） |
+| [ibd-doc-review](skills/ibd-doc-review/SKILL.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验门禁 | 0.15.4 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/SKILL.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成 | 0.5.2 | 🔴 doc-review（规范 + 校验门禁） |
 
 ## 🔗 工作链路
@@ -110,6 +110,19 @@ finance-review 16 维复核产出问题清单 → doc-annotate 注入原位批�
 | Python 库 | doc-annotate 的 docx/pdf 链路按需装 `python-docx`/`lxml`/`pymupdf`（SKILL.md 已声明）；其余脚本零依赖 |
 | 平台工具 | 样式套用依赖任一 docx 处理工具（tencent-docx / minimax-docx / 本地 Office），按 SKILL.md 依赖表自备 |
 
+### 依赖版本兼容矩阵（单包安装时对照）
+
+> 同 zip 全家桶安装天然满足下表（集合版本各包互验）；**单包安装**时按下表查版本下限，低于下限的旧组合可能行为不一致（依赖方升版后须复核下限，见各包 CHANGELOG）。
+
+| 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
+|---|---|---|---|---|
+| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.8.0 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.0 | 0.15.4 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.15.1 | 0.15.4 | ✅ |
+
+验证方法：装齐后各包跑自测（gates `scripts/tests/test_check_gates.py`、doc-review `scripts/tests/test_check_styles.py`），全绿即组合可用。
+| 平台工具 | 样式套用依赖任一 docx 处理工具（tencent-docx / minimax-docx / 本地 Office），按 SKILL.md 依赖表自备 |
+
 ## 🛠 技术细节
 
 - 每包独立 SemVer，变更记录见各包 `CHANGELOG.md`
@@ -119,6 +132,7 @@ finance-review 16 维复核产出问题清单 → doc-annotate 注入原位批�
 ## 📌 近期更新
 
 - **2026-09-10 · v0.1.1**：doc-review 0.15.3（check_revisions 去 lxml 依赖 → 纯标准库，冷启动验证修复）；doc-write / quality-gates 补齐 README；发布渠道文案统一 GitHub；集合 README 产品级重写
+- **2026-09-10（未发布批次）**：doc-review 0.15.4（自测同步 data 组迁移）；CI 门禁（P4+自测+一致性）；依赖兼容矩阵 + 四包最小复现示例
 - **2026-09-09 · v0.1.0**：集合仓库首版发布，5 包全量（doc-review 0.15.2 / gates 0.8.0 / finance-review 0.8.3 / write 0.8.0 / annotate 0.5.2）
 
 ## 📚 文档

@@ -53,6 +53,8 @@ agent_created: true
 
 ## 使用流程
 
+> 最小复现示例（清单校验 / 批注注入 / 修订生成，含期望输出）见 [examples.md](references/examples.md)。
+
 ### 1. 准备输入
 
 1. **原文**：Word `docx`（推荐，批注体验最佳：可回复/解决/接受拒绝）或 PDF。

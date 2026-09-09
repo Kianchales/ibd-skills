@@ -4,6 +4,10 @@
 
 ## [0.8.3] - 2026-09-09
 
+### 文档更新（2026-09-10 · 未 bump）：新增 references/examples.md（最小复现示例），SKILL.md 使用流程补引用
+
+- examples.md：对话触发/命令/期望输出，脚本类示例为实测输出；doc-review 既有 examples.md 同步补入门指引句
+
 ### 新增：execution-discipline 细则 9「批注数量卫生与同源合并」+ issue-list-format §1.1 覆盖单元
 
 - **背景**：用户质疑「全量覆盖也不能个个都批」（防批注过多把文件搞崩）→ 研究确认技术边界：批注体积成本极低（每条 ~1.4KB XML/zip ~300B，实测）；真实约束 = Word 云端协同批注线程硬阈值（~500-700 条触发 sync pause）+ 人读性；Word 本地理论上限 21 亿条

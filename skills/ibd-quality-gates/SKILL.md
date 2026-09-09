@@ -39,6 +39,8 @@ agent_created: true
 
 ## 使用流程
 
+> 最小复现示例（对话触发 / 命令 / 期望输出）见 [examples.md](references/examples.md)。
+
 ### 1. 任务启动内核（Task Core · 开工前必过）
 
 > 多角色团队的「任务启动内核」章节只保留本角色参数，通用 4 条骨架统一引用本 skill [task-core.md](references/task-core.md)（单用户模式直接按骨架执行即可）。

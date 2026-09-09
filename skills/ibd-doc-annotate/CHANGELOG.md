@@ -2,6 +2,10 @@
 
 ## [0.5.2] - 2026-09-09
 
+### 文档更新（2026-09-10 · 未 bump）：新增 references/examples.md（最小复现示例），SKILL.md 使用流程补引用
+
+- examples.md：对话触发/命令/期望输出，脚本类示例为实测输出；doc-review 既有 examples.md 同步补入门指引句
+
 ### 增强：validate_issues 同源归并自检 + 数量卫生阈值（配套复核纪律细则 9）
 
 - validate_issues.py 新增两个 WARN：①title 归一后重复 → 疑似同源未合并（应合一条 desc 内联位置，或作家族子编号）②批注数 >200 提示自查归并、>400 提示拆分交付（云端协同红线前）——拆/并不删条目

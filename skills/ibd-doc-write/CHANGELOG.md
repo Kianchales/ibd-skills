@@ -1,8 +1,10 @@
 # CHANGELOG · ibd-doc-write
 
-> 版本规则（skill 发布规范）：功能/结构变更 bump minor；规则裁定/缺陷修复 bump patch。
+> 版本规则（2026-09-10 用户裁定）：主版本 X 由用户裁定；功能变更 bump Y（次版本）；修 bug/描述修正 bump Z（修订号）；纯文档更新仅留痕不 bump。
 
 ## v0.8.0（2026-09-09）· 公开化准备完成
+
+- **文档更新（2026-09-10 · 未 bump）**：新增 references/examples.md（最小复现示例：对话触发 → 执行链路 → 交付物结构），SKILL.md 使用流程补引用
 
 - **用户裁定公开**：doc-write 转为公开候选层（与 doc-review/quality-gates 同族），writing-style 语言资产全量共享
 - **环境指名净化（12 处）**：内部产品名/连接器名/私有配套 skill 名等指名引用 → 泛化（公司内部 Wiki/云文档/本地目录任选；配套检索/生产工具）；依赖表去掉连接器与私有标注（P3 可发布层合规）

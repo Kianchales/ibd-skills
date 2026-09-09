@@ -26,6 +26,8 @@ A股 IPO 投行文档写作总入口。核心：让 AI 写文件像投行人、�
 
 ## 使用流程
 
+> 最小复现示例（对话触发 → 执行链路 → 交付物结构）见 [examples.md](references/examples.md)。
+
 ### 1. 文档类型路由（先识别类型再走对应 references）
 
 | 文档类型 | 适用 references | 说明 |
