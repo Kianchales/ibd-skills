@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.15.3] - 2026-09-10
+
+### 修复：check_revisions.py 去 lxml 依赖（冷启动验证 F1）
+
+- **`scripts/check_revisions.py` lxml → 标准库 `xml.etree.ElementTree`**：维持「内置脚本零依赖」承诺——coldstart 实测发现脚本声称零依赖但 `from lxml import etree`（消费者干净环境冷启动即 ModuleNotFoundError）；lxml 用量仅 fromstring/tostring 3 处，重写要点：
+  - 深拷贝 `etree.tostring(doc)` → 加 `encoding="unicode"`（stdlib 默认 us-ascii bytes，中文/UTF-8 文档 round-trip 需显式）
+  - `clean_tree` 的 `.getparent()`/`.index()`（lxml 特有，stdlib Element 无）→ 自建 `_collect()`（文档序节点列表 + id→父映射），删 del 顺序无关、解包 ins 逆序处理兼容嵌套修订对
+  - 顶部 docstring「依赖：纯标准库（zipfile + lxml）」自相矛盾 → 改「zipfile + xml.etree.ElementTree」，零 pip 包
+- **回归验证 4 样本全过**：合法 2 对修订 PASS / clean 稿 PASS / 坏稿三错齐报（缺 author·id 不成对·trackRevisions）/ 合法嵌套修订对 clean 化正确
+- 触发：ibd-skills v0.1.0 冷启动验证（2026-09-10，报告 F1）；修复后 doc-review 4 脚本干净环境全部冷启动 OK
+
 ## [0.15.2] - 2026-09-09
 
 ### 增补：annotations.md §9 PDF 载体差异速览（同日文档补充，未 bump）

@@ -16,7 +16,7 @@
 ## 依赖
 
 - Python 3 + `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）
-- **`ibd-doc-review` skill（外部依赖·断链自助）**：本技能的格式规范单一事实源（references/annotations.md、references/revisions.md）与产物校验门禁（scripts/check_annotations.py、check_revisions.py）都在该 skill 内，本技能不重复维护、**不随包携带**。按依赖声明制发布——使用方在缺少该 skill 的环境自行下载安装即可（获取途径 = `ibd-doc-review` 同渠道发布物：skillhub / GitHub）；仅安装本技能可执行注入/修订，但交付前规范合规校验（门禁）会因缺依赖不可用，请先补齐依赖再跑门禁。**版本下限：`ibd-doc-review ≥ 0.15.1`**（下限 = 当前已验证版本，双方升版时同步更新）。
+- **`ibd-doc-review` skill（外部依赖·断链自助）**：本技能的格式规范单一事实源（references/annotations.md、references/revisions.md）与产物校验门禁（scripts/check_annotations.py、check_revisions.py）都在该 skill 内，本技能不重复维护、**不随包携带**。按依赖声明制发布——使用方在缺少该 skill 的环境自行下载安装即可（获取途径 = `ibd-doc-review` 同渠道发布物：GitHub 的 Kianchales/ibd-skills 集合仓库）；仅安装本技能可执行注入/修订，但交付前规范合规校验（门禁）会因缺依赖不可用，请先补齐依赖再跑门禁。**版本下限：`ibd-doc-review ≥ 0.15.1`**（下限 = 当前已验证版本，双方升版时同步更新）。
 
 ## 快速开始
 

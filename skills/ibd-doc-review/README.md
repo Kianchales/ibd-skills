@@ -52,12 +52,12 @@ A 股投行文档格式处理技能，用于投行 Word 文档的样式规范化
 
 修改模板后重新运行校验即可生效，无需修改代码。
 
-## 完整版获取
+## 获取与模板
 
-skillhub 分发包不含模板文件。完整版（含模板）从 GitHub 仓库获取：
+分发包（zip）含 `assets/templates/` 三个模板 docx，随包携带即用；改模板 = 定制输出样式。源码/历史版本见 GitHub 集合仓库：
 
 ```
-https://github.com/Kianchales/ibd-doc-review
+https://github.com/Kianchales/ibd-skills（skills/ibd-doc-review/）
 ```
 
 ## 目录结构

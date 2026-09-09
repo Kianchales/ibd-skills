@@ -21,7 +21,7 @@ description: >
   「落实函格式」「套模板样式」「核对格式」「格式自查」「检查序号金额日期标点」
   「批注复核」「原位批注」「复核意见打在原文」「批注格式」「校验批注」
   「修订稿校验」「校验修订」「检查修订稿」「修订结构对不对」
-version: 0.15.2
+version: 0.15.3
 agent_created: true
 ---
 
@@ -227,7 +227,7 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 
 > 模板文件路径（**skill 自带，即样式源**）：`assets/templates/`（相对本 skill 目录）
 > **模板即样式源**：使用者可直接修改/替换 `assets/templates/` 下的 docx——**改模板 = 定制输出样式**，输出将跟随新模板。
-> **skillhub 分发版说明**：skillhub 平台不接受 .docx/.zip 资产，分发版不含模板文件——模板经 GitHub 仓库获取：`git clone https://github.com/Kianchales/ibd-doc-review`（完整版含 `assets/templates/` 三个模板 docx）
+> **模板随包携带**：`assets/templates/` 三个模板 docx 随分发包一起分发（zip 内含），分发版与本地版资产一致，可直接使用或替换定制
 > 模板权威源为机构内部资产（不随分发包携带）；分发版以包内 `assets/templates/` 为使用源，样式定义以包内模板 + style-map.md/rules.md 为准。
 
 | 模板文件 | 适用文档 | 样式体系 | 关键样式 ID |

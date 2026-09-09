@@ -18,13 +18,13 @@ ibd-doc-review · check_revisions.py — 复核修订稿只读校验门禁（规
   --expect N（可选）：ins 条数与 N 比对
 
 任一 FAIL → exit 1，不交付。--report 写 <输入>_修订校验报告.md。
-依赖：纯标准库（zipfile + lxml）。
+依赖：纯标准库（zipfile + xml.etree.ElementTree），零 pip 包。
 """
 import argparse
 import os
 import sys
 import zipfile
-from lxml import etree
+import xml.etree.ElementTree as etree
 
 W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 XML_SPACE = '{http://www.w3.org/XML/1998/namespace}space'
@@ -44,20 +44,43 @@ def full_text(root):
     return "".join(t.text or "" for t in root.iter(W + 't'))
 
 
+def _collect(root):
+    """文档序节点列表 + id→父元素映射（stdlib ElementTree 无 getparent/index，自建辅助）。
+
+    returns: (nodes, parent_map) —— parent_map[id(node)] = 父元素（root 的父为 None）。
+    """
+    nodes = []
+    parent = {}
+    stack = [(None, root)]
+    while stack:
+        p, c = stack.pop()
+        parent[id(c)] = p
+        nodes.append(c)
+        stack.extend((c, ch) for ch in reversed(list(c)))
+    return nodes, parent
+
+
 def clean_tree(doc):
     """返回接受全部修订后的文档根（删 w:del、解包 w:ins）。不影响传入树（深拷贝）。"""
-    root = etree.fromstring(etree.tostring(doc))
-    dels = [d for d in root.iter(W + 'del')]
-    for d in dels:
-        d.getparent().remove(d)
-    inss = [i for i in root.iter(W + 'ins')]
-    for i in reversed(inss):
-        parent = i.getparent()
-        idx = parent.index(i)
+    root = etree.fromstring(etree.tostring(doc, encoding="unicode"))
+    nodes, parent = _collect(root)
+    # 删 w:del（顺序无关，remove 只依赖父的子列表）
+    for c in nodes:
+        if c.tag == W + 'del':
+            p = parent[id(c)]
+            if p is not None:
+                p.remove(c)
+    # 解包 w:ins：子节点按原位插入父；逆序处理以兼容 ins 嵌套（内层先解包）
+    for i in reversed([c for c in nodes if c.tag == W + 'ins']):
+        p = parent[id(i)]
+        if p is None:
+            continue
+        children = list(p)
+        idx = children.index(i)
         for child in list(i):
-            parent.insert(idx, child)
+            p.insert(idx, child)
             idx += 1
-        parent.remove(i)
+        p.remove(i)
     return root
 
 
