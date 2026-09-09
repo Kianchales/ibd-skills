@@ -6,7 +6,7 @@ A 股投行（IBD）工作流 skill 集合仓库：投行文档的写作、质�
 
 | skill | 定位 | 版本 | 依赖 |
 |---|---|---|---|
-| [ibd-doc-review](skills/ibd-doc-review/) | 投行文档格式层单一事实源：样式应用、格式核对、批注/修订规范与校验门禁 | 0.15.2 | 零外部 skill 依赖（基座） |
+| [ibd-doc-review](skills/ibd-doc-review/) | 投行文档格式层单一事实源：样式应用、格式核对、批注/修订规范与校验门禁 | 0.15.3 | 零外部 skill 依赖（基座） |
 | [ibd-quality-gates](skills/ibd-quality-gates/) | 交付前内容质量门禁：数字五要素、反模式扫描、五道质量门（G1-G5）、数值自洽核对 | 0.8.0 | 推荐配 ibd-doc-review |
 | [ibd-finance-review](skills/ibd-finance-review/) | 招股书/申报文件财务章节深度复核（16 维清单，锚定企业会计准则） | 0.8.3 | 零硬依赖（纯规范清单包） |
 | [ibd-doc-write](skills/ibd-doc-write/) | 投行文档写作总入口：反馈回复五步链路、招股书章节/报告/备忘录结构规范、投行语言写作规范 | 0.8.0 | 🔴 ibd-quality-gates ≥0.7.0 + ibd-doc-review ≥0.15.0 + 任一 docx 工具 |
@@ -26,5 +26,5 @@ finance-review 产出复核清单 → doc-annotate 注入批注（按 doc-review
 ## 版本与发布
 
 - 每包独立版本（SemVer），版本记录见各包 `CHANGELOG.md`
-- 发布 tag 采用包前缀：`ibd-doc-review-v0.15.2`、`ibd-quality-gates-v0.8.0`
-- Release 附件 zip 仅含对应包子目录
+- 集合 Release：`ibd-skills-vX.Y.Z`，zip 附件含 `README.md` + `skills/` 全部 5 包（一次获取全家桶）；包内各含 SKILL.md 主文件与 references/scripts 资源
+- 源码/历史版本以本仓库 `skills/<包名>/` 为准
