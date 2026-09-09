@@ -11,11 +11,11 @@
 </p>
 
 <h4 align="center">
-  <a href="skills/ibd-doc-write/SKILL.md">写作</a> |
-  <a href="skills/ibd-quality-gates/SKILL.md">质量校验</a> |
-  <a href="skills/ibd-finance-review/SKILL.md">财务复核</a> |
-  <a href="skills/ibd-doc-review/SKILL.md">格式</a> |
-  <a href="skills/ibd-doc-annotate/SKILL.md">批注交付</a>
+  <a href="skills/ibd-doc-write/README.md">写作</a> |
+  <a href="skills/ibd-quality-gates/README.md">质量校验</a> |
+  <a href="skills/ibd-finance-review/README.md">财务复核</a> |
+  <a href="skills/ibd-doc-review/README.md">格式</a> |
+  <a href="skills/ibd-doc-annotate/README.md">批注交付</a>
 </h4>
 
 <details open>
@@ -63,11 +63,11 @@
 
 | skill | 定位 | 版本 | 依赖 |
 |---|---|---|---|
-| [ibd-doc-write](skills/ibd-doc-write/SKILL.md) | 投行文档**写作总入口**：反馈回复五步方法论链路、招股书章节/报告/备忘录结构、投行语言规范 | 0.8.1 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.0 |
-| [ibd-quality-gates](skills/ibd-quality-gates/SKILL.md) | **交稿前质量校验**：数字五要素、反模式扫描、五项判据 G1-G5、数值自洽核对 | 0.8.3 | 零硬依赖（基座之一） |
-| [ibd-finance-review](skills/ibd-finance-review/SKILL.md) | **财务深度复核**：招股书/申报文件 16 维清单，锚定企业会计准则与监管审核口径 | 0.8.3 | 零硬依赖（纯规范清单包） |
-| [ibd-doc-review](skills/ibd-doc-review/SKILL.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验 | 0.15.5 | 零外部 skill 依赖（基座） |
-| [ibd-doc-annotate](skills/ibd-doc-annotate/SKILL.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成 | 0.5.3 | 🔴 doc-review（规范 + 校验门禁） |
+| [ibd-doc-write](skills/ibd-doc-write/README.md) | 投行文档**写作总入口**：反馈回复五步方法论链路、招股书章节/报告/备忘录结构、投行语言规范 | 0.8.1 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.0 |
+| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前质量校验**：数字五要素、反模式扫描、五项判据 G1-G5、数值自洽核对 | 0.8.3 | 零硬依赖（基座之一） |
+| [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：招股书/申报文件 16 维清单，锚定企业会计准则与监管审核口径 | 0.8.3 | 零硬依赖（纯规范清单包） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验 | 0.15.5 | 零外部 skill 依赖（基座） |
+| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成 | 0.5.3 | 🔴 doc-review（规范 + 校验门禁） |
 
 ## 🔗 工作链路
 
