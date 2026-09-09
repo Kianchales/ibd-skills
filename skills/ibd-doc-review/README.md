@@ -1,105 +1,85 @@
-# ibd-doc-review
+<p align="center">
+  <img src="https://img.shields.io/badge/IBD%20Doc%20Review-%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-2e6cc4" alt="ibd-doc-review">
+</p>
 
-A 股投行文档格式处理技能，用于投行 Word 文档的样式规范化与格式质量检查。
+<p align="center">
+  <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
+  <img src="https://img.shields.io/badge/version-0.15.5-green" alt="version">
+  <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
+  <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
+</p>
 
-本技能不修改文档内容。
+<h4 align="center">样式应用 · 格式核对 · 批注/修订规范与校验</h4>
 
-## 功能
+## 💡 这是什么
 
-本技能提供两类能力：
+A 股投行文档的**格式层单一事实源**：样式规范化、格式核对、批注与修订的规范与产物校验——全链路管「文件长得好不好、对不对版」，**只改格式，不改内容**。
 
-1. **样式应用**
-   对 Word 文档套用招股书版或反馈回复版样式体系，适用于招股书、反馈回复、报告、备忘录、尽调报告等正式文档。样式以模板文件为源，修改模板即可调整输出样式。
+> 套样式、查格式、验批注——三个动作一个 skill，规则只维护一份。
 
-2. **格式核对**
-   对文档进行格式质量检查，覆盖标题序号连续性、日期写法统一、标点全半角、释义简称、表格规范等 10 个核对项（数值自洽核对已迁 `ibd-quality-gates` scripts/check_data.py），输出按严重程度分级的问题清单，每条包含位置、原文、问题与修改建议。
-
-## 使用方法
-
-### 样式应用
-
-对文档执行样式套用与校验（含内容完整性校验、格式修改明细输出、Word 修订模式输出格式改动）。具体操作命令见附录。
-
-### 格式核对
-
-对文档执行格式检查（docx 载体），核对完成后在文档同目录生成核对报告（总览及分级明细）。支持按文字、表格类别或指定核对项执行。具体操作命令见附录。
-
-## 核对项
-
-| 类别 | 核对项 | 说明 |
-|------|--------|------|
-| 文字 | 标题层级序号 | 检查序号跳号、重号、倒退；支持章节编号、问题编号等自定义体系 |
-| 文字 | 用词规范 | 检查常见错别字与异形词 |
-| 文字 | 日期写法 | 检查日期格式一致性；中文年月日为最正式写法 |
-| 文字 | 多余空格与标点 | 检查连续空格、标点重复 |
-| 文字 | 释义简称 | 检查简称定义冲突、未定义即使用等 |
-| 文字 | 国家/地区表述 | 检查敏感表述，内置合规清单，可追加 |
-> 数值自洽核对（金额文本格式 / 指标数值一致 / 表格计算 / 跨表勾稽）已于 2026-09-06 迁 `ibd-quality-gates` scripts/check_data.py（md/docx 双载体），本表不再列入。
-| 表格 | 字号规范 | 表格字号应为五号，必要时可用小五 |
-| 表格 | 数字对齐 | 检查数字单元格右对齐 |
-| 表格 | 空单元格 | 汇总统计，不逐条提示 |
-| 表格 | 不适用符号 | 检查「不适用」标记统一性 |
-
-## 模板自定义
-
-`assets/templates/` 下模板为样式源：
-
-| 模板 | 适用范围 |
-|------|---------|
-| 报告模板.docx | 招股书版样式 |
-| 反馈回复样式.docx | 反馈回复版样式 |
-| 表格模板.docx | 三线表规范 |
-
-修改模板后重新运行校验即可生效，无需修改代码。
-
-## 获取与模板
-
-分发包（zip）含 `assets/templates/` 三个模板 docx，随包携带即用；改模板 = 定制输出样式。源码/历史版本见 GitHub 集合仓库：
+## ✨ 快速开始
 
 ```
-https://github.com/Kianchales/ibd-skills（skills/ibd-doc-review/）
+「把这个 docx 按招股书版式套样式」      → 样式应用（模板驱动）
+「核对一下这份文档的序号/日期/标点」     → 格式核对（10 个核对项）
+「校验批注版/修订稿是否符合规范」        → 产物校验门禁
 ```
 
-## 目录结构
+## 🧩 核心能力
+
+### 🎨 样式应用
+对 Word 文档套用招股书版 / 反馈回复版样式体系，适用于招股书、反馈回复、报告、备忘录、尽调报告等正式文档。样式以模板为源——**改模板 = 定制输出样式**。
+
+### 🔍 格式核对（只读）
+标题序号连续性、日期写法统一、标点全半角、释义简称、表格规范等 10 个核对项，输出按严重程度分级的问题清单（位置/原文/问题/建议）。
+
+### 📝 批注与修订规范 + 校验
+复核结论落到原文（批注/修订稿）的**格式规范单一事实源**：批注 4 行紧凑结构、编号体系、类型词表、字体、锚点规则；修订三模式、rev 字段、修订落定。配套产物只读校验门禁（check_annotations / check_revisions）——不合规即 exit 1 不交付。
+
+> 注：批注/修订的**注入执行**（把意见打进原文）归 `ibd-doc-annotate`——本 skill 是规范与校验侧。
+
+## 🚀 典型场景
+
+**场景：正文定稿 → 申报格式**
+
+内容校验过门后 → 声明样式场景（招股书版/反馈回复版）→ 套样式 → 校验内容一致性（只改格式不丢字）→ 格式核对 → 交付。
+
+## 🔗 与生态内其他 skill 的分工
+
+```
+doc-write 写草稿 → quality-gates 内容校验 → doc-review 格式复核 → 交付
+finance-review 复核清单 → doc-annotate 注入批注 → doc-review 校验批注
+```
+
+- **内容质量与数值自洽**（数字五要素/反模式/G1-G5）→ `ibd-quality-gates`
+- **批注/修订执行器**（Word/PDF 原位注入）→ `ibd-doc-annotate`（本 skill 校验其产物）
+- **写作草稿** → `ibd-doc-write`（引用本 skill 做格式落地）
+
+## 📦 安装与依赖
+
+- 🔴 **必须**：任一 docx 处理工具（tencent-docx / minimax-docx 至少一，样式套用/新建用）+ 内置校验脚本（随包自带，零第三方依赖）
+- 🟡 **推荐**：本地 Office 编辑（局部微调，体验最佳）
+- 🟢 **可选**：外部数据源（交叉验证）；officecli（渲染层物理缺陷扫描，独立二进制按需自备）
+
+校验脚本全部 Python 3 标准库（zipfile + xml.etree），解压即跑。
+
+## 📁 目录结构
 
 ```
 ibd-doc-review/
-├── SKILL.md              # 主文件：触发词、场景识别、流程、规范
+├── SKILL.md              # 主文件：S1-S7 流程/边界/规范
 ├── README.md             # 本文件
-├── assets/templates/     # 样式源模板
-├── references/           # 样式对照、规则、敏感词清单、示例
-└── scripts/              # 校验与核对脚本（含自测）
+├── assets/templates/     # 样式源模板（报告/反馈回复/表格）
+├── references/           # 规范与规则（annotations/revisions/style-map 等）
+└── scripts/              # 校验门禁脚本（含自测）
 ```
 
-## 使用规范
+## 📌 近期更新
 
-- 样式应用只改格式，不修改内容；套用后须执行内容完整性校验
-- 优先使用命名样式，避免手写字体格式
-- 段落间距由样式控制，不使用空段落
+- **2026-09-10 · v0.15.5**：displayName「IBD 投行格式复核」；批注注入触发词分流归 doc-annotate
+- **2026-09-10 · v0.15.4**：自测同步 data 组迁移（18 用例全过）
+- **2026-09-10 · v0.15.3**：check_revisions 去 lxml → 纯标准库（冷启动修复）
 
-## 依赖
-
-- 必需：无
-- 推荐：文档生成与编辑工具（tencent-docx、minimax-docx、本地 Office 编辑），用于新建文档与局部调整
-
-## 附录：脚本命令（面向技术用户）
-
-脚本基于 Python 标准库，无第三方依赖。
-
-```bash
-# 样式应用
-python scripts/check_styles.py --input 文档.docx --scenario 招股书     # 套用招股书版样式
-python scripts/check_styles.py --input 文档.docx --scenario 反馈回复   # 套用反馈回复版样式
-python scripts/check_styles.py --input 样式化结果.docx --verify-content 原文.docx  # 内容完整性校验
-python scripts/check_styles.py --input 样式化结果.docx --diff 原文.docx            # 格式修改明细
-python scripts/check_styles.py --input 样式化结果.docx --revise 原文.docx          # Word 修订模式输出
-
-# 格式核对
-python scripts/check_content.py --input 文档.docx                     # 执行全部核对项
-python scripts/check_content.py --input 文档.docx --checks text       # 按类别执行（text/table 两组；数值自洽核对见 ibd-quality-gates check_data.py）
-python scripts/check_content.py --input 文档.docx --geo-file 清单.json # 追加敏感词清单
-```
-
-## 许可
+## ⚖️ 许可
 
 MIT

@@ -1,70 +1,77 @@
-# ibd-doc-annotate
+<p align="center">
+  <img src="https://img.shields.io/badge/IBD%20Doc%20Annotate-%E6%89%B9%E6%B3%A8%E4%B8%8E%E4%BF%AE%E8%AE%A2%E4%BA%A4%E4%BB%98-2e6cc4" alt="ibd-doc-annotate">
+</p>
 
-把 A 股投行复核结论**落到文档原文上**的执行器：给一份「复核问题清单 + 原文」，产出批注版或修订稿，每条改动都锚在原问题句段、带编号可回溯。
+<p align="center">
+  <img src="https://img.shields.io/badge/IBD%20%E6%89%B9%E6%B3%A8%E4%B8%8E%E4%BF%AE%E8%AE%A2%E4%BA%A4%E4%BB%98-blue" alt="displayName">
+  <img src="https://img.shields.io/badge/version-0.5.3-green" alt="version">
+  <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
+</p>
 
-本技能是纯执行器——**只做落地转化，不产生复核内容**。哪些地方有问题、怎么改，都由上游问题清单决定；本技能只负责把清单变成 Word/PDF 上看得见的批注或修订。
+<h4 align="center">复核结论落地执行器 · 批注版 / 修订稿双形态</h4>
 
-## 两种交付形态
+## 💡 这是什么
+
+把 A 股投行复核结论**落到文档原文上**的执行器：给一份「复核问题清单 + 原文」，产出批注版或修订稿——每条改动都锚在原问题句段、带编号可回溯。
+
+> 纯执行器：**只做落地转化，不产生复核内容**——哪里有问题、怎么改，由上游问题清单决定；它只负责把清单变成 Word/PDF 上看得到的批注或修订。
+
+## ✨ 快速开始
+
+```
+「把这份复核清单全部批注进原文」   → 批注版（Word 审阅批注 / PDF 高亮弹注）
+「按清单出一版修订稿」              → 修订稿（先确认形态：Word 修订/直接改好/双版）
+「先校验一下问题清单格式」          → validate_issues.py 入口预检
+```
+
+## 🧩 两种交付形态
 
 | 形态 | 输入 | 输出 | 用途 |
 |---|---|---|---|
-| **批注版** | 问题清单 + 原文 docx/pdf | `<原文>_<日期>_v<N>_批注版.docx/pdf` + `_批注总览.md` | 只加批注不改原文，复核意见钉在问题句段上 |
-| **修订稿** | 问题清单（含 `rev` 替换文本）+ 原文 docx | `<原文>_<日期>_v<N>_修订稿.docx(+_clean.docx)` + `_修改清单.md` | 把修改建议落到原文：Word 修订模式（可接受/拒绝）/ 直接改好 / 双版 |
+| **批注版** | 问题清单 + 原文 docx/pdf | `<原文>_批注版.docx/pdf` + `_批注总览.md` | 只加批注不改原文，意见钉在问题句段上 |
+| **修订稿** | 问题清单（含 rev 替换文本）+ 原文 docx | `<原文>_修订稿.docx(+_clean.docx)` + `_修改清单.md` | 修改建议落到原文：revise/clean/both 三形态 |
 
-修订稿的输出形态由**用户确认**（revise / clean / both），不按请求措辞自动推断。
+修订稿形态由**用户确认**（revise=Word 修订 / clean=直接改好 / both=双版），不按请求措辞自动推断。
 
-## 依赖
+## 🚀 典型场景
 
-- Python 3 + `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）
-- **`ibd-doc-review` skill（外部依赖·断链自助）**：本技能的格式规范单一事实源（references/annotations.md、references/revisions.md）与产物校验门禁（scripts/check_annotations.py、check_revisions.py）都在该 skill 内，本技能不重复维护、**不随包携带**。按依赖声明制发布——使用方在缺少该 skill 的环境自行下载安装即可（获取途径 = `ibd-doc-review` 同渠道发布物：GitHub 的 Kianchales/ibd-skills 集合仓库）；仅安装本技能可执行注入/修订，但交付前规范合规校验（门禁）会因缺依赖不可用，请先补齐依赖再跑门禁。**版本下限：`ibd-doc-review ≥ 0.15.1`**（下限 = 当前已验证版本，双方升版时同步更新）。
+**场景：财务复核收尾 → 批注版交付**
 
-## 快速开始
+finance-review 16 维复核产出问题清单（J-01 起编号）→ 本 skill 逐条转 Word 审阅批注锚定原句 → 复核/修订两形态同源一次生成 → 交付批注版原文 + 精简总览（无法自动锚定的条目记总览待人工）。
 
-```bash
-# 1. 准备问题清单（格式见 scripts/issues.example.json，每条含 author/anchor/title/desc/advice；可先跑 scripts/validate_issues.py --input issues.json 入口预检；
-#    修订稿条目加 rev=替换后文本，anchor 同时是替换范围；编号前缀用 code 字段自定义）
+## 🔗 与生态内其他 skill 的分工
 
-# 2. 批注版
-python scripts/annotate_docx.py --docx 原文.docx --issues issues.json      # Word 审阅批注
-python scripts/annotate_pdf.py  --pdf 原文.pdf --issues issues.json        # PDF 高亮+弹注
+| 角色 | 规范（怎么算合规） | 生成（意见→批注/修订） | 校验（产物过不过关） |
+|---|---|---|---|
+| `ibd-doc-review`（格式复核） | ✅ 单一事实源（references/） | — | ✅ 门禁（check_*.py） |
+| `ibd-doc-annotate`（本 skill） | 只引用不重复 | ✅ 执行器 | 产出送 review 门禁 |
 
-# 3. 修订稿（形态 revise/clean/both 由用户确认）
-python scripts/revise_docx.py --docx 原文.docx --issues issues.json --mode revise
-python scripts/revise_docx.py --docx 原文.docx --issues issues.json --mode clean
-python scripts/revise_docx.py --docx 原文.docx --issues issues.json --mode both
+上游问题清单格式与 `finance-review`/人工审查同源（code/type/severity/anchor/title/desc/suggestion）。
 
-# 4. 校验门禁（交付前必跑，位于外部依赖 ibd-doc-review——缺依赖先自行安装该 skill，见上文「依赖」）
-python <ibd-doc-review>/scripts/check_annotations.py --input 批注版.docx --pdf 批注版.pdf --expect N
-python <ibd-doc-review>/scripts/check_revisions.py   --input 修订稿.docx --mode revise --expect N
-```
+## 📦 安装与依赖
 
-## 目录结构
+- 🔴 **必须**：Python 3 + `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）——按载体装
+- 🔴 **外部依赖**：`ibd-doc-review ≥ 0.15.1`（格式规范 + 校验门禁，不随本包携带）——缺依赖时可执行注入/修订，但交付前规范校验不可用，按断链自助指引从集合仓库补齐
+
+## 📁 目录结构
 
 ```
 ibd-doc-annotate/
-├── SKILL.md                  # 技能说明（触发词/流程/边界）
-├── scripts/
-│   ├── annotate_docx.py      # Word 批注注入（跨 run 拆分、保留原格式）
-│   ├── validate_issues.py    # 入口校验器（issues 结构早拦，CLI + 注入前自动校验）
-│   ├── annotate_pdf.py       # PDF 高亮+弹注（字符级定位，容忍空白）
-│   ├── revise_docx.py        # 修订稿执行器（revise/clean/both）
-│   └── issues.example.json   # 问题清单模板
-└── README.md
+├── SKILL.md                  # 主文件（触发词/流程/边界）
+├── README.md                 # 本文件
+└── scripts/
+    ├── annotate_docx.py      # Word 批注注入（跨 run 拆分、保留原格式）
+    ├── annotate_pdf.py       # PDF 高亮+弹注（字符级定位）
+    ├── revise_docx.py        # 修订稿执行器（revise/clean/both）
+    ├── validate_issues.py    # 问题清单入口校验
+    └── issues.example.json   # 问题清单模板
 ```
 
-## 边界
+## 📌 近期更新
 
-- 只注入/修订，不重写文档：批注不改原文文字；修订只动清单指定的 anchor 区间
-- 锚点覆盖复杂格式（换行/制表/超链接）或找不到时 → 记入总览/清单「待人工」，不硬撑
-- 复核判断与类型词表属上游流程与 `ibd-doc-review` 规范域，本技能不做内容判断、不校验词表
+- **2026-09-10 · v0.5.3**：displayName「IBD 批注与修订交付」；触发词去「批注复核」歧义
+- **2026-09-10 · v0.5.2**：执行器与 review 规范同源归并自检
 
-## 与 ibd-doc-review 的分工
-
-| | 规范（怎么才算合规） | 生成（把意见变成批注/修订） | 校验（产物过不过关） |
-|---|---|---|---|
-| ibd-doc-review | ✅ 单一事实源（references/） | — | ✅ 门禁（scripts/check_*.py） |
-| ibd-doc-annotate | 只引用不重复 | ✅ 执行器 | 产出送 review 门禁 |
-
-## License
+## ⚖️ 许可
 
 MIT License — 见 [LICENSE.txt](LICENSE.txt)。
