@@ -1,7 +1,7 @@
 ---
 name: ibd-quality-gates
 slug: ibd-quality-gates
-displayName: IBD 投行交付质量校验
+displayName: IBD 投行质量校验
 summary: 投行文档交稿前的质量校验：每个数字有来源、每句判断有依据、没有过头话、没有 AI 腔，五项判据全过才放行。只管内容质量，不管排版。
 description: >
   给投行文档（分析报告、尽调报告、反馈回复、备忘录等）做交稿前的质量校验。
@@ -17,7 +17,7 @@ version: 0.8.3
 agent_created: true
 ---
 
-# ibd-quality-gates（IBD 投行交付质量校验）
+# ibd-quality-gates（IBD 投行质量校验）
 
 交稿前的质量校验：**每个数字有来源、每句判断有依据、没有过头话、没有 AI 腔，五项判据全过才放行。**
 
