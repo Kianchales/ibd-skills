@@ -1,0 +1,105 @@
+# ibd-doc-review
+
+A 股投行文档格式处理技能，用于投行 Word 文档的样式规范化与格式质量检查。
+
+本技能不修改文档内容。
+
+## 功能
+
+本技能提供两类能力：
+
+1. **样式应用**
+   对 Word 文档套用招股书版或反馈回复版样式体系，适用于招股书、反馈回复、报告、备忘录、尽调报告等正式文档。样式以模板文件为源，修改模板即可调整输出样式。
+
+2. **格式核对**
+   对文档进行格式质量检查，覆盖标题序号连续性、日期写法统一、标点全半角、释义简称、表格规范等 10 个核对项（数值自洽核对已迁 `ibd-quality-gates` scripts/check_data.py），输出按严重程度分级的问题清单，每条包含位置、原文、问题与修改建议。
+
+## 使用方法
+
+### 样式应用
+
+对文档执行样式套用与校验（含内容完整性校验、格式修改明细输出、Word 修订模式输出格式改动）。具体操作命令见附录。
+
+### 格式核对
+
+对文档执行格式检查（docx 载体），核对完成后在文档同目录生成核对报告（总览及分级明细）。支持按文字、表格类别或指定核对项执行。具体操作命令见附录。
+
+## 核对项
+
+| 类别 | 核对项 | 说明 |
+|------|--------|------|
+| 文字 | 标题层级序号 | 检查序号跳号、重号、倒退；支持章节编号、问题编号等自定义体系 |
+| 文字 | 用词规范 | 检查常见错别字与异形词 |
+| 文字 | 日期写法 | 检查日期格式一致性；中文年月日为最正式写法 |
+| 文字 | 多余空格与标点 | 检查连续空格、标点重复 |
+| 文字 | 释义简称 | 检查简称定义冲突、未定义即使用等 |
+| 文字 | 国家/地区表述 | 检查敏感表述，内置合规清单，可追加 |
+> 数值自洽核对（金额文本格式 / 指标数值一致 / 表格计算 / 跨表勾稽）已于 2026-09-06 迁 `ibd-quality-gates` scripts/check_data.py（md/docx 双载体），本表不再列入。
+| 表格 | 字号规范 | 表格字号应为五号，必要时可用小五 |
+| 表格 | 数字对齐 | 检查数字单元格右对齐 |
+| 表格 | 空单元格 | 汇总统计，不逐条提示 |
+| 表格 | 不适用符号 | 检查「不适用」标记统一性 |
+
+## 模板自定义
+
+`assets/templates/` 下模板为样式源：
+
+| 模板 | 适用范围 |
+|------|---------|
+| 报告模板.docx | 招股书版样式 |
+| 反馈回复样式.docx | 反馈回复版样式 |
+| 表格模板.docx | 三线表规范 |
+
+修改模板后重新运行校验即可生效，无需修改代码。
+
+## 完整版获取
+
+skillhub 分发包不含模板文件。完整版（含模板）从 GitHub 仓库获取：
+
+```
+https://github.com/Kianchales/ibd-doc-review
+```
+
+## 目录结构
+
+```
+ibd-doc-review/
+├── SKILL.md              # 主文件：触发词、场景识别、流程、规范
+├── README.md             # 本文件
+├── assets/templates/     # 样式源模板
+├── references/           # 样式对照、规则、敏感词清单、示例
+└── scripts/              # 校验与核对脚本（含自测）
+```
+
+## 使用规范
+
+- 样式应用只改格式，不修改内容；套用后须执行内容完整性校验
+- 优先使用命名样式，避免手写字体格式
+- 段落间距由样式控制，不使用空段落
+
+## 依赖
+
+- 必需：无
+- 推荐：文档生成与编辑工具（tencent-docx、minimax-docx、本地 Office 编辑），用于新建文档与局部调整
+
+## 附录：脚本命令（面向技术用户）
+
+脚本基于 Python 标准库，无第三方依赖。
+
+```bash
+# 样式应用
+python scripts/check_styles.py --input 文档.docx --scenario 招股书     # 套用招股书版样式
+python scripts/check_styles.py --input 文档.docx --scenario 反馈回复   # 套用反馈回复版样式
+python scripts/check_styles.py --input 样式化结果.docx --verify-content 原文.docx  # 内容完整性校验
+python scripts/check_styles.py --input 样式化结果.docx --diff 原文.docx            # 格式修改明细
+python scripts/check_styles.py --input 样式化结果.docx --revise 原文.docx          # Word 修订模式输出
+
+# 格式核对
+python scripts/check_content.py --input 文档.docx                     # 执行全部核对项
+python scripts/check_content.py --input 文档.docx --checks text       # 按类别执行（text/table 两组；数值自洽核对见 ibd-quality-gates check_data.py）
+python scripts/check_content.py --input 文档.docx --geo-file 清单.json # 追加敏感词清单
+```
+
+## 许可
+
+MIT

@@ -3,7 +3,7 @@
 
 按「问题类型 × 严重程度」组织：HIGH=错误（须改）/ MEDIUM=警告 / LOW=提示。
 
-组别与核对项：
+组别与核对项（docx 载体，样式化后核对）：
   text  文字类：
         heading_seq 标题层级序号连续性（含 第X节/第X章、问题X 自定义编号）   HIGH
         terms       用词规范性（错别字/异形词；支持外部清单扩展）            MEDIUM
@@ -11,20 +11,21 @@
         spaces      多余空格与重复标点                                    HIGH
         abbr        释义简称统一（冲突/前置使用/未定义复用/引号风格）          MEDIUM-LOW
         geo         国家城市表述合规（--geo-file 外部清单驱动）              HIGH
-  data  数据类：
-        amounts     金额千分位与两位小数（豁免 %、文号/编码）                MEDIUM
-        consistency 同名指标数值前后一致                                  MEDIUM
-        calc        表格合计行求和 / 占比列合计≈100%                       HIGH
-        cross_table 跨表同名科目数值比对                                  MEDIUM
   table 表格类：
         table_font  字号体系（五号21pt/小五18pt，其余违规）                 HIGH
         table_align 数字单元格右对齐                                    MEDIUM
         table_empty 空单元格                                           LOW
-        table_na    「不适用」标记统一性                                 MEDIIUM
+        table_na    「不适用」标记统一性                                 MEDIUM
 
 用法：
   python check_content.py --input <docx> [--output 报告.md]
-      [--checks all | text | data | table | heading_seq,calc,...]
+      [--checks all | text | table | heading_seq,table_font,...]
+
+载体：
+  docx —— 样式化后跑（text 组文字规范 + table 组表格样式/结构核对）
+  注：数值自洽核对（data 组：金额文本格式/数值前后一致/合计勾稽/跨表比对）
+      已于 2026-09-06 迁至 ibd-quality-gates scripts/check_data.py（md/docx 双载体），
+      本脚本不再承担；--checks 传入 data 组相关 id 会提示新归属。
 """
 
 import argparse
@@ -54,6 +55,7 @@ def load_docx(path):
     except Exception as e:
         print(f"[ERROR] 读取失败 {path}: {e}")
         return None
+
 
 
 PARA_RE = re.compile(r"<w:p\b[^>]*>.*?</w:p>", re.S)
@@ -689,83 +691,6 @@ def check_geo(doc_text, geo_rules):
     return issues
 
 
-# ---- amounts 金额千分位两位小数（豁免 % 与文号/编码）
-
-RE_NO_THOUSANDS = re.compile(r"(?<![\d,.%])(\d{5,9})(?=元|万元|亿元|[^\d]|$)")
-RE_BAD_DECIMALS = re.compile(r"\d{1,3}(?:,\d{3})+\.(\d)(?![\d%])")
-DOC_CODE_RE = re.compile(r"^\d{6,8}$")
-
-
-def _is_percent_after(text, end):
-    return text[end:].lstrip(" ").startswith("%")
-
-
-def check_amounts(items):
-    issues = []
-    seen = set()
-    for i, (kind, info) in enumerate(items):
-        text = info["text"]
-        if not text:
-            continue
-        work = re.sub(r"\d+(?:[,.]\d+)*\s*%",
-                      lambda mm: "%" * len(mm.group(0)), text)
-        where = ("表格" + f"表{info['table_no']}") if kind == "cell" else (f"正文#{i + 1}")
-
-        for m in RE_NO_THOUSANDS.finditer(work):
-            frag = m.group(0)
-            key = (where, frag, m.start())
-            if key in seen:
-                continue
-            seen.add(key)
-            if DOC_CODE_RE.match(frag):
-                continue  # 文号/编码豁免（含日期连写，由 dates 项处理）
-            # 标准号豁免（2026-08-27 裁定）：GB/GB/T/ISO/Q/DB… 后接数字串属标准编号非金额
-            prefix = text[max(0, m.start() - 10):m.start()]
-            if re.search(r"[A-Za-z]{1,4}(?:/[A-Za-z]{1,4})?\s*$", prefix):
-                continue
-            # 地址要素豁免（2026-08-27 裁定）：…路6号105室-40627（集中办公区）等地址数字段
-            if re.search(r"[路街号室栋层弄巷门]", prefix):
-                continue
-            # 连字符/波浪线分隔的编号段豁免（如 105室-40627）
-            if prefix.rstrip()[-1:] in ("-", "—", "~"):
-                continue
-            # 编码串豁免：数字后紧跟字母（如 84025S11267R0SC）
-            after_ch = text[m.end()] if m.end() < len(text) else ""
-            if after_ch.isalpha():
-                continue
-            # # 前缀编号豁免（如 #72897）
-            if prefix.rstrip()[-1:] == "#":
-                continue
-            # 案号/文号豁免：数字后接「号」（如 民初11336号）
-            if text[m.end():m.end() + 2].lstrip().startswith("号"):
-                continue
-            note = ""
-            if len(frag) >= 8:
-                note = "（长数字串，若为文号/编码可忽略本条）"
-            ctx_l = max(0, m.start() - 12)
-            snippet = text[ctx_l:m.end() + 10].replace("\n", "")
-            issues.append(Issue(
-                "amounts", "金额数字（千分位/两位小数）", where + f"「…{snippet[:26]}…」",
-                frag, "位数较多的数字未加千分位分隔符" + note, "添加千分位并核对是否需保留两位小数",
-                "MEDIUM"))
-
-        for m in RE_BAD_DECIMALS.finditer(work):
-            frag_raw = text[m.start():m.end()] if m.start() < len(text) else ""
-            frag = work[m.start():m.end()]
-            key = (where, frag, m.start())
-            if key in seen:
-                continue
-            seen.add(key)
-            if _is_percent_after(text, m.end()):
-                continue  # 百分比豁免
-            ctx_l = max(0, m.start() - 12)
-            snippet = text[ctx_l:m.end() + 10].replace("\n", "")
-            issues.append(Issue(
-                "amounts", "金额数字（千分位/两位小数）", where + f"「…{snippet[:26]}…」",
-                frag, "带千分位的金额仅保留一位小数", "补齐至两位小数（如 .50）", "MEDIUM"))
-    return issues
-
-
 # ---- punctuation 中英文标点（前后字符判定法）
 
 HALF_PUNCTS = ",.;:?!()\"'"
@@ -855,199 +780,6 @@ def check_punctuation(items):
                 "建议改用「」或全角弯引号“”", "LOW")
     return issues
 
-
-# ---- consistency 数值前后一致（同名指标不同值）
-
-METRIC_VAL_RE = re.compile(
-    r"([\u4e00-\u9fffA-Za-z][\u4e00-\u9fffA-Za-z0-9（）]{1,19}?(?:营业收入|净利润|净利总额|归母净利润|总资产|总负债|净资产|所有者权益|货币资金|应收账款|存货|总股本|股本))"
-    r"[^\d\-]{0,6}(-?[\d,]+\.[\d]{2}|-?\d{4,}(?:,\d{3})*(?:\.\d+)?)\s*(万元|亿元|元|万|%)")
-
-
-def check_consistency(items):
-    metrics = {}
-    issues = []
-    for i, (kind, info) in enumerate(items):
-        t = info["text"]
-        if not t:
-            continue
-        for m in METRIC_VAL_RE.finditer(t):
-            name, val, unit = m.group(1), m.group(2), m.group(3)
-            # 千分位去掉再比较数值；保持展示为原文片段
-            norm_val = val.replace(",", "").rstrip(".")
-            try:
-                fv = float(norm_val)
-                if unit == "万元":
-                    fv *= 10000
-                elif unit == "亿元":
-                    fv *= 100000000
-            except ValueError:
-                continue
-            key = name[-14:]
-            metrics.setdefault((key, unit), []).append(
-                {"pos": i, "raw": m.group(0)[:40], "val": fv})
-    for (name_key, unit), records in metrics.items():
-        uniq_vals = {round(r["val"], 4) for r in records}
-        if len(uniq_vals) > 1:
-            vals_disp = " / ".join(str(r["val"]) + unit for r in records[:6])
-            positions = ", ".join(f"#{r['pos'] + 1}段" for r in records[:6])
-            issues.append(Issue(
-                "consistency", "指标数值前后一致",
-                f"指标「{name_key}」（单位{unit}，出现于 {positions}）",
-                vals_disp,
-                f"同名指标在不同位置数值不同（共 {len(records)} 处、{len(uniq_vals)} 个不同取值），疑似前后不一致——可能是口径差异，请人工核实",
-                "核实口径一致后统一数值，或在表述中明确口径差异", "MEDIUM"))
-    return issues
-
-
-# ---- calc 表格合计行求和 / 占比列合计≈100%
-
-def _to_num(s):
-    s = s.replace(",", "").replace("%", "").strip().rstrip("。")
-    try:
-        return float(s)
-    except ValueError:
-        return None
-
-
-def check_calc(tables):
-    issues = []
-    for tbl in tables:
-        no = tbl["no"]
-        rows = tbl["rows"]
-        texts = [[c["text"] for c in row] for row in rows]
-        tbl_loc = f"表{no}" + (f"（首行『{tbl['head']}』）" if tbl.get("head") else "")
-
-        # (a) 合计行求和校验（其余数据行列和 vs 合计行；×100 差异视为单位口径问题）
-        for ri, trow in enumerate(texts):
-            if not any(("合计" in c) or ("总计" in c) for c in trow if isinstance(c, str)):
-                continue
-            header_rows = 1 if ri > 0 else 0
-            data_rows = [r2 for ri2, r2 in enumerate(texts)
-                         if ri2 >= header_rows and ri2 != ri and any(c.strip() for c in r2)]
-            # 排除小计/中间汇总行（2026-08-27 裁定：小计行含数值，作分项会重复计数）
-            data_rows = [r2 for r2 in data_rows
-                         if not any(("小计" in c) or ("其中" in c) or ("减：" in c)
-                                    or ("加：" in c) or ("剔除" in c)
-                                    for c in r2 if isinstance(c, str))]
-            if len(data_rows) < 2:
-                continue
-            bad_cols = []
-            for ci in range(len(trow)):
-                col_total = _to_num(trow[ci])
-                if col_total is None:
-                    continue
-                parts = []
-                ok_all = True
-                for drow in data_rows:
-                    v = _to_num(drow[ci]) if ci < len(drow) else None
-                    if v is None:
-                        ok_all = False
-                        break
-                    parts.append(v)
-                if not ok_all or not parts:
-                    continue  # 该列存在非数值单元格，跳过（无法可靠求和）
-                s = round(sum(parts), 4)
-                tol = max(0.02, abs(col_total) * 0.001)
-                if abs(s - col_total) > tol:
-                    bad_cols.append((ci, s, col_total))
-            if not bad_cols:
-                continue
-            # 单位口径差异识别：仅分项之和恰为合计值的 100 倍（小数 vs 百分数）时降级
-            unit_issue = []
-            real_bad = []
-            for bc in bad_cols:
-                ci, s, tot = bc
-                if s and abs(s - tot * 100) <= max(0.02, abs(tot * 100) * 0.001):
-                    unit_issue.append(bc)   # 小数 vs 百分数 口径
-                else:
-                    real_bad.append(bc)
-            if unit_issue:
-                ci, s, tot = unit_issue[0]
-                issues.append(Issue(
-                    "calc", "表格合计与占比计算校验",
-                    f"{tbl_loc} 合计行第{ci + 1}列",
-                    f"分项之和 {s:g} 为合计值 {tot:g} 的 100 倍",
-                    "疑似单位/口径不一致（分项与合计数量级差异过大），请人工核实",
-                    "MEDIUM"))
-            for ci, s, tot in real_bad[:3]:
-                issues.append(Issue(
-                    "calc", "表格合计与占比计算校验",
-                    f"{tbl_loc} 合计行（第{ri + 1}行）第{ci + 1}列",
-                    f"分项之和 {s:g} ≠ 合计值 {tot:g}",
-                    "疑似计算错误或分项有遗漏（容差已计入四舍五入），请人工复核",
-                    "重新计算合计或补充分项", "HIGH"))
-
-        # (b) 占比列合计 ≈100%
-        ncols = max((len(r) for r in texts), default=0)
-        for ci in range(ncols):
-            pct_vals = []
-            has_header = False
-            for ri, trow in enumerate(texts):
-                if any(("小计" in c) or ("其中" in c) for c in trow if isinstance(c, str)):
-                    pct_vals.append(None)
-                    continue
-                if ci >= len(trow):
-                    pct_vals.append(None)
-                    continue
-                txt = trow[ci].strip()
-                if any(k in txt for k in ("比例", "占比", "%")):
-                    has_header = True
-                v = _to_num(txt)
-                if "%" in txt or (txt.endswith("%")):
-                    v = _to_num(txt.replace("%", ""))
-                    pct_vals.append(v if v is None else v)
-                    continue
-                if "占比" in (texts[0][ci] if texts and ci < len(texts[0]) else ""):
-                    pct_vals.append(v)
-                else:
-                    pct_vals.append(None)
-            nums = [v for v in pct_vals if v is not None]
-            if has_header and len(nums) >= 3:
-                ssum = round(sum(nums), 2)
-                if abs(ssum - 100.0) > 1.0:
-                    issues.append(Issue(
-                        "calc", "表格合计与占比计算校验",
-                        f"{tbl_loc} 第{ci + 1}列（占比列）",
-                        f"占比合计 {ssum:g}% ≠ 100%（±1%）",
-                        "疑似占比计算错误或有遗漏项，请人工复核", "HIGH"))
-    return issues
-
-
-def c_ok_text(row, ci):
-    try:
-        return isinstance(row[ci], str) and bool(row[ci].strip()) and \
-            not any(k in row[ci] for k in ("单位", "注"))
-    except Exception:
-        return False
-
-
-# ---- cross_table 同名科目跨表数值比对
-
-def check_cross_table(tables):
-    first_col_values = {}
-    for tbl in tables:
-        seen_in_this_table = set()
-        for row in tbl["rows"]:
-            if not row:
-                continue
-            key = row[0]["text"]
-            if not key or key in seen_in_this_table:
-                continue
-            seen_in_this_table.add(key)
-            vals = tuple(_to_num(c["text"]) for c in row[1:])
-            first_col_values.setdefault(key, []).append((tbl["no"], vals))
-
-    issues = []
-    for key, occurrences in sorted(first_col_values.items()):
-        distinct = {(vals) for _, vals in occurrences if all(v is not None for v in vals)}
-        tables_involved = [no for no, _ in occurrences]
-        if len(distinct) > 1 and len(tables_involved) > 1:
-            disp = " / ".join(str(list(v))[:60] for _, v in occurrences[:4])
-            issues.append(Issue(
-                "cross_table", "跨表同名科目勾稽", f"科目「{key}」出现在表 {'、'.join('表'+str(n) for n in tables_involved)}",
-                f"各行数值不一致：{disp}",
-                "疑似勾稽关系差异——可能是口径/期间不同属正常，请人工核实", "MEDIUM"))
-    return issues
 
 
 # ---- table_* 表格类
@@ -1204,17 +936,13 @@ CHECK_REGISTRY = [
     {"id": "punctuation", "group": "text", "name": "中英文标点（前后字符判定）", "severity": "HIGH"},
     {"id": "abbr", "group": "text", "name": "释义简称统一（含未定义使用检出）", "severity": "MEDIUM"},
     {"id": "geo", "group": "text", "name": "国家/城市表述合规（外部清单）", "severity": "HIGH"},
-    {"id": "amounts", "group": "data", "name": "金额千分位与两位小数", "severity": "MEDIUM"},
-    {"id": "consistency", "group": "data", "name": "指标数值前后一致", "severity": "MEDIUM"},
-    {"id": "calc", "group": "data", "name": "表格合计与占比计算校验", "severity": "HIGH"},
-    {"id": "cross_table", "group": "data", "name": "跨表同名科目勾稽比对", "severity": "MEDIUM"},
     {"id": "table_font", "group": "table", "name": "表格字号体系（五号/小五）", "severity": "HIGH"},
     {"id": "table_align", "group": "table", "name": "表格数字右对齐", "severity": "MEDIUM"},
     {"id": "table_empty", "group": "table", "name": "表格空单元格", "severity": "LOW"},
     {"id": "table_na", "group": "table", "name": "不适用标记统一性", "severity": "MEDIUM"},
 ]
 
-GROUPS = {"text": [], "data": [], "table": []}
+GROUPS = {"text": [], "table": []}
 for _item in CHECK_REGISTRY:
     GROUPS[_item["group"]].append(_item["id"])
 CHECK_BY_ID = {_item["id"]: _item for _item in CHECK_REGISTRY}
@@ -1232,7 +960,11 @@ def resolve_checks(spec):
         elif tk in CHECK_BY_ID:
             chosen.append(tk)
         else:
-            print(f"[WARN] 未知核对项/组名: {tk}")
+            if tk in ("data", "amounts", "consistency", "calc", "cross_table"):
+                print(f"[WARN] {tk} 已随 data 组迁至 ibd-quality-gates scripts/check_data.py"
+                      f"——本脚本只做 text/table 组")
+            else:
+                print(f"[WARN] 未知核对项/组名: {tk}")
     ordered = [c["id"] for c in CHECK_REGISTRY if c["id"] in set(chosen)]
     return ordered
 
@@ -1256,10 +988,6 @@ def run(input_path, check_ids, geo_file=None, terms_file=None):
         "punctuation": lambda: check_punctuation(items),
         "abbr": lambda: check_abbr(full_text),
         "geo": lambda: check_geo(full_text, geo_rules),
-        "amounts": lambda: check_amounts(items),
-        "consistency": lambda: check_consistency(items),
-        "calc": lambda: check_calc(tables),
-        "cross_table": lambda: check_cross_table(tables),
         "table_font": lambda: check_table_font(tables),
         "table_align": lambda: check_table_align(tables),
         "table_empty": lambda: check_table_empty(tables),
@@ -1345,11 +1073,12 @@ def resolve_files(path):
 
 def main():
     ap = argparse.ArgumentParser(description="IPO 文档基本格式核对 v2（只读，不改文件）")
-    ap.add_argument("--input", required=True, help="docx 文件路径（支持 glob）")
+    ap.add_argument("--input", required=True,
+                    help="docx 文件路径（样式化后；支持 glob）")
     ap.add_argument("--output", default=None, help="核对报告 md 输出路径（默认 <input>_格式核对报告.md）")
     ap.add_argument("--checks", default="all",
-                    help="all 或 组名(text/data/table) 或核对项 id，可组合逗号分隔，"
-                         "如 --checks text,data 或 --checks calc,cross_table")
+                    help="all 或 组名(text/table) 或核对项 id，可组合逗号分隔，"
+                         "如 --checks text,table 或 --checks table_font,geo")
     ap.add_argument("--geo-file", default=None,
                     help="国家/城市敏感词清单 JSON：[{\"term\":\"...\",\"note\":\"...\",\"suggestion\":\"...\"}]")
     ap.add_argument("--terms-file", default=None,
