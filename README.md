@@ -131,8 +131,8 @@ finance-review 16 维复核产出问题清单 → doc-annotate 注入原位批�
 
 ## 📌 近期更新
 
+- **2026-09-10 · v0.1.2**：五包命名收敛（doc-review→格式复核 / gates→质量校验 / annotate→批注与修订交付 / doc-write 去 G4 黑话）；触发词路由分流；SKILL.md 骨架与 README 全量标准化（集合风）；CI 门禁上线；依赖兼容矩阵 + 四包最小复现示例
 - **2026-09-10 · v0.1.1**：doc-review 0.15.3（check_revisions 去 lxml 依赖 → 纯标准库，冷启动验证修复）；doc-write / quality-gates 补齐 README；发布渠道文案统一 GitHub；集合 README 产品级重写
-- **2026-09-10（未发布批次）**：doc-review 0.15.4（自测同步 data 组迁移）；CI 门禁（P4+自测+一致性）；依赖兼容矩阵 + 四包最小复现示例
 - **2026-09-09 · v0.1.0**：集合仓库首版发布，5 包全量（doc-review 0.15.2 / gates 0.8.0 / finance-review 0.8.3 / write 0.8.0 / annotate 0.5.2）
 
 ## 📚 文档

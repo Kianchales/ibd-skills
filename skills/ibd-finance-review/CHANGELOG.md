@@ -1,8 +1,11 @@
 # Changelog
 
-本 skill 遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 与语义化版本。分发 zip 不含本文件（历史说明不随包，版本记录由发布门禁在打包前校验）。
+本 skill 遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 与语义化版本。集合分发包（ibd-skills）随 zip 携带本文件；单包独立分发可自行剔除（历史说明不随包，版本记录由发布门禁在打包前校验）。
 
 ## [0.8.3] - 2026-09-09
+### 文档标准化 T1（2026-09-10 · 纯文档未 bump）
+
+- SKILL.md 骨架统一重构：英文标题（Usage/Resources/Dependencies/Integration/Maintenance）全中文化；Triggers 提为「何时使用」节；Examples 并入使用流程（输出样例子节）；双边界节合并为「边界与协作」；README 集合风重写
 
 ### 文档更新（2026-09-10 · 未 bump）：新增 references/examples.md（最小复现示例），SKILL.md 使用流程补引用
 
