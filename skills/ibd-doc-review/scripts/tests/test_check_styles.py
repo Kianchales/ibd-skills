@@ -349,8 +349,8 @@ class TestCheckStyles(unittest.TestCase):
         self.assertIn("<w:spacing w:line=\"360\"", doc, "原 pPr 直接格式应保留")
         os.remove(out)
 
-    def test_content_check_heading_skip_and_amount(self):
-        """格式核对（check_content.py）：标题序号跳号 + 金额千分位/两位小数检出。"""
+    def test_content_check_heading_skip(self):
+        """格式核对（check_content.py）：标题序号跳号检出（金额核对已随 data 组迁 ibd-quality-gates check_data.py，0.15.0）。"""
         path = os.path.join(self.tmp, "content.docx")
         make_mini_docx(path, [
             ("002", "一、发行人基本情况"),
@@ -358,12 +358,24 @@ class TestCheckStyles(unittest.TestCase):
             ("002", "三、股权结构"),
             ("000", "报告期内营业收入为 110,200.5万元。"),
         ])
-        code, out = run_content(path, checks="heading_seq,amounts")
+        code, out = run_content(path, checks="heading_seq")
         self.assertEqual(code, 0, f"核对应正常完成，输出:\n{out}")
         report = read_content_report(path)
         self.assertIn("跳号", report, "「一、→ 三、」应检出跳号")
-        self.assertIn("12345", report, "5 位以上数字未加千分位应检出")
-        self.assertIn("110,200.5", report, "一位小数金额应检出")
+        # 金额核对已迁出：check_content 不再检出金额问题（迁移验证见 test_content_amount_migrated）
+        self.assertNotIn("12345", report, "金额核对已迁 gates check_data.py，本脚本不应再报金额")
+
+    def test_content_amount_migrated(self):
+        """金额核对迁移验证：--checks amounts 提示迁移到 gates，不再产出金额检出。"""
+        path = os.path.join(self.tmp, "amt_migrated.docx")
+        make_mini_docx(path, [
+            ("000", "金额为12345.6万元。"),
+        ])
+        code, out = run_content(path, checks="amounts")
+        self.assertEqual(code, 0, f"核对应正常完成，输出:\n{out}")
+        self.assertIn("ibd-quality-gates scripts/check_data.py", out, "应打印迁移提示（指向 gates check_data.py）")
+        report = read_content_report(path)
+        self.assertNotIn("12345", report, "金额问题已不归 check_content 检出")
 
     def test_content_punctuation_neighbor(self):
         """格式核对（check_content.py）：标点前后字符判定——中文语境半角报、英英间全角报。"""
@@ -377,20 +389,6 @@ class TestCheckStyles(unittest.TestCase):
         self.assertIn("中文语境使用半角标点", report)
         # 2026-08-27 裁定：英英之间全角标点不再报（投行中文阅读习惯）
         self.assertNotIn("误用全角", report)
-
-    def test_content_amount_exemptions(self):
-        """格式核对豁免：比例%、文号/编码不报；仅真实金额检出。"""
-        path = os.path.join(self.tmp, "exempt.docx")
-        make_mini_docx(path, [
-            ("000", "比例合计100%；证券代码123456；文号20260001；金额为12345.6万元。"),
-        ])
-        code, out = run_content(path, checks="amounts")
-        self.assertEqual(code, 0, f"核对应正常完成，输出:\n{out}")
-        report = read_content_report(path)
-        self.assertIn("| 12345 |", report, "真实金额应检出")
-        # 豁免项不应作为「问题对象」出现在明细表/明细行中
-        for exempt in ("| 20260001 |", "| 123456 |", "| 100 |"):
-            self.assertNotIn(exempt, report, f"{exempt} 应豁免（比例%/文号/编码）")
 
     def test_content_punctuation_neighbor_rule(self):
         """标点前后字符判定法：中文语境半角必报；英文/数字间半角不报；英英间全角报。"""

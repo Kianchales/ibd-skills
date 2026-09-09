@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.15.4] - 2026-09-10
+
+### 修复：自测过期用例同步 0.15.0 data 组迁移（CI 回归首抓，随 P1 批次）
+
+- `scripts/tests/test_check_styles.py`：两用例仍断言 check_content 检出金额问题——data 组 09-06 已迁 ibd-quality-gates check_data.py（0.15.0），旧期望过期导致 18 用例 2 失败（本地自测长期未跑未暴露）
+  - `test_content_check_heading_skip_and_amount` → `test_content_check_heading_skip`：只测标题跳号（heading_seq），断言金额不归本脚本检出
+  - 新增 `test_content_amount_migrated`：`--checks amounts` 输出迁移提示（指向 gates check_data.py）且报告零金额检出——迁移行为回归锚点
+  - 删除 `test_content_amount_exemptions`（豁免逻辑随 data 组迁出，回归覆盖归 gates 侧补测）
+- 自测 18/18 全过；触发：P1 GitHub Actions CI 落地时首跑抓出
+
 ## [0.15.3] - 2026-09-10
 
 ### 修复：check_revisions.py 去 lxml 依赖（冷启动验证 F1）

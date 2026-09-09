@@ -1,0 +1,58 @@
+name: gates
+
+# ibd-skills 发布门禁 CI（P1 自动化，2026-09-10）
+# 范围边界：可公开的合规项在 CI 跑（模板校验/自测/一致性）；
+# 隐私扫描与内部引用检查含私有名单，保持本地发布门禁（publish-pipeline P0.5-P2）。
+
+on:
+  push:
+    paths:
+      - 'skills/**'
+      - 'scripts/**'
+      - 'README.md'
+      - '.github/**'
+  pull_request:
+    paths:
+      - 'skills/**'
+
+jobs:
+  gate-frontmatter:
+    name: P4 · frontmatter / LICENSE / CHANGELOG
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 对 skills/ 每包跑模板校验
+        run: |
+          failed=0
+          for p in skills/*/; do
+            echo "== $p"
+            python scripts/gates/validate_frontmatter.py "$p" || failed=1
+          done
+          exit $failed
+
+  tests:
+    name: 各包自带自测
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: quality-gates 自测（反模式/绝对化/AI 痕迹，5 用例）
+        run: python skills/ibd-quality-gates/scripts/tests/test_check_gates.py
+      - name: doc-review 自测（样式/核对/修订 18 用例，纯 stdlib）
+        run: python skills/ibd-doc-review/scripts/tests/test_check_styles.py
+
+  consistency:
+    name: 版本 / README / 渠道一致性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 一致性检查（SKILL version = CHANGELOG 最新节 / README 在位 / 无过时渠道文案）
+        run: python scripts/gates/check_consistency.py
