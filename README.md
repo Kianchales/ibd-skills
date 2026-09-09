@@ -12,7 +12,7 @@
 
 <h4 align="center">
   <a href="skills/ibd-doc-write/SKILL.md">写作</a> |
-  <a href="skills/ibd-quality-gates/SKILL.md">质量门</a> |
+  <a href="skills/ibd-quality-gates/SKILL.md">把关</a> |
   <a href="skills/ibd-finance-review/SKILL.md">财务复核</a> |
   <a href="skills/ibd-doc-review/SKILL.md">格式</a> |
   <a href="skills/ibd-doc-annotate/SKILL.md">批注交付</a>
@@ -51,7 +51,7 @@
 
 ```
 「帮我写 XX 公司的第一轮审核问询反馈回复」   → ibd-doc-write 起草
-「交付前过一遍质量门」                        → ibd-quality-gates 把关
+「交稿前把把关」                              → ibd-quality-gates 把关
 「按招股书版式套样式并核对格式」              → ibd-doc-review 落地
 「把复核问题全部批注进原文」                  → ibd-doc-annotate 交付
 ```
@@ -64,7 +64,7 @@
 | skill | 定位 | 版本 | 依赖 |
 |---|---|---|---|
 | [ibd-doc-write](skills/ibd-doc-write/SKILL.md) | 投行文档**写作总入口**：反馈回复五步方法论链路、招股书章节/报告/备忘录结构、投行语言规范 | 0.8.0 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.0 |
-| [ibd-quality-gates](skills/ibd-quality-gates/SKILL.md) | **交付前内容质量门禁**：数字五要素、反模式扫描、五道质量门 G1-G5、数值自洽核对 | 0.8.0 | 零硬依赖（基座之一） |
+| [ibd-quality-gates](skills/ibd-quality-gates/SKILL.md) | **交稿前内容把关**：数字五要素、反模式扫描、五道关 G1-G5、数值自洽核对 | 0.8.2 | 零硬依赖（基座之一） |
 | [ibd-finance-review](skills/ibd-finance-review/SKILL.md) | **财务深度复核**：招股书/申报文件 16 维清单，锚定企业会计准则与监管审核口径 | 0.8.3 | 零硬依赖（纯规范清单包） |
 | [ibd-doc-review](skills/ibd-doc-review/SKILL.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验门禁 | 0.15.4 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/SKILL.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成 | 0.5.2 | 🔴 doc-review（规范 + 校验门禁） |
@@ -73,7 +73,7 @@
 
 ```
 ──────────── 写作线 ────────────
-doc-write 写草稿 → gates 内容质量门（数字五要素/反模式/G1-G5 + 数值自洽）
+doc-write 写草稿 → gates 内容把关（数字五要素/反模式/G1-G5 + 数值自洽）
                 → doc-review 套样式 + 格式核对 → 正式稿
 
 ──────────── 复核线 ────────────
@@ -84,7 +84,7 @@ finance-review 16 维复核产出问题清单 → doc-annotate 注入原位批�
 ## 🚀 典型场景
 
 **场景一：反馈回复写作（一轮问询 → 申报稿）**
-拿问询函 → 按 28 个问询域查方法论 → 逐问起草（套投行语言、去 AI 味）→ 草稿阶段先过内容质量门 → 定稿后套样式、跑格式核对 → 交付带引用清单的回复。
+拿问询函 → 按 28 个问询域查方法论 → 逐问起草（套投行语言、去 AI 味）→ 草稿阶段先过内容关 → 定稿后套样式、跑格式核对 → 交付带引用清单的回复。
 
 **场景二：招股书章节复核（逐段挑错 → 原位批注）**
 按 16 维财务清单逐章核查 → 问题清单编号（J/L/I/Z 分型）→ 全部转 Word 原位批注（错误不分大小全量覆盖）→ 门禁校验批注合规 → 交付批注版原文 + ≤1 页精简总览。
