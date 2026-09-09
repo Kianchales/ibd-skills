@@ -24,7 +24,7 @@ agent_created: true
 
 把复核结论**落到原文上**：给一份问题清单和一份原文（Word/PDF），产出「批注版原文 + 精简总览」，每条批注锚在问题句段、编号与总览一一对应。只加批注、不改原文一个字。
 
-## 职权范围（复核结论落地 · 双形态）
+## 定位简介（复核落地 · 双形态）
 
 复核交付的**执行器**，与 `ibd-doc-review`（格式规范/质检，只管规范与门禁不生成）分工：
 
@@ -157,7 +157,7 @@ python <ibd-doc-review>/scripts/check_revisions.py --input <修订稿_clean.docx
 - **格式规则不在此重复**：本 skill 的产出必须符合 `ibd-doc-review` 的 annotations.md（批注）与 revisions.md（修订稿）；规范有更新只改那一处，两 skill 交接以它为合规依据
 - **上游开放**：复核问题清单可来自任何审查流程（投行专家团分析、`ibd-doc-review` 格式核对、人工复核等）；本 skill 只做交付形态转化，不产生复核内容
 
-## 踩坑要点（实测）
+## 踩坑与要点
 
 - **pymupdf 页对象须持有引用**：`page = doc[pno]` 后再 `add_highlight_annot`，内联 `doc[pno].add_highlight_annot(...)` 的页代理被 GC 会报「annotation not bound to any page」
 - **跨 run 锚定**：docx 锚点常横跨多个 run——脚本按字符坐标把 run 切成片段（首片段复用原元素、其余深拷贝保留 rPr），段落文本零改动；含 `w:br/w:tab` 的 run 判定为复杂 run 不自动切

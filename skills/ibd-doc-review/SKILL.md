@@ -280,7 +280,7 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 - 为什么可选：脚本 check_styles.py 查**样式规则应用**（pStyle/裸段落/跳级），officecli 查**渲染与结构层物理缺陷**——规则检查 vs 物理扫描互补，不是替代
 - 缺了会怎样：S6 门禁少一道补充维度（交付说明注明「未跑物理缺陷扫描」），核心样式流程不受影响
 
-## 上游接口与边界
+## 边界与协作
 
 - **默认上游 = `ibd-doc-write`**（IBD 投行文档写作）：内容层产出草稿并声明样式场景（招股书版/反馈回复版）→ 交本 skill 套样式 + 校验
 - **顺序规则：内容质量门禁在前、格式落地在后**——write 草稿先过 `ibd-quality-gates`（数字五要素/反模式/G1-G5 + 数值自洽门 check_data.py，md 即可跑），内容定稿后再交本 skill 套样式；套样式后跑 check_content（text/table 组，依赖样式化 docx）
@@ -288,7 +288,7 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 - **批注版链路**：章节复核产出批注版原文 → 执行器 `ibd-doc-annotate` 注入（规范依据 = 本 skill [annotations.md](references/annotations.md)）→ 本 skill `check_annotations.py` 门禁 → 交付（批注版 + 精简总览双轨）；门禁归入主理人 G5 把关范围
 - **下游协作**：本 skill 只改格式不改内容（铁律 0）；**内容质量（数字五要素/反模式/来源可溯）归 `ibd-quality-gates`**（内容层公共服务，上游同样开放）；格式核对中的「文档内数据自洽」与本 skill 边界见「格式核对模式」
 
-## 踩坑记录（实测）
+## 踩坑与要点
 
 - **中文文件名编码**：Git Bash 向 Python/minimax CLI 传中文文件名参数可能乱码（zipfile 读 报告模板.docx 曾报 "No such item"）→ 优先用 Python `glob.glob`/`os.listdir` 遍历目录取文件，或复制为临时英文文件名再处理
 - **minimax-docx 环境**：restore 必须用 csproj（.slnx 不支持 dotnet 8）；依赖华为云 NuGet 镜像
@@ -303,3 +303,8 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
   2. `create` 生成的空白文档无预置 Heading1 样式（会告警），套样式以本 skill 模板为准，勿依赖 CLI 自带样式
   3. `batch` 批量操作默认原子回滚（v1.0.137+），任一失败整体回滚不落盘——适合正式文档批量修改
   4. 调用方式：`<officecli 安装目录>/officecli.exe`（未入 PATH，按本机安装位置确认）；与 `tencent-local-office-edit` 编辑中的文件勿同时操作（文件锁隔离）
+
+## 维护
+
+- 格式规则（样式映射/核对项/批注与修订规范）修改只改本 skill——`ibd-doc-annotate`（执行器）与 `ibd-doc-write`（写作）引用本 skill 规范，不重复维护；规则变更同步 CHANGELOG
+- 本 skill 升版后须复核下游版本下限（doc-annotate ≥0.15.1 / doc-write ≥0.15.0），同步各包依赖声明
