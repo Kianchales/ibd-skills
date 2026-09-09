@@ -248,7 +248,7 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 |---|---|
 | 🔴 **必须** | 任一 docx 处理工具（`minimax-docx`〔🟨官方市场〕 或 `tencent-docx`〔🟦内置〕至少一，套样式/新建用）+ 内置脚本 `check_styles.py` / `check_content.py` / `check_annotations.py` / `check_revisions.py`〔⬛随包自带，零依赖〕 |
 | 🟡 **推荐** | `tencent-local-office-edit`〔🟦内置〕（局部样式微调，体验最佳）；模板 docx（`assets/templates/`〔⬛随包自带〕，可替换即定制样式） |
-| 🟢 **可选** | 外部数据源（金融数据终端等连接器，仅交叉验证时用）；知识库后端（KB_BACKEND：公司内部知识库/云文档/本地目录任选——检索同类范例，非必需）；`officecli`〔⬛开源 CLI〕（渲染层物理缺陷扫描 + OpenXML 架构校验，S6 补充门禁） |
+| 🟢 **可选** | 外部数据源（金融数据终端，仅交叉验证时用）；知识库后端（KB_BACKEND：知识库/云文档/本地目录任选——检索同类范例，非必需）；`officecli`（渲染层物理缺陷扫描 + OpenXML 架构校验，S6 补充门禁，独立二进制按需自备） |
 | **运行模式** | 单用户直接使用；也可作为 `ibd-doc-write` 的格式层被串联调用（见「上游接口与边界」） |
 
 ### 工具说明（安装时读 · 每个工具为什么是这个层级）
@@ -271,11 +271,11 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 - 为什么推荐：模板是样式体系的可视化载体；没有则只能按 `style-map.md` 文字逐项手工设置，样式落地变繁琐
 
 **🟢 可选 · 外部金融数据终端 / KB_BACKEND**
-- 用途：金融数据交叉验证；KB_BACKEND 检索同类范例（公司内部知识库/云文档/本地目录任选）
+- 用途：金融数据交叉验证；KB_BACKEND 检索同类范例（知识库/云文档/本地目录任选）
 - 为什么可选：格式核对不依赖外部数据；范例检索仅是锦上添花
 - 缺了会怎样：**核心功能（样式/核对/校验）完全不受影响**
 
-**🟢 可选 · `officecli`〔⬛开源 CLI，独立二进制〕**
+**🟢 可选 · `officecli`（独立二进制，按需自备）**
 - 用途：渲染层物理缺陷扫描（`view issues`：文本溢出/首行缩进缺失/公式错误）+ OpenXML 架构校验（`validate`）；S6 补充门禁
 - 为什么可选：脚本 check_styles.py 查**样式规则应用**（pStyle/裸段落/跳级），officecli 查**渲染与结构层物理缺陷**——规则检查 vs 物理扫描互补，不是替代
 - 缺了会怎样：S6 门禁少一道补充维度（交付说明注明「未跑物理缺陷扫描」），核心样式流程不受影响
