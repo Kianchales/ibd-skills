@@ -26,5 +26,5 @@ finance-review 产出复核清单 → doc-annotate 注入批注（按 doc-review
 ## 版本与发布
 
 - 每包独立版本（SemVer），版本记录见各包 `CHANGELOG.md`
-- 发布 tag 采用包前缀：`ibd-doc-review/v0.15.2`、`ibd-quality-gates/v0.8.0`
+- 发布 tag 采用包前缀：`ibd-doc-review-v0.15.2`、`ibd-quality-gates-v0.8.0`
 - Release 附件 zip 仅含对应包子目录
