@@ -36,6 +36,20 @@ SCRIPTS = str(_ROOT / "scripts")
 ENTRY = os.path.join(METHODS, "通用方法论_最终版.md")
 PARSED = os.path.join(SCRIPTS, "parsed_titles.txt")
 
+
+
+def _require_library():
+    """冷启动前置检查：未找到方法论库时给出清晰指引，而非堆栈崩溃"""
+    import sys as _s
+    if not os.path.isdir(METHODS):
+        _s.stderr.write("✗ 未找到方法论库：%s\n" % METHODS)
+        _s.stderr.write("  用法：--methods-root <库根目录>（或设环境变量 METHODS_ROOT）\n")
+        _s.stderr.write("  首次使用：按 SKILL.md「库配置」四问引导接入你的库；库结构规范见 references/methods-guide.md\n")
+        _s.exit(2)
+
+
+_require_library()
+
 # 域文件体积警戒线：超过即 WARN 并提示拆分预案
 DOMAIN_SIZE_WARN_BYTES = 300 * 1024
 

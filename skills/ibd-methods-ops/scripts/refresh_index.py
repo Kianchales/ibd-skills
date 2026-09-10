@@ -44,7 +44,12 @@ def run_step(script, desc):
     r = subprocess.run(cmd, capture_output=True, text=True)
     tail = (r.stdout.strip().splitlines() or [""])[-1]
     if r.returncode != 0:
-        print("✗ %s 失败: %s" % (script, (r.stderr or tail)[:200]))
+        err_lines = [l for l in (r.stderr or "").splitlines() if l.strip()]
+        root = err_lines[-1] if err_lines else tail
+        print("✗ %s 失败（根因: %s）" % (script, root[:200]))
+        print("  —— 完整输出（末 5 行）——")
+        for l in err_lines[-5:]:
+            print("  " + l[:200])
         return False
     print("✓ %s — %s" % (script, tail))
     return True

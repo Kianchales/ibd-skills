@@ -27,6 +27,20 @@ V26 = latest_v26()
 PARSED = os.path.join(str(_ROOT / "scripts"), "parsed_titles.txt")
 OUT = os.path.join(METHODS, "方法论调用索引.md")
 
+
+
+def _require_library():
+    """冷启动前置检查：未找到方法论库时给出清晰指引，而非堆栈崩溃"""
+    import sys as _s
+    if not os.path.isdir(METHODS):
+        _s.stderr.write("✗ 未找到方法论库：%s\n" % METHODS)
+        _s.stderr.write("  用法：--methods-root <库根目录>（或设环境变量 METHODS_ROOT）\n")
+        _s.stderr.write("  首次使用：按 SKILL.md「库配置」四问引导接入你的库；库结构规范见 references/methods-guide.md\n")
+        _s.exit(2)
+
+
+_require_library()
+
 # ---------- 问题域定义（审核问询常见问题域，Q 编号） ----------
 # (编号, 问题域名, [关键词])
 DOMAINS = [
@@ -216,6 +230,9 @@ for qid, name, kws in DOMAINS:
     cells.append("、".join([e["eid"] for e in wd[:3]]) if wd else "—")
     lines_out.append("| %s | %s | %s |" % (qid, name, " | ".join(cells)))
 
+d = os.path.dirname(OUT)
+if d:
+    os.makedirs(d, exist_ok=True)
 with io.open(OUT, "w", encoding="utf-8") as f:
     f.write("\n".join(lines_out) + "\n")
 

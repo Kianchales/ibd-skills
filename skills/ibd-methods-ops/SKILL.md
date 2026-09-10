@@ -5,7 +5,7 @@ displayName: IBD 方法论学习与维护
 description: 方法论知识库「生产 + 维护」双域全流程。生产域=案例蒸馏沉淀（选材→材料准备→三专家并行蒸馏→写作角色综合成文→共通点蒸馏→沉淀入库→索引刷新→护栏校验），触发词「执行蒸馏学习XX次」「蒸馏学习XX次」；维护域=方法论库结构健康（护栏体检/编号归一/去重/修复工具箱），触发词「方法论体检」「方法论治理」「库结构检查」。方法论库路径可配置（METHODS_ROOT），知识库后端可配（默认本地目录，可选连接器）；支持单用户模式（默认）与团队模式（可选）。
 summary: 方法论知识库「学习（产知识）+ 维护（保健康）」一体化——案例蒸馏沉淀新方法论 + 库结构健康护栏 + 随包脚本工具链（15 个），路径与知识库后端可配置。
 agent_created: true
-version: 1.5.0
+version: 1.5.1
 ---
 
 # ibd-methods-ops
@@ -158,7 +158,7 @@ python scripts/migrate_case_no.py ...      [--apply]           # 编号位宽迁
 - **与 ibd-methods-query 互补**：本 skill 管生产+维护（写入侧），query 管检索消费（读取侧）——查询方法论走 query 的标准检索链路，不经本 skill
 - **被依赖声明**：`ibd-doc-write` / `ibd-methods-query` 可选依赖本 skill（≥1.5.0：库规范 + 脚本工具链 + 库接入配置）
 - **库结构规范单一事实源**：本 skill 的 [methods-guide.md](references/methods-guide.md)；`ibd-doc-write` 的库指引为其消费侧精简版（无库降级），二者同源
-- **高频句法反哺 doc-write**：蒸馏产出的通用高频句式同步 [ibd-doc-write 高频句法库](../../ibd-doc-write/references/writing-style.md)（skill 只存通用高频，案例级条目留 `{METHODS_ROOT}/`，双轨不混）
+- **高频句法反哺 doc-write**（可选依赖，未装则跳过）：蒸馏产出的通用高频句式同步至 ibd-doc-write 的「高频句法库」（该包 references 下；本包只存通用高频，案例级条目留 `{METHODS_ROOT}/`，双轨不混）
 - **格式规范归 doc-review**：方法论文件的格式问题移交 `ibd-doc-review`，本 skill 不自建格式规则
 - **不设第二源**：索引刷新→`[refresh_index.py](scripts/refresh_index.py)`；脚本→本包 `scripts/`（详见 references/govern/fix-tools.md 边界声明）
 

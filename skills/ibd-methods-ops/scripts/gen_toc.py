@@ -22,6 +22,20 @@ METHODS = str(_ROOT / "methods")
 PARSED = os.path.join(str(_ROOT / "scripts"), "parsed_titles.txt")
 TOC = os.path.join(METHODS, "方法论_条目标题目录.md")
 
+
+
+def _require_library():
+    """冷启动前置检查：未找到方法论库时给出清晰指引，而非堆栈崩溃"""
+    import sys as _s
+    if not os.path.isdir(METHODS):
+        _s.stderr.write("✗ 未找到方法论库：%s\n" % METHODS)
+        _s.stderr.write("  用法：--methods-root <库根目录>（或设环境变量 METHODS_ROOT）\n")
+        _s.stderr.write("  首次使用：按 SKILL.md「库配置」四问引导接入你的库；库结构规范见 references/methods-guide.md\n")
+        _s.exit(2)
+
+
+_require_library()
+
 # ---- 1. 读解析结果（5 列：域文件/编号/标题/类型/行号）----
 entries = []
 with io.open(PARSED, "r", encoding="utf-8") as f:
@@ -78,6 +92,9 @@ if wd:
     for e in wd:
         out.append("| %s | %s | %d |" % (e["eid"], e["title"], e["ln"]))
 
+d = os.path.dirname(TOC)
+if d:
+    os.makedirs(d, exist_ok=True)
 with io.open(TOC, "w", encoding="utf-8") as f:
     f.write("\n".join(out) + "\n")
 print("TOC:", TOC, "rows:", total_head, "+", len(wd))

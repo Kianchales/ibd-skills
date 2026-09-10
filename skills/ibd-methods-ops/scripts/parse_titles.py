@@ -21,6 +21,20 @@ _ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resol
 METHODS = str(_ROOT / "methods")
 OUT = os.path.join(str(_ROOT / "scripts"), "parsed_titles.txt")
 
+
+
+def _require_library():
+    """冷启动前置检查：未找到方法论库时给出清晰指引，而非堆栈崩溃"""
+    import sys as _s
+    if not os.path.isdir(METHODS):
+        _s.stderr.write("✗ 未找到方法论库：%s\n" % METHODS)
+        _s.stderr.write("  用法：--methods-root <库根目录>（或设环境变量 METHODS_ROOT）\n")
+        _s.stderr.write("  首次使用：按 SKILL.md「库配置」四问引导接入你的库；库结构规范见 references/methods-guide.md\n")
+        _s.exit(2)
+
+
+_require_library()
+
 # 域文件命名规范：通用方法论_<域>域.md + 投行语言专项_*.md（避开单案文件与入口）
 DOMAIN_FILES = sorted(
     glob.glob(os.path.join(METHODS, "通用方法论_*域.md"))
@@ -71,6 +85,9 @@ for fpath in DOMAIN_FILES:
                 entries.append((fname, "（" + m.group(2) + "）", m.group(3).strip(), "HEAD", i + 1))
                 continue
 
+d = os.path.dirname(OUT)
+if d:
+    os.makedirs(d, exist_ok=True)
 with io.open(OUT, "w", encoding="utf-8") as f:
     f.write("TOTAL=%d\n" % len(entries))
     for dom, eid, title, kind, lineno in entries:

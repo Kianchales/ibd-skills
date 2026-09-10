@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BB%B4%E6%8A%A4-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-1.5.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-1.5.1-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -89,6 +89,7 @@ CHANGELOG.md             版本记录
 
 ## 📌 近期更新
 
+- **2026-09-10 · v1.5.1**：冷启动修复（库前置检查 / 输出目录自建 / 编排器错误展示 / 单装断链）
 - **2026-09-10 · v1.5.0**：公开首版——通用化（路径占位符 / KB 后端开放 / 角色称谓）+ 15 脚本随包 + 库规范并入；双向开放原则（资料来源与沉淀去向由用户确定）
 - 更早版本见 [CHANGELOG.md](CHANGELOG.md)
 
