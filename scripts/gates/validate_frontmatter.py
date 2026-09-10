@@ -138,9 +138,35 @@ def validate(skill_dir):
                 issues.append("one-level-deep 违规: %s/%s 未从 SKILL.md 直接可达（须在 body 提及）" % (sub, fn))
 
     # 8b. 链接格式（吸收 validate-skills）：路径引用用 markdown 链接 [text](path)，非裸文件名（跳过代码块）
+    #     负向断言含 /：跨包路径（如 ibd-doc-write/references/...）中间的 references/ 不算裸引用（2026-09-10 修）
     body_nocode = re.sub(r"```.*?```", "", body, flags=re.DOTALL)
-    for m in re.finditer(r"(?<![\(\]])(references|scripts|examples)/[A-Za-z0-9_\-\.]+\.(?:md|py|json)", body_nocode):
+    for m in re.finditer(r"(?<![\(\]/])(references|scripts|examples)/[A-Za-z0-9_\-\.]+\.(?:md|py|json)", body_nocode):
         warns.append("裸路径引用（应改 markdown 链接 [text](path)）: %s" % m.group(0))
+
+    # 8c. 文档骨架一致性（T1/T2 标准 · 2026-09-10 加）：README=产品文档九节 / SKILL.md=执行指令标准节
+    #     README 与 SKILL.md 分工：README 给人（是什么/快速开始/场景/安装/许可），SKILL.md 给 AI（触发/流程/工具/边界）
+    readme_p = os.path.join(skill_dir, "README.md")
+    if os.path.exists(readme_p):
+        rm = io.open(readme_p, encoding="utf-8").read()
+        readme_required = ["这是什么", "快速开始", "典型场景", "分工", "安装与依赖", "目录结构", "近期更新", "许可"]
+        missing_r = [k for k in readme_required if k not in rm]
+        if missing_r:
+            warns.append("README 骨架缺节（T2 标准）: %s" % "、".join(missing_r))
+    # T1 标准 = 7 节（定位简介/协作模式等为按需扩展节，不作必需）
+    skill_required = ["何时使用", "资源索引", "依赖与工具", "边界与协作", "维护"]
+    missing_s = [k for k in skill_required if ("## " + k) not in body and ("## " + k + "（") not in body]
+    if missing_s:
+        warns.append("SKILL.md 骨架缺节（T1 标准）: %s" % "、".join(missing_s))
+
+    # 8d. README 版本同步（2026-09-10 加 · 发布前必查）：badge 版本与「近期更新」须与 SKILL.md version 一致
+    if os.path.exists(readme_p):
+        _rm = io.open(readme_p, encoding="utf-8").read()
+        _ver = ver.group(1) if ver else ""
+        _mb = re.search(r"badge/version-([0-9.]+)", _rm)
+        if _mb and _ver and _mb.group(1) != _ver:
+            warns.append("README badge 版本滞后: %s（应 %s）" % (_mb.group(1), _ver))
+        if _ver and _ver not in _rm:
+            warns.append("README 未提及当前版本 %s（「近期更新」节应同步）" % _ver)
 
     # 9. LICENSE
     if not (os.path.exists(os.path.join(skill_dir, "LICENSE"))
