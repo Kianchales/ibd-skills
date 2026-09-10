@@ -74,4 +74,4 @@ ibd-doc-annotate/
 
 ## ⚖️ 许可
 
-MIT License — 见 [LICENSE.txt](LICENSE.txt)。
+MIT License — 见 [LICENSE](LICENSE)。
