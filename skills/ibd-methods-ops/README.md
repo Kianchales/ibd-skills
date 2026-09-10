@@ -1,3 +1,13 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/IBD%20Methods%20Ops-%E6%96%B9%E6%B3%95%E8%AE%BA%E5%BA%93%E7%94%9F%E4%BA%A7%E4%B8%8E%E7%BB%B4%E6%8A%A4-2e6cc4" alt="IBD Methods Ops">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BB%B4%E6%8A%A4-blue" alt="displayName">
+  <img src="https://img.shields.io/badge/version-1.5.0-green" alt="version">
+  <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
+</p>
+
 # ibd-methods-ops
 
 方法论知识库「学习（产知识）+ 维护（保健康）」一体化 skill——把案例（招股书 + 问询回复）蒸馏沉淀为新方法论，并用护栏与工具链保持库结构健康。

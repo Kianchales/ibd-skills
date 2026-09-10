@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%96%87%E6%A1%A3%E5%86%99%E4%BD%9C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.8.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.9.0-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -60,6 +60,7 @@ doc-write 写草稿 → quality-gates 内容校验 → doc-review 格式复核/�
 | 依赖 | 版本下限 | 用途 |
 |---|---|---|
 | ibd-quality-gates | ≥ 0.7.0 | 内容质量校验（数字五要素/G1-G5 + 数值自洽） |
+| ibd-methods-ops（可选） | ≥ 1.5.0 | 方法论库完整能力（库规范 + 蒸馏沉淀 + 维护工具链；无它时按 methods-guide 精简版自建） |
 | ibd-doc-review | ≥ 0.15.0 | 格式落地 + text/table 核对 |
 
 获取途径：GitHub 集合仓库 `Kianchales/ibd-skills`（`skills/` 子目录），与获取本技能同一来源。
@@ -82,6 +83,7 @@ ibd-doc-write/
 
 ## 📌 近期更新
 
+- **2026-09-10 · v0.9.0**：库规范分层——消费侧薄化（最小起步 + 无库降级，单装自足）+ 规范源移交 `ibd-methods-ops` + 可选依赖声明（≥1.5.0）
 - **2026-09-10 · v0.8.1**：对外表述顺词（去 G4 黑话/门禁词→校验/三重复精简）；SKILL 骨架标准化
 - **2026-09-09 · v0.8.0**：公开化准备完成（内部指名净化 12 处，依赖表 P3 合规）
 

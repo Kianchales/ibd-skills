@@ -1,3 +1,13 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/IBD%20Methods%20Query-%E6%96%B9%E6%B3%95%E8%AE%BA%E5%BA%93%E6%A3%80%E7%B4%A2-2e6cc4" alt="IBD Methods Query">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E6%A3%80%E7%B4%A2-blue" alt="displayName">
+  <img src="https://img.shields.io/badge/version-0.2.0-green" alt="version">
+  <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
+</p>
+
 # ibd-methods-query
 
 方法论库「检索域」skill——把「索引 → 定向读取 → 合成」固化为标准检索链路，按需只读命中条目，**绝不全文读库**。
