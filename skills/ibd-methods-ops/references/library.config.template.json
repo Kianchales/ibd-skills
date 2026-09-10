@@ -1,0 +1,34 @@
+{
+  "_说明": "方法论库配置文件模板——复制为同目录下 library.config.json 并填写；首次使用也可由 skill「库配置」四问引导生成",
+  "_开放式声明": "库不锁定任何产品：本地目录 / Obsidian / 乐享 / ima / 任意 MCP 知识库 / 云文档等皆可接入（示例非穷举）——按「能力档位」定位：A 档=文件型（全能力：索引+行号定向）；B 档=检索型（走连接器搜索，无行号定位）；A+B=文件型为主+云同步",
+
+  "backend": "local",
+  "access": "filesystem",
+  "root": "~/methods",
+  "connector": { "name": "", "space": "", "root": "" },
+  "capabilities": { "indexable": true, "line_locator": true, "search": false },
+  "notes_dir": "notes",
+
+  "_字段说明": {
+    "backend": "库载体名（自由填：local / obsidian / lexiang / ima / 你的库名）",
+    "access": "访问方式：filesystem（文件读写）/ mcp（连接器工具）/ cli（命令行）",
+    "root": "库根位置（A 档填路径；B 档可留空或填逻辑名）",
+    "connector": "B 档必填：连接器名 + 空间/根节点标识（按你的库服务填写）",
+    "capabilities": "档位能力：indexable（能否生成本地索引）/ line_locator（能否行号定向）/ search（是否走服务检索）",
+    "notes_dir": "蒸馏笔记落库位置（相对 root；B 档可为逻辑目录名）"
+  },
+
+  "_示例_A档_本地目录": {
+    "backend": "local", "access": "filesystem", "root": "~/methods",
+    "capabilities": { "indexable": true, "line_locator": true, "search": false }, "notes_dir": "notes"
+  },
+  "_示例_A档_Obsidian": {
+    "backend": "obsidian", "access": "filesystem", "root": "~/Obsidian/MyVault/methods",
+    "capabilities": { "indexable": true, "line_locator": true, "search": false }, "notes_dir": "notes"
+  },
+  "_示例_B档_云知识库连接器": {
+    "backend": "<连接器名，如 lexiang / ima / 你的库>", "access": "mcp",
+    "connector": { "name": "<连接器>", "space": "<空间 ID>", "root": "<根节点 ID>" },
+    "capabilities": { "indexable": false, "line_locator": false, "search": true }, "notes_dir": "蒸馏笔记"
+  }
+}
