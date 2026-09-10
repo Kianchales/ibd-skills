@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.15.5-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.15.7-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -76,6 +76,8 @@ ibd-doc-review/
 
 ## 📌 近期更新
 
+- **2026-09-10 · v0.15.7**：新增 `deliver_gate.py`（交付前综合核验九项 · 一次跑完 · 极简输出）；门禁前置流程固化
+- **2026-09-10 · v0.15.6**：修 a6 表体字号两文件矛盾（style-map 9pt ↔ rules 10.5pt，统一为 10.5pt）；修 `check_table_empty` 不识别 vMerge 的误报
 - **2026-09-10 · v0.15.5**：displayName「IBD 投行格式复核」；批注注入触发词分流归 doc-annotate
 - **2026-09-10 · v0.15.4**：自测同步 data 组迁移（18 用例全过）
 - **2026-09-10 · v0.15.3**：check_revisions 去 lxml → 纯标准库（冷启动修复）

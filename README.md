@@ -67,13 +67,17 @@
 
 | skill | 定位 | 版本 | 依赖 |
 |---|---|---|---|
-| [ibd-doc-write](skills/ibd-doc-write/README.md) | 投行文档**写作总入口**：反馈回复五步方法论链路、招股书章节/报告/备忘录结构、投行语言规范 | 0.9.0 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.0；🟢 methods-ops ≥1.5.0（库完整能力） |
+| [ibd-doc-write](skills/ibd-doc-write/README.md) | 投行文档**写作规范与框架入口**：反馈回复五步方法论链路、招股书章节/报告/备忘录结构、投行语言规范。⚠️ **尚不成熟，不能独立撰写整段投行文件** | 0.13.0 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
 | [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前质量校验**：数字五要素、反模式扫描、五项判据 G1-G5、数值自洽核对 | 0.8.3 | 零硬依赖（基座之一） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：招股书/申报文件 16 维清单，锚定企业会计准则与监管审核口径 | 0.8.3 | 零硬依赖（纯规范清单包） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验 | 0.15.5 | 零外部 skill 依赖（基座） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验 + 交付门禁 `deliver_gate.py` | 0.15.7 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成 | 0.5.3 | 🔴 doc-review（规范 + 校验门禁） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **方法论库生产 + 维护**：蒸馏 S0-S7（材料来源由用户定）+ 维护域 3 步 + 15 个随包脚本（索引/落库/门禁/修复/拆分/迁移） | 1.5.0 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **方法论库生产 + 维护**：蒸馏 S0-S7（材料来源由用户定）+ 维护域 3 步 + 15 个随包脚本（索引/落库/门禁/修复/拆分/迁移） | 1.5.1 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **方法论库检索**：问题拆解 → 索引定位 → 定向读取 → 合成，按需只读命中条目不全文读库 | 0.2.0 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
+
+> [!WARNING]
+> **`ibd-doc-write` 尚不成熟，无法满足「独立撰写整段投行文件」的要求。**
+> 它提供的是**写作规范与结构框架**（问题拆解链路、结构规范、语言句法库、方法论引用自检），产出定位于**供投行人改写的结构化初稿**——素材与事实由项目组提供、专业判断由申报会计师／律师确认、成稿须逐句审校后方可进入复核或申报流程。**请当「规范化助手」用，不要当「代笔」用**。详见 [其 README「能力边界」](skills/ibd-doc-write/README.md)。
 
 ## 🔗 工作链路
 
@@ -93,8 +97,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 ## 🚀 典型场景
 
-**场景一：反馈回复写作（一轮问询 → 申报稿）**
-拿问询函 → 按 28 个问询域查方法论 → 逐问起草（套投行语言、去 AI 味）→ 草稿阶段先过质量校验 → 定稿后套样式、跑格式核对 → 交付带引用清单的回复。
+**场景一：反馈回复写作（一轮问询 → 结构化初稿）**
+拿问询函 → 按 28 个问询域查方法论 → 逐问起草（套投行语言、去 AI 味）→ 草稿阶段先过质量校验 → 定稿后套样式、跑格式核对 → 产出**供投行人改写的初稿**（⚠️ write 尚不成熟，**不能独立完成整段申报文件**，成稿须逐句审校）。
 
 **场景二：招股书章节复核（逐段挑错 → 原位批注）**
 按 16 维财务清单逐章核查 → 问题清单编号（J/L/I/Z 分型）→ 全部转 Word 原位批注（错误不分大小全量覆盖）→ 门禁校验批注合规 → 交付批注版原文 + ≤1 页精简总览。
@@ -131,10 +135,10 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
 | ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.8.3 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.0 | 0.15.5 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.15.1 | 0.15.5 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.5.0 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.5.0 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.15.7 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.15.1 | 0.15.7 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.5.1 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.5.1 | ✅ |
 
 验证方法：装齐后各包跑自测（gates `scripts/tests/test_check_gates.py`、doc-review `scripts/tests/test_check_styles.py`、ops `scripts/check_methods_health.py`），全绿即组合可用。
 
@@ -146,6 +150,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 ## 📌 近期更新
 
+- **2026-09-11 · v0.2.4**：**编号体系统一 + 交付门禁**——各包 references 编号示例同步至现行体系（体例域 `S-` 前缀／案号 `AN{4位}`，与库内《编号体系说明》对齐，历史迁移记录按原形态保留）；`ibd-doc-review` 0.15.7 新增交付前综合核验 `deliver_gate.py`；README 补齐 `ibd-doc-write` 能力边界声明（**尚不成熟，不能独立撰写整段投行文件**）；版本矩阵同步至 write 0.13.0 / doc-review 0.15.7 / methods-ops 1.5.1；仓库加 `.gitignore` 防临时文件随包
 - **2026-09-10 · v0.2.0**：**新增 2 包**（methods-ops 1.5.0 方法论库生产+维护 / methods-query 0.2.0 检索域）；doc-write 0.9.0（库规范分层）；**双向开放**——库接入（本地/Obsidian/云知识库）与材料来源均由使用者自定；15 个随包脚本（索引/落库/门禁/修复/拆分/迁移）
 - **2026-09-10 · v0.1.2**：五包命名收敛（doc-review→格式复核 / gates→质量校验 / annotate→批注与修订交付 / doc-write 去 G4 黑话）；触发词路由分流；SKILL.md 骨架与 README 全量标准化（集合风）；CI 门禁上线；依赖兼容矩阵 + 四包最小复现示例
 - **2026-09-10 · v0.1.1**：doc-review 0.15.3（check_revisions 去 lxml 依赖 → 纯标准库，冷启动验证修复）；doc-write / quality-gates 补齐 README；发布渠道文案统一 GitHub；集合 README 产品级重写

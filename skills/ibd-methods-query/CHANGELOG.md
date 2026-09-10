@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 编号示例同步现行体系（2026-09-11 · 纯文档未 bump）
+
+- `references/retrieval-chain.md`、`examples/response-retrieval.md` 的单案编号示例由 `{域}-C{NN}-{序号}` 同步为 `{域}-AN{4位}-{序号}`，与库内《编号体系说明》对齐；单案与主库编号的隔离规则不变
+
 ### 文档骨架对齐（2026-09-10 · T1/T2 标准）
 
 - README 补齐至 T2 九节骨架（+典型场景/近期更新/许可）；SKILL.md 参考节改「资源索引」+ 补「维护」节（文档级，未 bump）

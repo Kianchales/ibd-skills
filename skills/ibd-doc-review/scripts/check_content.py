@@ -132,8 +132,13 @@ def parse_tables(doc):
                 sizes = sorted({int(v) for v in re.findall(r'<w:sz w:val="(\d+)"', cxml)})
                 paras = [_para_info(pb.group(0)) for pb in PARA_RE.finditer(cxml)]
                 raw_text = _text_of(cxml).strip()
+                # 纵向合并标记：restart = 合并起始格；continue = 被合并的续格（续格本就无文字）
+                _tcpr = re.search(r'<w:tcPr>.*?</w:tcPr>', cxml, re.S)
+                _vm = re.search(r'<w:vMerge(?:\s+w:val="([^"]+)")?\s*/>', _tcpr.group(0)) if _tcpr else None
+                vmerge = (_vm.group(1) or "continue") if _vm else None
                 cells.append({"text": raw_text,
                               "raw": "".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", cxml)),
+                              "vmerge": vmerge,
                               "sizes": sizes, "paras": paras})
             rows.append(cells)
         head_snips = []
@@ -865,7 +870,11 @@ def check_table_align(tables):
 
 
 def check_table_empty(tables):
-    """空单元格（2026-08-27 裁定：不再逐表报警告，改为全文 1 条汇总提示）。"""
+    """空单元格（2026-08-27 裁定：不再逐表报警告，改为全文 1 条汇总提示）。
+
+    2026-09-10 补充：排除 vMerge 续格（continue）——纵向合并的续格本就无文字，
+    计入会产生误报（实测：合并「行业共性因素」「公司特有因素」后仍被报 3 个空格）。
+    """
     issues = []
     total_all = 0
     affected = 0
@@ -874,7 +883,8 @@ def check_table_empty(tables):
         empty_rows = Counter()
         for ri, row in enumerate(tbl["rows"]):
             for ci, cell in enumerate(row):
-                if cell["text"] == "":
+                # vMerge 续格（continue）本就无文字，不计为空单元格
+                if cell["text"] == "" and cell.get("vmerge") != "continue":
                     empty_rows[(ri + 1)] += 1
         if empty_rows:
             total = sum(empty_rows.values())

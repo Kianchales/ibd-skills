@@ -21,7 +21,7 @@ description: >
   「落实函格式」「套模板样式」「核对格式」「格式自查」「检查序号金额日期标点」
   「批注格式」「校验批注」「批注规范」「修订稿校验」「校验修订」「检查修订稿」
   「修订结构对不对」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
-version: 0.15.5
+version: 0.15.7
 agent_created: true
 ---
 
@@ -79,6 +79,12 @@ agent_created: true
       （revise 版：ins==del 对、author/id 成对、delText/ins 非空、trackRevisions、
         clean 化落定证明；clean 版：无修订标记残留；规范见 references/revisions.md）
       注：修订稿的「生成」由 ibd-doc-annotate skill revise_docx.py 执行（--mode 按提示词区分）
+
+场景H：**交付前综合核验（一次跑完 · 极简输出）** ──→ scripts/deliver_gate.py
+      （把 标点/样式/vMerge/锚点/禁用词/占位符/结构/同源/指纹 九项合并为**一次调用**，
+        输出「一行一指标」：PASS 不展开、FAIL 才给明细。**设计目的就是压缩核验输出**——
+        实测教训：分散核验时同一指标被反复统计（引号 8 次、结构核验 6 次、锚点 5 次），
+        每次脚本输出都进上下文，成为 token 消耗大头。退出码 0/1 可直接作交付判据）
 ```
 
 **工具调用顺序**（与文档生成工具链一致）：
@@ -86,6 +92,7 @@ agent_created: true
 2. 已有文件整套套样式 → `minimax-docx apply-template`（实测通过，XSD 校验门禁防损坏）
 3. 局部微调/改段落样式 → `tencent-local-office-edit`（唯一编辑中枢）
 4. 样式校验 → 本 skill 自带脚本 [check_styles.py](scripts/check_styles.py)
+5. **交付前综合核验 → [deliver_gate.py](scripts/deliver_gate.py)（九项一次跑完，只输出结论行）**
 
 **失败降级协议（脚本兜底 + 标注局限）**：
 
@@ -135,6 +142,7 @@ agent_created: true
 - 表格三线表规范（框线/字号/对齐/tblHeader/合计加粗）→ [rules.md](references/rules.md) 第二节
 
 **S6 校验门禁**
+- **交付前综合核验（推荐先跑这一条）**：`python deliver_gate.py --docx <交付件.docx> --md <内容源.md> --anchors "36,507.55;19.96" --scenario 反馈回复 --expect-vmerge N` —— 九项一次跑完、只输出「一行一指标」，**PASS 不展开、FAIL 才给明细**；退出码 0/1 直接作交付判据。`--ban` 可省略（默认启用内置投行禁用词红线 13 词），`--anchors` 用**分号**分隔（数字含千分位逗号，勿用逗号）。设计意图与实测教训见决策树「场景 H」；需要全量明细再单独跑 check_styles / check_content
 - 成品文档校验：`python check_styles.py --input <docx或目录> --scenario <招股书|反馈回复>`（脚本位于本包 scripts/）（`报告` 为 `招股书` 别名，兼容旧调用；默认 `--mode document`）
 - 模板/样式库校验：`--mode template`（检查 styles.xml 中 000-009 / 0011+001 / a4-a6 是否齐全；模板正文为空属正常，勿用 document 模式误判）
 - 内容完整性校验：`--verify-content <原文.docx>`（套样式后文本与原文逐字对比，严禁修改原文内容）
@@ -193,7 +201,7 @@ python scripts/check_content.py --input <docx> --checks geo,table_na    # 指定
 | | 国家城市表述合规（--geo-file 外部敏感词清单驱动） | HIGH | 清单命中即报，出现次数与首现上下文 |
 | **表格类 table** | 字号体系：全表五号（10.5pt），放不下可用小五（9pt），其余违规 | HIGH | 单元格 w:sz 扫描（21/18 合法） |
 | | 表格数字右对齐 | MEDIUM | 数值单元格段落 jc 校验 |
-| | 空单元格 | LOW(提示) | 空单元格统计（不计入问题数） |
+| | 空单元格 | LOW(提示) | 空单元格统计（不计入问题数；已排除 vMerge 续格） |
 | | 「不适用」标记符号同表内统一性 | MEDIUM | —/-//不适用/N.A. 分类计数 |
 
 交付：`<input>_格式核对报告.md`——核对总览矩阵（组别×严重度）+ 按 HIGH/MEDIUM/LOW 三级分块的逐条明细（核对项/位置/原文/问题/建议）。控制台输出错误/警告/提示三级汇总。**只读核对，不改文件**。
@@ -246,7 +254,7 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 
 | 维度 | 说明 |
 |---|---|
-| 🔴 **必须** | 任一 docx 处理工具（`minimax-docx`〔🟨官方市场〕 或 `tencent-docx`〔🟦内置〕至少一，套样式/新建用）+ 内置脚本 `check_styles.py` / `check_content.py` / `check_annotations.py` / `check_revisions.py`〔⬛随包自带，docx 侧零依赖；仅 `check_annotations.py --pdf` 的 PDF 侧需 pymupdf，缺失时跳过并提示〕 |
+| 🔴 **必须** | 任一 docx 处理工具（`minimax-docx`〔🟨官方市场〕 或 `tencent-docx`〔🟦内置〕至少一，套样式/新建用）+ 内置脚本 `check_styles.py` / `check_content.py` / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py`〔⬛随包自带，docx 侧零依赖；仅 `check_annotations.py --pdf` 的 PDF 侧需 pymupdf，缺失时跳过并提示〕 |
 | 🟡 **推荐** | `tencent-local-office-edit`〔🟦内置〕（局部样式微调，体验最佳）；模板 docx（`assets/templates/`〔⬛随包自带〕，可替换即定制样式） |
 | 🟢 **可选** | 外部数据源（金融数据终端，仅交叉验证时用）；知识库后端（KB_BACKEND：知识库/云文档/本地目录任选——检索同类范例，非必需）；`officecli`（渲染层物理缺陷扫描 + OpenXML 架构校验，S6 补充门禁，独立二进制按需自备） |
 | **运行模式** | 单用户直接使用；也可作为 `ibd-doc-write` 的格式层被串联调用（见「上游接口与边界」） |
@@ -257,8 +265,8 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 - 用途：套样式（minimax-docx `apply-template`）/ 新建文档（tencent-docx `create`）
 - 为什么必须：本 skill 的所有 docx 操作都建立在 docx 工具之上；**没有它无法读/写 Word 文档**，只能输出 Markdown + 样式说明
 
-**🔴 必须 · 内置脚本（`check_styles.py` / `check_content.py` / `check_annotations.py` / `check_revisions.py`）**
-- 用途：样式校验（必备样式/裸段落/空段落/跳级/内容一致）+ 格式核对 14 项（只读）+ 批注产物校验（4 段结构/加粗分布/编号/四件套，只读）+ 修订稿产物校验（ins/del 对/author/id/trackRevisions/落定证明，只读）
+**🔴 必须 · 内置脚本（`check_styles.py` / `check_content.py` / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py`）**
+- 用途：样式校验（必备样式/裸段落/空段落/跳级/内容一致）+ 格式核对 14 项（只读）+ 批注产物校验（4 段结构/加粗分布/编号/四件套，只读）+ 修订稿产物校验（ins/del 对/author/id/trackRevisions/落定证明，只读）+ **交付前综合核验九项（一次跑完 · 极简输出，PASS 不展开、FAIL 才给明细）**
 - 为什么必须：随包自带零依赖，校验与核对是本 skill 的核心能力
 - 缺了会怎样：不会缺——随包分发，无需额外安装
 
@@ -283,7 +291,11 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 ## 边界与协作
 
 - **默认上游 = `ibd-doc-write`**（IBD 投行文档写作）：内容层产出草稿并声明样式场景（招股书版/反馈回复版）→ 交本 skill 套样式 + 校验
+- **下游调用点（doc-write ≥0.10.0）**：写作链已把本 skill 的 `deliver_gate.py` 嵌进其流程——`--md` 模式用在**套样式之前**做文字规范预检（其流程 ①''）、`--docx` 模式作**交付前综合核验**（其流程 ④）。**故本脚本的改动会直接影响写作链**：升版时须同步核对 doc-write 的依赖下限声明（当前 ≥0.15.7）
 - **顺序规则：内容质量门禁在前、格式落地在后**——write 草稿先过 `ibd-quality-gates`（数字五要素/反模式/G1-G5 + 数值自洽门 check_data.py，md 即可跑），内容定稿后再交本 skill 套样式；套样式后跑 check_content（text/table 组，依赖样式化 docx）
+- **⚠️ 文字规范必须在「套样式之前」先查（2026-09-10 实测）**：标点全半角（引号/括号）虽是格式核对项，但**返工成本的落点不同**——若等套样式之后才发现文字层问题，改文字会导致样式重做。实测一份交付件有 384 处半角引号一路漏到套样式之后才被抓出，白跑一轮样式。故完整顺序应为：
+  **内容定稿 → `check_content.py --checks text`（先把标点全角化）→ 套样式 → `deliver_gate.py` 综合核验 → 交付**
+- **交付前一律先跑 `deliver_gate.py`**：九项一次跑完、只输出结论行；不要用「分散的多条核验命令」替代（实测同一指标被反复统计 5-8 次，输出本身成为 token 大头）
 - **上游开放**：本 skill 是格式层公共服务，**不限于 write 接入**——人工撰写、其他 AI 流程、外部导入的 Word 文档均可调用套样式 / 格式核对（触发词见上表）
 - **批注版链路**：章节复核产出批注版原文 → 执行器 `ibd-doc-annotate` 注入（规范依据 = 本 skill [annotations.md](references/annotations.md)）→ 本 skill `check_annotations.py` 门禁 → 交付（批注版 + 精简总览双轨）；门禁归入主理人 G5 把关范围
 - **下游协作**：本 skill 只改格式不改内容（铁律 0）；**内容质量（数字五要素/反模式/来源可溯）归 `ibd-quality-gates`**（内容层公共服务，上游同样开放）；格式核对中的「文档内数据自洽」与本 skill 边界见「格式核对模式」
@@ -293,6 +305,9 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 - **中文文件名编码**：Git Bash 向 Python/minimax CLI 传中文文件名参数可能乱码（zipfile 读 报告模板.docx 曾报 "No such item"）→ 优先用 Python `glob.glob`/`os.listdir` 遍历目录取文件，或复制为临时英文文件名再处理
 - **minimax-docx 环境**：restore 必须用 csproj（.slnx 不支持 dotnet 8）；依赖华为云 NuGet 镜像
 - **apply-template 语义**：把模板样式套到源文件（保留源内容换样式），不是以模板内容为基底——新建场景用 create，套用场景用 apply-template，勿混淆
+- **⚠️ apply-template 只做「组件级替换」、不做段落 pStyle 映射（2026-09-10 实测）**：该命令替换的是 styles/theme/numbering/sectPr 等部件，**段落级样式映射不在其职责内**——套用后 pStyle 分布仍是 `(裸):N`（原来多少还是多少），易被误判为"套样式失败"。段落级映射须**另做一步**：少量走 `tencent-local-office-edit` 手动指定，批量走脚本改 document.xml（插 `w:pStyle` + 清 `w:pPr` 残留直接格式 + 清 run 的 `rPr` 仅留真加粗/上标）。**验收判据**：body 级 pStyle 引用数从 0 变为非 0、必备样式齐备、残留直接格式归零
+- **⚠️ 半全角标点属格式核对项，须在「套样式之前」先过 `check_content.py --checks text`（2026-09-10 实测）**：中文语境半角引号 `"`、半角括号 `()` 会被判 HIGH（实测一份 384 处引号一路漏到套样式之后才被主理人补跑抓出）。文字层返工将导致样式重做——**内容定稿后、套样式之前，先跑文字规范核对把标点全角化**，再进入样式落地
+- **标点全角化的安全做法（实测）**：引号按**行内出现顺序交替**替换为左/右引号（须先验"含奇数个引号的行的数量 = 0"，即所有引号均在本行/本段内配对）；替换后以「**去掉全部引号字符后的文本 sha256 前后一致**」证明零内容改动。全半角为等宽字符，替换前后字符数与 document.xml 长度均不变
 - **--revise 修订稿三坑（2026-08-27 实测，OpenXmlValidator 实证）**：
   1. **元素名是 `w:trackRevisions`，不存在 `w:trackChanges`**——settings.xml 写 trackChanges 是非法元素，Word 静默忽略，修订记录与显示全部失效；合法插入位置为 `w:bordersDoNotSurroundFooter` 之后（25 个位置暴力测试仅此一处过 validator），revisionView 必须带 `w:formatting="1"` 否则打开时格式标记默认隐藏
   2. **pPrChange 快照 pPr 不允许含 `w:rPr`**（CT_PPrGeneral 类型）——真实文档裸段落（有 pPr 无 pStyle）快照时须剔除段落标记 run 属性，否则 Word 视为无效修订节点不显示

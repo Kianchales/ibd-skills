@@ -1,0 +1,16 @@
+# 备份与临时文件（本项目 .bak-YYYYMMDD 命名）
+*.bak
+*.bak-*
+*.orig
+*.rej
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
