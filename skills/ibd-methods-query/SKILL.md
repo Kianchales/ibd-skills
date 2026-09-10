@@ -86,9 +86,17 @@ S4 合成输出  汇总命中条目 → 回复写作素材 / 分析结论 / 引�
 - **编号是身份**：检索到的条目编号即引用编号，不另造
 - **检索失败降级**：速查无匹配 → 关键词搜 `方法论调用索引.md`/`方法论_条目标题目录.md`（Grep）→ 仍无 → 登记待沉淀（新方法论缺口）
 
-## 参考
+## 资源索引
 
 - 检索链路细节：[retrieval-chain.md](references/retrieval-chain.md)
 - 演示：[response-retrieval.md](examples/response-retrieval.md)（反馈回复检索全流程）
 - 库规范（目录/条目/索引机制）：`ibd-methods-ops` 的 methods-guide.md
 - 变更记录：`CHANGELOG.md`
+
+## 维护（何时需要改本 skill）
+
+| 变化类型 | 需要改 skill？ | 动作 |
+|---------|---------------|------|
+| 库规范变化（目录/条目/索引机制） | ❌ 不改 | 规范源在 `ibd-methods-ops` 的 methods-guide.md |
+| 检索链路变化（S1-S4 步骤/降级规则） | ✅ 改 | 同步本 skill + [retrieval-chain.md](references/retrieval-chain.md) |
+| 新增载体适配（新档位/新连接器检索方式） | ✅ 改 | 更新「库接入适配」节 |
