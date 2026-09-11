@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E8%B4%A2%E5%8A%A1%E7%AB%A0%E8%8A%82%E6%B7%B1%E5%BA%A6%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.8.3-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.8.4-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E8%BD%AF%E4%BB%B6%E4%BE%9D%E8%B5%96-3776AB" alt="no-deps">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>

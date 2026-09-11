@@ -40,6 +40,23 @@ def note(sev, msg):
     print(f"[{sev}] {msg}")
 
 
+def is_bold(run):
+    """run 是否加粗 —— 语义判定，不能只看 <w:b> 元素是否存在。
+
+    <w:b/> 或 <w:b w:val="1|true|on"> → 加粗；
+    <w:b w:val="0|false|off">       → **显式取消加粗**，须判为不加粗。
+
+    实测（2026-09-11）：写作链产出的批注正文 run 常带
+    `<w:b w:val="0"/>` 显式声明常规字重，旧判定会将其误判为加粗，
+    导致合规批注被 FAIL（仅引导词可加粗）。属性名即 w:val，无内层前缀。
+    """
+    el = run.find(f"{W}rPr/{W}b")
+    if el is None:
+        return False
+    v = el.get(f"{W}val")
+    return v is None or str(v).strip() not in ("0", "false", "off")
+
+
 def check_docx(path):
     print(f"=== docx: {path}")
     try:
@@ -104,7 +121,7 @@ def check_docx(path):
             return "".join(t.text or "" for r in p.findall(f"{W}r") for t in r.findall(f"{W}t"))
 
         def runs_bold_state(p):
-            return [(r.find(f"{W}rPr/{W}b") is not None,
+            return [(is_bold(r),
                      "".join(t.text or "" for t in r.findall(f"{W}t"))) for r in p.findall(f"{W}r")]
 
         texts = [para_text(p) for p in paras]

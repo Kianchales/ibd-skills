@@ -7,7 +7,8 @@ description: >
   本技能是「复核结论落地执行器」，承接复核交付双形态——批注与修订同源（同一份复核问题清单）：
   ① 批注版（现役）：接收结构化复核问题清单（作者/类型/严重度/锚点/标题/描述/建议）与原文
   docx 或 PDF，自动把每条问题变成一条 Word 审阅批注或 PDF 高亮注释锚定在原文问题句段上，
-  并同步生成与批注编号一一对应的精简总览报告（双轨兜底：无法自动锚定的条目在总览中列出
+  并同步生成与批注编号一一对应的精简总览报告（**双轨并存、批注优先**——交付口径见
+  `ibd-doc-review` skill 的 delivery.md；总览兼作兜底：无法自动锚定的条目在其中列出
   待人工定位）。脚本自动完成：编号分配（清单 code 字段 + 该前缀序号，脚本不内置任何
   人名/代号映射）、锚点定位（docx 跨 run 拆分且保留原格式 / PDF 字符级容忍空白）、
   批注正文 4 行紧凑排版、Word comments 四件套补全、总览生成。
@@ -16,7 +17,7 @@ description: >
   输出修订稿 docx + 修改清单（已修订/待人工两区）。
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.5.3
+version: 0.5.4
 agent_created: true
 ---
 
@@ -34,6 +35,8 @@ agent_created: true
 | **修订稿**（docx，形态先与用户确认） | ✅ 现役 | `revise`=Word 修订模式（审阅可接受/拒绝）｜`clean`=直接改好｜`both`=双版；**用户提出修订需求先反问确认形态再执行，不按措辞自动路由**；与批注同源（同一份问题清单），归属本 skill 而非 ibd-doc-review |
 
 > 修订稿职权边界：原 `ibd-doc-review` 中「复核交付形态」的修订稿（内容级）已划归本 skill；`ibd-doc-review` `check_styles.py --revise` 的**格式修订**（套样式差异转 Word 修订）属格式层，仍留在 `ibd-doc-review`，与本 skill 无关。
+>
+> **交付口径**（默认交付形态 / 触发语路由 / 批注与修订职权划分 / 批注全量覆盖纪律）= `ibd-doc-review` skill 的 **delivery.md**——本 skill 是执行器，口径不另立、不重复维护。
 
 ## 何时使用
 
@@ -47,7 +50,7 @@ agent_created: true
 | 修订稿生成（revise 默认） | 「生成修订稿」「出修订稿」「出一版修订稿」 |
 | 修订稿直接改好 / 双版 | 「直接改好」「干净版」「定稿」｜「两个都要」「修订版+干净版」 |
 
-> 配合链路：**复核问题从哪来** → `ibd-doc-review`（格式核对/审阅）或专家团分析产出问题清单；**批注格式规范** → `ibd-doc-review` 的 annotations.md、**修订稿规范** → `ibd-doc-review` 的 revisions.md（单一事实源，本 skill 只执行不另立规则）；**产出校验** → `ibd-doc-review` 的 check_annotations.py（批注）/ check_revisions.py（修订稿），交付前必跑，任一 FAIL 退回重做。
+> 配合链路：**复核问题从哪来** → `ibd-doc-review`（格式核对/审阅）或专家团分析产出问题清单；**交付口径**（默认形态/触发语路由/批注纪律）→ `ibd-doc-review` 的 **delivery.md**；**批注格式规范** → `ibd-doc-review` 的 annotations.md、**修订稿规范** → `ibd-doc-review` 的 revisions.md（单一事实源，本 skill 只执行不另立规则）；**产出校验** → `ibd-doc-review` 的 check_annotations.py（批注）/ check_revisions.py（修订稿），交付前必跑，任一 FAIL 退回重做。
 >
 > ⚠️ **依赖声明（断链自助）**：`ibd-doc-review` 是本技能的外部依赖，**不随本包携带**——安装本技能后须自行另装 `ibd-doc-review`（获取途径 = GitHub 发布渠道：Kianchales/ibd-skills 集合仓库 `skills/` 子目录，与获取本技能同一来源），缺它则格式规范、校验门禁不可用（断链）。详见「依赖与工具」。
 

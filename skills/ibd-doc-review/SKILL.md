@@ -2,7 +2,7 @@
 name: ibd-doc-review
 slug: ibd-doc-review
 displayName: IBD 投行格式复核
-summary: A 股投行文档格式复核：样式规范化（招股书/反馈回复排版）+ 格式核对（序号/日期/标点/简称/表格），只读核对不改文件。
+summary: A 股投行文档格式复核：样式规范化（招股书/反馈回复排版）+ 格式核对（序号/日期/标点/简称/表格）+ 章节复核交付约定（批注版/总览双轨），只读核对不改文件。
 description: >
   本技能用于 A 股投行文档的格式处理，提供两类能力：
   1. 样式应用：对 Word 文档套用招股书版或反馈回复版样式体系，适用于招股书、
@@ -16,12 +16,17 @@ description: >
   4. 批注与修订复核规范与校验：复核结论落到原文（批注 / 修订稿）的格式单一
      事实源（批注 4 行紧凑结构/编号/类型词表/字体/锚点；修订三模式/rev 字段/
      修订落定）+ 产物只读校验门禁（[check_annotations.py](scripts/check_annotations.py) 批注 / [check_revisions.py](scripts/check_revisions.py) 修订稿）。
+  5. 章节复核交付约定：章节复核交付的默认形态（批注版原文 + 精简总览双轨）、
+     执行链路（复核清单 → 注入 → 门禁 → 交付）、批注/修订职权划分、
+     触发语路由、批注全量覆盖纪律——单一事实源见
+     [delivery.md](references/delivery.md)。
   本技能不修改文档内容。
   触发词：「按招股书样式」「招股书排版」「按反馈回复样式」「问询回复格式」
   「落实函格式」「套模板样式」「核对格式」「格式自查」「检查序号金额日期标点」
   「批注格式」「校验批注」「批注规范」「修订稿校验」「校验修订」「检查修订稿」
-  「修订结构对不对」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
-version: 0.15.7
+  「修订结构对不对」「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」
+  「研究下XX节」「帮我看看这段」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
+version: 0.17.3
 agent_created: true
 ---
 
@@ -44,9 +49,12 @@ agent_created: true
 | 修订稿产物校验（只读） | 「修订稿校验」「校验修订」「检查修订稿」「修订结构对不对」「看修订稿格式」 |
 
 > 若任务同时含「写反馈回复内容」→ 内容写作属内容层任务（默认上游 = `ibd-doc-write`，见「上游接口与边界」）；本 skill 只负责生成后的样式落地；两者可串联（先写内容、再套样式）。
+> **执行细则（S1-S7 步骤 / 格式核对矩阵 / 复核交付模式 / 命令全表）→ [workflow.md](references/workflow.md)**（本文件只留决策树与铁律）。
 > 典型用例（触发→执行→产出 全链路示例）见 [examples.md](references/examples.md)。
 
 ## 使用流程
+
+> **本节读法**：决策树（进门选工具）与样式应用铁律（红线）留在本文件常读；**执行细则（S1-S7 / 格式核对 / 复核交付）→ [workflow.md](references/workflow.md)**，其中附录是**「脚本 × 场景」命令全表**——交付前先查那张表。
 
 ### 1. 场景识别与工具路由（决策树）
 
@@ -74,17 +82,27 @@ agent_created: true
       （docx：comments 四件套 / 4 段无空行 / 加粗分布 / 编号唯一；
         pdf：高亮条数与编号；规范见 references/annotations.md）
       注：批注的「注入生成」由 ibd-doc-annotate skill 执行，本 skill 只管规范与校验
+      注：交付前跑一条命令即可涵盖本场景 → deliver_gate.py --annotated
 
 场景G：修订稿产物校验（只读）──→ scripts/check_revisions.py
       （revise 版：ins==del 对、author/id 成对、delText/ins 非空、trackRevisions、
         clean 化落定证明；clean 版：无修订标记残留；规范见 references/revisions.md）
       注：修订稿的「生成」由 ibd-doc-annotate skill revise_docx.py 执行（--mode 按提示词区分）
+      注：交付前跑一条命令即可涵盖本场景 → deliver_gate.py --revised
 
 场景H：**交付前综合核验（一次跑完 · 极简输出）** ──→ scripts/deliver_gate.py
-      （把 标点/样式/vMerge/锚点/禁用词/占位符/结构/同源/指纹 九项合并为**一次调用**，
+      （基础九项 标点/样式/vMerge/锚点/禁用词/占位符/结构/同源/指纹 合并为**一次调用**；
+        按产物形态挂载复核三项——`--annotated` 加 批注部件/批注结构/批注编号，
+        `--revised` 加 修订成对/修订落定/修订计数，均为十一项；
+        另挂「物理扫描」一项（officecli 驱动，`--officecli` 启用；未装则 SKIP 不阻断），
         输出「一行一指标」：PASS 不展开、FAIL 才给明细。**设计目的就是压缩核验输出**——
         实测教训：分散核验时同一指标被反复统计（引号 8 次、结构核验 6 次、锚点 5 次），
         每次脚本输出都进上下文，成为 token 消耗大头。退出码 0/1 可直接作交付判据）
+      **三态**：[PASS] 通过 / [FAIL] 计入退出码 / [SKIP] 未执行——SKIP **不阻断交付**
+        （不计入 PASS 率），存在的意义是让「未跑物理扫描」在输出里**显式可见**，不靠人记
+      用法：九项 `--docx X --md Y`；批注版 `--docx X --annotated [--expect-annotated N]`；
+        修订版 `--docx X --revised [--expect-revised N]`（两开关互斥）；
+        物理扫描 `--officecli [--officecli-path P] [--expect-issues N]`
 ```
 
 **工具调用顺序**（与文档生成工具链一致）：
@@ -92,7 +110,7 @@ agent_created: true
 2. 已有文件整套套样式 → `minimax-docx apply-template`（实测通过，XSD 校验门禁防损坏）
 3. 局部微调/改段落样式 → `tencent-local-office-edit`（唯一编辑中枢）
 4. 样式校验 → 本 skill 自带脚本 [check_styles.py](scripts/check_styles.py)
-5. **交付前综合核验 → [deliver_gate.py](scripts/deliver_gate.py)（九项一次跑完，只输出结论行）**
+5. **交付前综合核验 → [deliver_gate.py](scripts/deliver_gate.py)（基础九项一次跑完、只输出结论行；批注版加 `--annotated`、修订版加 `--revised`）**
 
 **失败降级协议（脚本兜底 + 标注局限）**：
 
@@ -106,65 +124,11 @@ agent_created: true
 
 ### 2. 执行流程（S1-S7）
 
-**S1 识别样式场景**
-- 用户明确指定（招股书版 / 反馈回复版）→ 直接采用
-- 未明确 → 按文档类型推断：含"问题X."编号或【发行人说明】【中介机构核查】→ 反馈回复版；其余正式文档（含"第一节/第二节"、业务与技术、报告、备忘录等）→ 招股书版（000-009）
-
-**S2 加载样式资产**
-- 读 [style-map.md](references/style-map.md) 对应样式体系表
-- 确认模板 docx 存在（`ls` 检查，中文文件名注意编码）
-- 新建场景：确定是「以模板为基底填充」还是「从零生成后按表设置」
-
-**S3 工具路由**
-- 按上文决策树选择工具；调用前 ToolSearch 加载 skill / 工具 schema
-- `minimax-docx` 环境备忘：依赖 .NET SDK 8 + 华为云 NuGet 镜像；`apply-template` 前先 `dotnet restore MiniMaxAIDocx.Cli/MiniMaxAIDocx.Cli.csproj --source https://repo.huaweicloud.com/repository/nuget/v3/index.json`
-
-**S4 样式映射（核心）**
-按 [style-map.md](references/style-map.md) 将内容段落映射到 pStyle：
-
-| 内容类型 | 招股书版 pStyle（含报告类文档） | 反馈回复版 pStyle |
-|---------|----------------|------------------|
-| 章 / 问题编号标题 | 001（第一节 XXX，居中分页前） | 0011（问题1.XXX，两端对齐） |
-| 监管问题原文 | — | 001（黑体缩进，问题正文） |
-| 正文段落 | 000 | 000（首行缩进2字符1.5倍行距） |
-| 二级标题 | 002（一、） | 002（一、，加粗） |
-| 三级标题 | 003（（一）） | 003（（一），加粗） |
-| 四级标题 | 004（1、） | 004（1、，加粗） |
-| 五级标题 | 005（（1）） | 005（（1），加粗） |
-| 六级标题 | 006（1）） | 006（1），默认） |
-| 七级标题 | 007（①） | 007（①，默认） |
-| 表格前单位行 | 008（右对齐五号） | 008（右对齐五号） |
-| 表格后备注行 | 009（五号首行缩进） | 009（五号首行缩进） |
-| 表格 | 报告表格 a6 | 报告表格 a6 |
-
-**S5 标题序号 + 表格规则**
-- 标题序号九级链 + 「序号段落判定（标题 vs 正文，双维度算法）」→ [rules.md](references/rules.md) 第一节
-- 表格三线表规范（框线/字号/对齐/tblHeader/合计加粗）→ [rules.md](references/rules.md) 第二节
-
-**S6 校验门禁**
-- **交付前综合核验（推荐先跑这一条）**：`python deliver_gate.py --docx <交付件.docx> --md <内容源.md> --anchors "36,507.55;19.96" --scenario 反馈回复 --expect-vmerge N` —— 九项一次跑完、只输出「一行一指标」，**PASS 不展开、FAIL 才给明细**；退出码 0/1 直接作交付判据。`--ban` 可省略（默认启用内置投行禁用词红线 13 词），`--anchors` 用**分号**分隔（数字含千分位逗号，勿用逗号）。设计意图与实测教训见决策树「场景 H」；需要全量明细再单独跑 check_styles / check_content
-- 成品文档校验：`python check_styles.py --input <docx或目录> --scenario <招股书|反馈回复>`（脚本位于本包 scripts/）（`报告` 为 `招股书` 别名，兼容旧调用；默认 `--mode document`）
-- 模板/样式库校验：`--mode template`（检查 styles.xml 中 000-009 / 0011+001 / a4-a6 是否齐全；模板正文为空属正常，勿用 document 模式误判）
-- 内容完整性校验：`--verify-content <原文.docx>`（套样式后文本与原文逐字对比，严禁修改原文内容）
-- 序号段落核对：`--check-numbering`（列出序号开头段落及上下文，辅助标题/正文判定）
-- 格式修改清单：`--diff <原文.docx>`（对比样式化结果与原文，生成格式问题清单 + 修改统计，详见 S7）
-- 修订稿生成：`--revise <原文件.docx>`（基于原文件生成 Word 修订稿：格式改动转为 w:pPrChange 修订 + trackChanges，详见 S7）
-- 检查项：必备样式已应用（000 + 场景一级：招股书 001 / 反馈回复 0011+001）、无裸正文段落、无空段落（段落间禁止空行）、标题层级无跳级
-- `minimax-docx apply-template` 自带 XSD 校验门禁（防损坏）
-- **补充门禁（推荐 · officecli 驱动，缺省不卡流程；承接 ibd-quality-gates 原 G6 语义——内容层 0.6.0 起不再持有 officecli，docx 物理扫描统一在本节）**：
-  - 架构校验：`officecli validate <docx>`——OpenXML schema 合法性（防文件损坏/Word 打不开）
-  - 渲染层缺陷扫描：`officecli view <docx> issues`——文本溢出、正文首行缩进缺失、公式错误等物理缺陷
-  - officecli 不可用时跳过并在交付说明注明「未跑物理缺陷扫描」；发现问题 → 返回 S4/S5 修正后重跑
-- **任一不符 → 返回 S4/S5 修正后重跑，不交付**
-
-**S7 交付与声明（三件套交付物）**
-格式修改任务（已有 docx 套样式/改格式）交付**三件套**：
-1. **修订稿**（docx，Word 修订格式）：基于**原文件**生成，所有格式改动以 `w:pPrChange`（格式更改修订）标记，并开启 `trackChanges`——Word 打开后在审阅面板逐条查看，可接受/拒绝。生成：`check_styles.py --input <样式化结果.docx> --revise <原文件.docx>`（输出 `<原文件>_修订稿.docx`，`--output` 可指定路径）
-2. **格式问题清单**（md）：`check_styles.py --diff <样式化结果.docx> <原文.docx>` 自动生成 `<样式化结果>_格式修改清单.md`——逐条列出**位置、原文、改成什么**（段落位置 + 原样式 → 新样式；空段落删除单列）
-3. **修改统计**：清单内「修改统计」表——总段落数、修改段落合计、标题样式/正文样式/空段落删除/表格、文本内容一致性
-- 交付说明：交付物路径 + 样式应用情况声明（"已按招股书版 000-009 样式生成/套用" 或 "已按反馈回复版样式套用"）
-- 若从零生成，必须声明"已按报告模板 000-009 样式生成"
-- 样式未全覆盖处列出清单（哪些段落待人工复核）
+> **完整细则 → [workflow.md](references/workflow.md) 第一节**（含样式映射全表、S6 门禁命令清单、S7 三件套交付）
+>
+> - **七步主线**：S1 识别场景 → S2 加载样式资产 → S3 工具路由 → S4 样式映射（内容段落→pStyle，核心）→ S5 序号/表格规则 → S6 校验门禁 → S7 三件套交付（修订稿 + 格式问题清单 + 修改统计）
+> - **S4 映射按 [style-map.md](references/style-map.md)**（000 正文、001/0011 一级、002-007 二至七级、008 单位行、009 备注、a6 表格）；S5 序号判定与三线表规则按 [rules.md](references/rules.md) 第一/二节
+> - **S6 门禁一条命令跑完**：`deliver_gate.py`（基础九项；复核产物加 `--annotated` / `--revised`）——命令全表见 [workflow.md](references/workflow.md) 附录
 
 ### 3. 样式应用铁律
 
@@ -176,58 +140,22 @@ agent_created: true
 5. **不覆盖用户手动格式**：用户已有 docx 中人工调整的格式（非样式体系内容），apply-template 前先与用户确认是否保留
 6. **段落间禁止空行/空段落**：段落间距一律靠样式 spacing（段前/段后）控制，不得插入无文字空段落分隔段落——样式自带 spacing 已提供间距，空段落破坏样式统一性（命中裸段落检查）、造成间距叠加
 
-### 4. 格式核对模式（check_content.py，只读不改文件 · 分组框架）
+### 4. 格式核对模式（check_content.py，只读不改文件）
 
-> 敏感词/地理表述清单见 [sensitive_terms.json](references/sensitive_terms.json)（--geo-file 驱动，可扩展维护）。
-
-触发：「核对格式」「格式自查」「投行格式核对」「检查序号/日期/标点/表格样式」「文件质量核查」等**只读审查类请求**。适用于任意投行 Word 文档（中性通用规则）。数值自洽核对（金额文本格式/数值前后一致/勾稽）请用 `ibd-quality-gates` 的 check_data.py（md/docx 双载体）。
-
-```bash
-python scripts/check_content.py --input <docx>                          # 全部核对项（样式化 docx：text+table）
-python scripts/check_content.py --input <docx> --checks text            # 只查文字规范组
-python scripts/check_content.py --input <docx> --checks table           # 只查表格样式/结构组
-python scripts/check_content.py --input <docx> --checks geo,table_na    # 指定子项
-```
-
-**两大组别 × 严重程度矩阵**（HIGH=错误须改 / MEDIUM=警告大概率改 / LOW=提示人工酌情；docx 载体）：
-
-| 组别 | 核对项 | 默认严重度 | 判定逻辑 |
-|------|--------|-----------|---------|
-| **文字类 text** | 标题层级序号连续性（跳号/重号/倒退；支持第X节/第X章、问题X 自定义编号，级别高于「一、」；中文数字一~九十九） | HIGH | 层次感知算法：同层递增+1，降层重起，升层按自身序列续 |
-| | 用词规范性（错别字/异形词，内置规则可经 term_rules.json 扩展） | MEDIUM | 内置+外部清单正则扫描 |
-| | 日期写法统一（十种形式：中英、年月/年月日、连写、分隔符等） | MEDIUM | 形式占比统计→主导写法判定→少数派明细；分隔符一致性 |
-| | 多余空格与重复标点 | HIGH | 中文间双空格、全角标点叠用、半角标点连打、中英混排 |
-| | 释义简称统一（冲突/前置使用/疑似未定义复用/引号风格） | MED-LOW | 定义对提取+前后位置比对+括号短语频次分析 |
-| | 国家城市表述合规（--geo-file 外部敏感词清单驱动） | HIGH | 清单命中即报，出现次数与首现上下文 |
-| **表格类 table** | 字号体系：全表五号（10.5pt），放不下可用小五（9pt），其余违规 | HIGH | 单元格 w:sz 扫描（21/18 合法） |
-| | 表格数字右对齐 | MEDIUM | 数值单元格段落 jc 校验 |
-| | 空单元格 | LOW(提示) | 空单元格统计（不计入问题数；已排除 vMerge 续格） |
-| | 「不适用」标记符号同表内统一性 | MEDIUM | —/-//不适用/N.A. 分类计数 |
-
-交付：`<input>_格式核对报告.md`——核对总览矩阵（组别×严重度）+ 按 HIGH/MEDIUM/LOW 三级分块的逐条明细（核对项/位置/原文/问题/建议）。控制台输出错误/警告/提示三级汇总。**只读核对，不改文件**。
-
-**边界**：本模式查的是**文字/表格自洽与样式规范**（序号连续性/简称日期写法统一/表格字号对齐/空与 NA 标记），属格式层核对；**数值自洽**（金额文本格式/数值前后一致/合计勾稽/跨表比对）已于 2026-09-06 迁 `ibd-quality-gates` 的 check_data.py（md/docx 双载体，写作链 md 阶段前置跑）；**内容质量与来源可溯**（每个数字有没有出处、判断有没有依据、是否说过头话）同样归 `ibd-quality-gates`。三类可**串联执行**：先过 gates（内容/溯源 + 数值自洽，md 即可跑）→ 本模式查格式/自洽（docx）→ 交付；外部文档也可只调用其中一类。
+> **完整细则 → [workflow.md](references/workflow.md) 第二节**（含命令块、两大组别 10 项核对矩阵、边界说明）
+>
+> - **只读审查**，适用于任意投行 Word 文档（中性通用规则）；命令：`check_content.py --input <docx> [--checks text|table|geo,table_na]`，出 `<input>_格式核对报告.md`
+> - **两大组别**：文字类 text（序号连续性 / 用词规范 / 日期写法 / 多余空格·数字前后空格·重复标点 / 释义简称 / 地理表述）+ 表格类 table（字号体系 / 数字右对齐 / 空单元格 / NA 标记统一），按 HIGH/MEDIUM/LOW 分级
+> - **边界**：本模式查格式层自洽；**数值自洽**（勾稽/前后一致）与**内容质量溯源**归 `ibd-quality-gates`（check_data.py）。敏感词/地理清单见 [sensitive_terms.json](references/sensitive_terms.json)
 
 ### 5. 批注与修订复核交付模式（规范 + 只读校验）
 
-> 复核结论落到原文（用户裁定：**批注版优先 + 精简总览报告双轨并存**，替代原「默认只出独立审核报告」；用户明确「生成修订稿」时才走修订，按提示词区分 revise/clean/both）。**批注规范单一事实源 = [annotations.md](references/annotations.md)；修订稿规范单一事实源 = [revisions.md](references/revisions.md)**。
-
-- **职责分工**：本 skill 定义规范 + 校验门禁（只读）；**批注注入 / 修订稿生成 = `ibd-doc-annotate` skill**（同一份复核问题清单 → `annotate_docx.py`/`annotate_pdf.py` 批注版，或 `revise_docx.py --mode` 修订稿）——两 skill 交接以本文件为合规依据
-- **职权边界**：复核交付的批注与修订稿同属 `ibd-doc-annotate` 职权（批注/修订同为其复核落地形态）；本 skill `check_styles.py --revise` 的格式修订属样式应用链路、与复核交付无关
-- **批注正文结构**：每条 4 行紧凑、无空行——标签行(加粗)/标题行(加粗,单独一行)/问题描述(引导词加粗)/建议(引导词加粗)
-- **编号**：`J`财务 `L`法律 `I`行业 `Z`主理人 + 作者内序号（J-01…），批注/修订稿/总览同一体系互相回溯
-- **校验门禁**（产物交付前必跑）：
-
-```bash
-python scripts/check_annotations.py --input <带批注.docx 或目录>                # 批注 docx 侧
-python scripts/check_annotations.py --pdf <带注释.pdf> --expect <条数>          # 批注 pdf 侧（需 pymupdf）
-python scripts/check_revisions.py --input <修订稿.docx> --mode revise --expect N # 修订稿（Word 修订模式稿）
-python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean       # 修订稿（干净版）
-```
-
-- 批注检查项：comments 条数 == cs/ce/ref 对数、每条 4 段无空行、标签/标题整行加粗、引导词加粗正文常规、编号前缀∈{J,L,I,Z}且唯一、CommentText/CommentReference 样式、Content_Types/rels 注册
-- 修订稿检查项（revise 版）：ins==del 对、author 归责、id 成对唯一、delText/ins 非空、settings 开 trackRevisions、clean 化后 ins 文本落定；clean 版：无修订标记残留
-- **任一 FAIL → 退回 `ibd-doc-annotate` 重新注入/生成，不交付**
+> **完整细则 → [workflow.md](references/workflow.md) 第三节**（含门禁命令块、检查项清单、加粗语义坑、自测命令）
+>
+> - **职责**：本 skill 定规范 + 门禁（只读）；**批注注入 / 修订稿生成 = `ibd-doc-annotate`**（同一份复核问题清单 → `annotate_docx.py` / `revise_docx.py --mode`）——两 skill 交接以本 skill 规范为合规依据；`check_styles.py --revise` 的格式修订属样式链路、与复核交付无关
+> - **门禁一条命令**：`deliver_gate.py --docx <件> --annotated [--expect-annotated N]` / `--revised [--expect-revised N]`，**任一 FAIL → 退回 `ibd-doc-annotate` 重注入，不交付**
+> - **规范单一事实源**：批注 → [annotations.md](references/annotations.md)；修订 → [revisions.md](references/revisions.md)；交付口径 → [delivery.md](references/delivery.md)
+> - **⚠️ 加粗判定须按语义**：`<w:b w:val="0">` 是**显式取消加粗**，只判 `<w:b>` 元素存在会把合规批注误判 FAIL（实测 2026-09-11，两脚本均已修）
 
 ## 资源索引
 
@@ -246,7 +174,13 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 
 **完整样式定义**（每种样式的字体/字号/对齐/缩进/间距/行距/大纲级别）见 [style-map.md](references/style-map.md)。
 
+**执行细则**（S1-S7 执行流程 / 格式核对模式与 10 项矩阵 / 批注与修订复核交付模式 / **「脚本 × 场景」命令全表**）见 [workflow.md](references/workflow.md)——**动手做之前翻这一份**。
+
 **批注复核规范**（交付形态双轨 / 4 行紧凑结构 / 编号体系 / 类型词表 / 字体 / 锚点规则 / 校验门禁）见 [annotations.md](references/annotations.md)；**修订稿交付规范**（三模式 / rev 字段 / 修订落定 / 修改清单 / 校验门禁）见 [revisions.md](references/revisions.md)——批注与修订稿复核的**格式单一事实源**；执行器（批注注入 + 修订稿生成）= `ibd-doc-annotate` skill。
+
+**章节复核交付约定**（默认交付形态 / 执行链路 / 批注与修订职权划分 / 触发语路由 / 批注纪律）见 [delivery.md](references/delivery.md)——复核类委托的**交付口径单一事实源**。
+
+**版本历史**：变更记录见本包 CHANGELOG.md（当前代际 0.15.0 起）；0.1.0 – 0.14.1 共 24 个历史版本段已归档至 [changelog-archive.md](references/changelog-archive.md)。
 
 ## 依赖与工具
 
@@ -254,7 +188,7 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 
 | 维度 | 说明 |
 |---|---|
-| 🔴 **必须** | 任一 docx 处理工具（`minimax-docx`〔🟨官方市场〕 或 `tencent-docx`〔🟦内置〕至少一，套样式/新建用）+ 内置脚本 `check_styles.py` / `check_content.py` / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py`〔⬛随包自带，docx 侧零依赖；仅 `check_annotations.py --pdf` 的 PDF 侧需 pymupdf，缺失时跳过并提示〕 |
+| 🔴 **必须** | 任一 docx 处理工具（`minimax-docx`〔🟨官方市场〕 或 `tencent-docx`〔🟦内置〕至少一，套样式/新建用）+ 内置脚本 `check_styles.py` / `check_content.py`〔含 `content_common.py` / `content_text.py` / `content_table.py` 三配套模块〕 / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py`〔⬛随包自带，docx 侧零依赖；仅 `check_annotations.py --pdf` 的 PDF 侧需 pymupdf，缺失时跳过并提示〕 |
 | 🟡 **推荐** | `tencent-local-office-edit`〔🟦内置〕（局部样式微调，体验最佳）；模板 docx（`assets/templates/`〔⬛随包自带〕，可替换即定制样式） |
 | 🟢 **可选** | 外部数据源（金融数据终端，仅交叉验证时用）；知识库后端（KB_BACKEND：知识库/云文档/本地目录任选——检索同类范例，非必需）；`officecli`（渲染层物理缺陷扫描 + OpenXML 架构校验，S6 补充门禁，独立二进制按需自备） |
 | **运行模式** | 单用户直接使用；也可作为 `ibd-doc-write` 的格式层被串联调用（见「上游接口与边界」） |
@@ -267,6 +201,7 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 
 **🔴 必须 · 内置脚本（`check_styles.py` / `check_content.py` / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py`）**
 - 用途：样式校验（必备样式/裸段落/空段落/跳级/内容一致）+ 格式核对 14 项（只读）+ 批注产物校验（4 段结构/加粗分布/编号/四件套，只读）+ 修订稿产物校验（ins/del 对/author/id/trackRevisions/落定证明，只读）+ **交付前综合核验九项（一次跑完 · 极简输出，PASS 不展开、FAIL 才给明细）**
+- **`check_content.py` 是拆组后的 CLI 入口**：内部按业务域分为 `content_common.py`（共享基础层：Issue / docx 解析 / 中文序号基元 / 标点基元）+ `content_text.py`（文字类 7 项）+ `content_table.py`（表格类 4 项），**三模块须与入口同目录随包分发**（入口内为绝对 import）；对外契约（参数/报告文件名/退出码）与拆组前完全一致
 - 为什么必须：随包自带零依赖，校验与核对是本 skill 的核心能力
 - 缺了会怎样：不会缺——随包分发，无需额外安装
 
@@ -284,18 +219,18 @@ python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean   
 - 缺了会怎样：**核心功能（样式/核对/校验）完全不受影响**
 
 **🟢 可选 · `officecli`（独立二进制，按需自备）**
-- 用途：渲染层物理缺陷扫描（`view issues`：文本溢出/首行缩进缺失/公式错误）+ OpenXML 架构校验（`validate`）；S6 补充门禁
+- 用途：渲染层物理缺陷扫描（`view issues`：文本溢出/首行缩进缺失/公式错误）+ OpenXML 架构校验（`validate`）；**已挂进 `deliver_gate.py --officecli`**（常驻一行状态：未装则 `[SKIP]` 可见但不阻断）
 - 为什么可选：脚本 check_styles.py 查**样式规则应用**（pStyle/裸段落/跳级），officecli 查**渲染与结构层物理缺陷**——规则检查 vs 物理扫描互补，不是替代
-- 缺了会怎样：S6 门禁少一道补充维度（交付说明注明「未跑物理缺陷扫描」），核心样式流程不受影响
+- 缺了会怎样：`deliver_gate` 的物理扫描行输出 `[SKIP] 未找到 officecli`（**交付说明据此注明「未跑物理缺陷扫描」**，不再靠人记），核心样式流程不受影响
 
 ## 边界与协作
 
 - **默认上游 = `ibd-doc-write`**（IBD 投行文档写作）：内容层产出草稿并声明样式场景（招股书版/反馈回复版）→ 交本 skill 套样式 + 校验
-- **下游调用点（doc-write ≥0.10.0）**：写作链已把本 skill 的 `deliver_gate.py` 嵌进其流程——`--md` 模式用在**套样式之前**做文字规范预检（其流程 ①''）、`--docx` 模式作**交付前综合核验**（其流程 ④）。**故本脚本的改动会直接影响写作链**：升版时须同步核对 doc-write 的依赖下限声明（当前 ≥0.15.7）
+- **下游调用点（doc-write ≥0.10.0）**：写作链已把本 skill 的 `deliver_gate.py` 嵌进其流程——`--md` 模式用在**套样式之前**做文字规范预检（其流程 ①''）、`--docx` 模式作**交付前综合核验**（其流程 ④）。**故本脚本的改动会直接影响写作链**：升版时须同步核对 doc-write 的依赖下限声明（当前 ≥0.15.8）。**兼容性提示**：`--annotated` / `--revised` 为新增开关，不给开关时行为与旧版完全一致（仍九项），故写作链无需改动即可继续调用
 - **顺序规则：内容质量门禁在前、格式落地在后**——write 草稿先过 `ibd-quality-gates`（数字五要素/反模式/G1-G5 + 数值自洽门 check_data.py，md 即可跑），内容定稿后再交本 skill 套样式；套样式后跑 check_content（text/table 组，依赖样式化 docx）
 - **⚠️ 文字规范必须在「套样式之前」先查（2026-09-10 实测）**：标点全半角（引号/括号）虽是格式核对项，但**返工成本的落点不同**——若等套样式之后才发现文字层问题，改文字会导致样式重做。实测一份交付件有 384 处半角引号一路漏到套样式之后才被抓出，白跑一轮样式。故完整顺序应为：
-  **内容定稿 → `check_content.py --checks text`（先把标点全角化）→ 套样式 → `deliver_gate.py` 综合核验 → 交付**
-- **交付前一律先跑 `deliver_gate.py`**：九项一次跑完、只输出结论行；不要用「分散的多条核验命令」替代（实测同一指标被反复统计 5-8 次，输出本身成为 token 大头）
+  **内容定稿 → `check_content.py --checks text`（先把标点全角化）→ 套样式 → `deliver_gate.py` 综合核验（复核产物加 `--annotated`/`--revised`）→ 交付**
+- **交付前一律先跑 `deliver_gate.py`**：基础九项一次跑完、只输出结论行，复核产物再加 `--annotated` / `--revised`；不要用「分散的多条核验命令」替代（实测同一指标被反复统计 5-8 次，输出本身成为 token 大头）
 - **上游开放**：本 skill 是格式层公共服务，**不限于 write 接入**——人工撰写、其他 AI 流程、外部导入的 Word 文档均可调用套样式 / 格式核对（触发词见上表）
 - **批注版链路**：章节复核产出批注版原文 → 执行器 `ibd-doc-annotate` 注入（规范依据 = 本 skill [annotations.md](references/annotations.md)）→ 本 skill `check_annotations.py` 门禁 → 交付（批注版 + 精简总览双轨）；门禁归入主理人 G5 把关范围
 - **下游协作**：本 skill 只改格式不改内容（铁律 0）；**内容质量（数字五要素/反模式/来源可溯）归 `ibd-quality-gates`**（内容层公共服务，上游同样开放）；格式核对中的「文档内数据自洽」与本 skill 边界见「格式核对模式」
