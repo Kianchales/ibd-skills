@@ -32,7 +32,7 @@ python <ibd-doc-review>/scripts/check_annotations.py --input 批注版.docx --ex
 
 **期望输出**：批注版.docx 内每个问题一条 Word 审阅批注，锚定在原句；门禁校验 PASS（`ins 条数与期望一致`）。
 
-> 依赖：docx 链路需 `python-docx` + `lxml`；门禁校验需外部依赖 `ibd-doc-review ≥ 0.15.1`（断链自助指引见 SKILL.md「依赖与工具」）。
+> 依赖：docx 链路需 `python-docx` + `lxml`；门禁校验需外部依赖 `ibd-doc-review ≥ 0.16.2`（断链自助指引见 SKILL.md「依赖与工具」）。
 
 ## 示例 3：修订稿生成（revise/clean/both 三模式）
 

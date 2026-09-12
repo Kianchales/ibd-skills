@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%89%B9%E6%B3%A8%E4%B8%8E%E4%BF%AE%E8%AE%A2%E4%BA%A4%E4%BB%98-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.5.4-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.5.5-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -51,7 +51,7 @@ finance-review 16 维复核产出问题清单（J-01 起编号）→ 本 skill �
 ## 📦 安装与依赖
 
 - 🔴 **必须**：Python 3 + `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）——按载体装
-- 🔴 **外部依赖**：`ibd-doc-review ≥ 0.15.1`（格式规范 + 校验门禁，不随本包携带）——缺依赖时可执行注入/修订，但交付前规范校验不可用，按断链自助指引从集合仓库补齐
+- 🔴 **外部依赖**：`ibd-doc-review ≥ 0.16.2`（格式规范 + 校验门禁 + 交付口径 `delivery.md`，不随本包携带）——缺依赖时可执行注入/修订，但交付前规范校验不可用，按断链自助指引从集合仓库补齐
 
 ## 📁 目录结构
 
@@ -69,6 +69,8 @@ ibd-doc-annotate/
 
 ## 📌 近期更新
 
+- **2026-09-12 · v0.5.5**：依赖下限同步交付口径——三处 `ibd-doc-review ≥ 0.15.1` → `≥ 0.16.2`（= `delivery.md` 引入版，原下限成死引用）
+- **2026-09-11 · v0.5.4**：交付口径语义窄化修正（双轨并存·批注优先）+ 回指 `delivery.md`
 - **2026-09-10 · v0.5.3**：displayName「IBD 批注与修订交付」；触发词去「批注复核」歧义
 - **2026-09-10 · v0.5.2**：执行器与 review 规范同源归并自检
 

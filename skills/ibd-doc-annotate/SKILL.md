@@ -17,7 +17,7 @@ description: >
   输出修订稿 docx + 修改清单（已修订/待人工两区）。
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.5.4
+version: 0.5.5
 agent_created: true
 ---
 
@@ -148,7 +148,7 @@ python <ibd-doc-review>/scripts/check_revisions.py --input <修订稿_clean.docx
 | 维度 | 说明 |
 |---|---|
 | 🔴 必须（Python 库） | `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）——仅用到对应载体时按需安装；Python 3 |
-| 🔴 必须（skill 依赖） | `ibd-doc-review` skill：格式规范单一事实源（annotations.md、revisions.md）+ 校验门禁（check_annotations.py、check_revisions.py）均在该 skill 内，本 skill 不重复维护、不随包携带。**依赖声明制**：本 skill 按「引用外部依赖」发布——使用方在缺少 `ibd-doc-review` 的环境（断链）自行下载安装该依赖后即可完整运行；获取途径 = `ibd-doc-review` 同渠道发布物（GitHub：Kianchales/ibd-skills 集合仓库），版本兼容见该 skill CHANGELOG。**版本下限：`ibd-doc-review ≥ 0.15.1`**（下限 = 当前已验证版本；任一 skill 升版后须复核并同步下限） |
+| 🔴 必须（skill 依赖） | `ibd-doc-review` skill：格式规范单一事实源（annotations.md、revisions.md）+ 校验门禁（check_annotations.py、check_revisions.py）均在该 skill 内，本 skill 不重复维护、不随包携带。**依赖声明制**：本 skill 按「引用外部依赖」发布——使用方在缺少 `ibd-doc-review` 的环境（断链）自行下载安装该依赖后即可完整运行；获取途径 = `ibd-doc-review` 同渠道发布物（GitHub：Kianchales/ibd-skills 集合仓库），版本兼容见该 skill CHANGELOG。**版本下限：`ibd-doc-review ≥ 0.16.2`**（下限 = 交付口径单一事实源 `delivery.md` 的引入版；低于此版该指向成死引用。任一 skill 升版后须复核并同步下限） |
 | 运行模式 | 单机直接调用；也可作为投行复核流水线（专家团/人工审查）的落地执行器 |
 
 **断链自助指引**：若执行校验门禁报「找不到 ibd-doc-review / check_annotations.py」，说明使用环境缺外部依赖——按 `ibd-doc-review` 的 GitHub 发布渠道（与获取本技能同一来源：Kianchales/ibd-skills 集合仓库 `skills/` 子目录）自行安装即可，无需等待组合包；本技能单跑注入脚本不受影响，仅规范合规校验（门禁）依赖该 skill。

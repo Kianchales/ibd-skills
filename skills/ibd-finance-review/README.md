@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E8%B4%A2%E5%8A%A1%E7%AB%A0%E8%8A%82%E6%B7%B1%E5%BA%A6%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.8.4-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.8.5-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E8%BD%AF%E4%BB%B6%E4%BE%9D%E8%B5%96-3776AB" alt="no-deps">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -48,7 +48,7 @@
 
 ## 📦 安装与依赖
 
-**零硬依赖**——纯规范 + Markdown，无脚本、无第三方包，任何能读 md 的环境即可执行复核。可选增强（有则用、无则跳过不影响交付）：数值自洽核对脚本、批注/修订工具、案例/行情数据服务。
+**零硬依赖**——纯规范 + Markdown，无脚本、无第三方包，任何能读 md 的环境即可执行复核。可选增强（有则用、无则跳过不影响交付）：数值自洽核对脚本、批注/修订工具、案例/行情数据服务。其中**交付落地链**（清单 → 批注版/修订稿）由 `ibd-doc-annotate` 执行，其依赖 `ibd-doc-review ≥ 0.16.2`（= 交付口径 `delivery.md` 引入版）——缺则该链路不可用，本包仍可独立产出清单。
 
 ## 📁 目录结构
 
@@ -70,6 +70,8 @@ ibd-finance-review/
 
 ## 📌 近期更新
 
+- **2026-09-12 · v0.8.5**：补交付落地链依赖下限（`ibd-doc-review ≥ 0.16.2` = `delivery.md` 引入版）
+- **2026-09-11 · v0.8.4**：交付口径回指 `delivery.md`（单一事实源）
 - **2026-09-10 · v0.8.3**：SKILL 骨架标准化（英文标题中文化、触发词/示例归位）
 - **2026-09-09 · v0.8.3**：注释优先/锚点唯一教训回填 + 案例信号 +4 条
 
