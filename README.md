@@ -71,8 +71,8 @@
 | [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前质量校验**：数字五要素、反模式扫描、五项判据 G1-G5、数值自洽核对 | 0.8.3 | 零硬依赖（基座之一） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：招股书/申报文件 16 维清单，锚定企业会计准则与监管审核口径 | 0.8.4 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
 | [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验 + 交付门禁 `deliver_gate.py` | 0.17.3 | 零外部 skill 依赖（基座） |
-| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成 | 0.5.5 | 🔴 doc-review ≥0.16.2（规范 + 校验门禁 + 交付口径 delivery.md） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **方法论库生产 + 维护**：蒸馏 S0-S7（材料来源由用户定）+ 维护域 3 步 + 15 个随包脚本（索引/落库/门禁/修复/拆分/迁移） | 1.5.2 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成 | 0.5.6 | 🔴 doc-review ≥0.16.2（规范 + 校验门禁 + 交付口径 delivery.md） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **方法论库生产 + 维护**：蒸馏 S0-S7（材料来源由用户定）+ 维护域 3 步 + 15 个随包脚本（索引/落库/门禁/修复/拆分/迁移） | 1.5.3 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **方法论库检索**：问题拆解 → 索引定位 → 定向读取 → 合成，按需只读命中条目不全文读库 | 0.2.0 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]
@@ -138,8 +138,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.17.3 | ✅ |
 | ibd-doc-annotate | ibd-doc-review | ≥ 0.16.2 | 0.17.3 | ✅ |
 | ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.17.3 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.5.2 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.5.2 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.5.3 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.5.3 | ✅ |
 
 > 下限口径：`ibd-doc-write` 的 ≥0.15.7 = `deliver_gate.py` 引入版；`ibd-doc-annotate` / `ibd-finance-review` 的 ≥0.16.2 = 交付口径单一事实源 `references/delivery.md` 引入版（两包均回指该文件，低于此版该指向成死引用）。
 
@@ -153,6 +153,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 ## 📌 近期更新
 
+- **2026-09-14 · v0.2.6**：**annotate 0.5.6 + methods-ops 1.5.3 上提**——`ibd-doc-annotate` **0.5.5 → 0.5.6**（修复后处理脚本 `fix_missing_ranges.py` 在锚点落单 run 内时产出 end→ref→start 的标记顺序颠倒缺陷，新验收敛「标记顺序 + 覆盖文本 + 段落零改动」断言，补 `scripts/tests/test_fix_missing_ranges.py` **8 项自测**）；`ibd-methods-ops` 1.5.2 → **1.5.3**（解析器/护栏回归修复：身份编号字符类 `[FLIW]`→`[FLIWS]` 恢复体例域 `S-` 条目解析、W 系列新增 `### WL-xxxxxx` h3 形态解析 283→357 条消除 43 处交叉引用误报；§S5 双向提炼规程与治理细则同步）。版本矩阵/依赖兼容矩阵同步。
 - **2026-09-12 · v0.2.5**：**审计整改批次上提（doc-review 0.15.7 → 0.17.3）**——①**交付门禁成型**：`deliver_gate.py` 覆盖 `--md` 草稿预检与 `--docx` 交付件九项，新增复核产物门禁 `--annotated`/`--revised` 挂载与 officecli 物理扫描第三态 `[SKIP]`；②**脚本结构性重构**：`check_content.py` 按业务域拆为入口 + `content_common`/`content_text`/`content_table`（对外 CLI 契约不变），配套挖出并修复 `terms` 核对项**自诞生起静默失效**的生产 bug（另修 `<w:b w:val="0">` 加粗误判）；③**文档收口**：使用流程抽取 `references/workflow.md`（主文件瘦身 38%）、交付口径归一到 `references/delivery.md`（单一事实源）、`CHANGELOG` 分代归档（46.9 → 29.2 KB）；④**测试补齐**：`scripts/tests/` 从 0 → 5 脚本 **85 项全过**（含纯标准库 OPC 关系语义守卫）；⑤**规则新增**：格式铁律「数字前后不加空格」（标准号西文缩写与数字间空格为例外）。联动升版 `ibd-doc-annotate` 0.5.3 → **0.5.5**、`ibd-finance-review` 0.8.3 → **0.8.5**（两包交付口径回指 `delivery.md`，依赖下限坐实 doc-review ≥0.16.2）；`ibd-methods-ops` 1.5.1 → **1.5.2**（依赖来源标注与图例对齐）；隐私侧同时清零发布门禁 BLOCK（平台路径与本机用户名）。
 - **2026-09-11 · v0.2.4**：**编号体系统一 + 交付门禁**——各包 references 编号示例同步至现行体系（体例域 `S-` 前缀／案号 `AN{4位}`，与库内《编号体系说明》对齐，历史迁移记录按原形态保留）；`ibd-doc-review` 0.15.7 新增交付前综合核验 `deliver_gate.py`；README 补齐 `ibd-doc-write` 能力边界声明（**尚不成熟，不能独立撰写整段投行文件**）；版本矩阵同步至 write 0.13.0 / doc-review 0.15.7 / methods-ops 1.5.1；仓库加 `.gitignore` 防临时文件随包
 - **2026-09-10 · v0.2.0**：**新增 2 包**（methods-ops 1.5.0 方法论库生产+维护 / methods-query 0.2.0 检索域）；doc-write 0.9.0（库规范分层）；**双向开放**——库接入（本地/Obsidian/云知识库）与材料来源均由使用者自定；15 个随包脚本（索引/落库/门禁/修复/拆分/迁移）

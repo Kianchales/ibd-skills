@@ -17,7 +17,7 @@ description: >
   输出修订稿 docx + 修改清单（已修订/待人工两区）。
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.5.5
+version: 0.5.6
 agent_created: true
 ---
 
@@ -140,6 +140,7 @@ python <ibd-doc-review>/scripts/check_revisions.py --input <修订稿_clean.docx
 | 入口校验器（issues 结构早拦：CLI 独立跑 + 三脚本注入前自动校验） | [validate_issues.py](scripts/validate_issues.py) | 📦 本包 |
 | 批注注入脚本（docx / pdf） | [annotate_docx.py](scripts/annotate_docx.py) / [annotate_pdf.py](scripts/annotate_pdf.py) | 📦 本包 |
 | 修订稿生成脚本（docx，三 mode） | [revise_docx.py](scripts/revise_docx.py) | 📦 本包 |
+| 后处理：补插丢失的批注 range（同段多批注冲突） | [fix_missing_ranges.py](scripts/fix_missing_ranges.py) | 📦 本包 |
 
 > 🔗 外部依赖 = `ibd-doc-review` skill 中的资源（规范单一事实源 + 校验门禁），**不随本包分发**，须按 GitHub 发布渠道（Kianchales/ibd-skills 集合仓库）自行安装；📦 本包 = 随本技能安装自带。
 
@@ -169,10 +170,11 @@ python <ibd-doc-review>/scripts/check_revisions.py --input <修订稿_clean.docx
 - **修订模式需开 settings `w:trackRevisions`**（元素名不是 trackChanges），合法插入位置 = `w:bordersDoNotSurroundFooter` 之后（OpenXmlValidator 实证，同 `ibd-doc-review` check_styles --revise）
 - **新文本 run 继承锚点首 run rPr**：rev 文本不加粗/下划线由原文决定，不另设格式；若替换后需保留强调格式，把格式留在 anchor 覆盖的原文 run 上
 - **同段多锚点按段尾→段首倒序应用**（坐标稳定）；重叠锚点靠前条转待人工
-- **同段多批注互相清除 range（实测 2026-09-06）**：主循环逐条注入时，同段落后续批注的段落重建会删除先前已插入的 `commentRangeStart/End`，导致 comments.xml 有批注但 document.xml 丢 range（check_annotations 报 cs/ce/ref 对数 < 批注数）。修复：跑 `fix_missing_ranges.py <docx> <issues.json>`（本包 scripts/ 下）后处理补插（按 issues.json 锚点重定位切 run 插 range），补完重跑门禁；交付前门禁必过
+- **同段多批注互相清除 range（实测 2026-09-06）**：主循环逐条注入时，同段落后续批注的段落重建会删除先前已插入的 `commentRangeStart/End`，导致 comments.xml 有批注但 document.xml 丢 range（check_annotations 报 cs/ce/ref 对数 < 批注数）。修复：跑 `fix_missing_ranges.py <docx> <issues.json>`（本包 scripts/ 下）后处理补插（按 issues.json 锚点重定位切 run 插 range），补完重跑门禁；交付前门禁必过。**门禁只校验 cs/ce/ref 对数**——2026-09-14 修掉其「锚点落在单个 run 内时 end 标记插到 start 之前」的顺序颠倒缺陷（对数相等故会静默放行）
 - **编号一次性分配**：批注/修订稿/总览共用同一编号，禁止生成后再改顺序
 - **复杂 run 检测为兜底而非缺陷**：真实申报稿正文多为简单 run，自动处理率高；少量兜底条目人工定位后如需批注/修订可手工加或扩清单重跑
 
 ## 维护
 
 - 版本变更记录见 [CHANGELOG.md](CHANGELOG.md)；格式规则变更只改 `ibd-doc-review` 的 annotations.md 与 revisions.md
+- 自测：`python scripts/tests/test_fix_missing_ranges.py`（后处理脚本 8 项；须装 python-docx，未装则整类 SKIP）

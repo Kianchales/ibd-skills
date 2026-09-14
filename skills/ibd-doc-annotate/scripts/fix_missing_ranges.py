@@ -72,36 +72,52 @@ def make_ref_run(p, cid):
     r.append(ref)
     return r
 
-def inject_range_at(p, start, end, cid):
-    """在段落 p 的字符区间 [start,end) 插入批注范围"""
-    runs = runs_in_para(p)
+def _split_at_boundary(p, boundary):
+    """把段落内字符位置 boundary 切成 run 边界（已在边界上则不动）"""
     pos = 0
-    # 定位起始 run
-    s_run, s_off = None, None
-    e_run, e_off = None, None
-    for r in runs:
+    for r in runs_in_para(p):
         L = len(run_text(r))
-        if s_run is None and pos <= start < pos + L:
-            s_run, s_off = r, start - pos
-        if pos < end <= pos + L:
-            e_run, e_off = r, end - pos
+        if L and pos < boundary < pos + L:
+            split_run(r, boundary - pos)
+            return True
         pos += L
+    return False
+
+def _run_spans(p):
+    """[(run, 段内起始, 段内结束)]；跳过空文本 run（批注标记 run 文本为空，天然不计入坐标）"""
+    pos = 0
+    out = []
+    for r in runs_in_para(p):
+        L = len(run_text(r))
+        if not L:
+            continue
+        out.append((r, pos, pos + L))
+        pos += L
+    return out
+
+def inject_range_at(p, start, end, cid):
+    """在段落 p 的字符区间 [start,end) 插入批注范围
+
+    步骤：先把 end / start 切成 run 边界（先切后边界、再切前边界；切分只改变 run
+    划分、不改变字符坐标）→ 按边界定位锚点首/末 run → start 标记插在锚点首 run 前、
+    end 标记插在锚点末 run 后（其后紧跟 commentReference run）。
+    这样可覆盖「起终点落在同一 run 内」的情形（此时曾出现 end 标记插到 start 之前）。
+    """
+    _split_at_boundary(p, end)
+    _split_at_boundary(p, start)
+    spans = _run_spans(p)
+    s_run = next((r for r, b, _e in spans if b == start), None)
+    e_run = next((r for r, _b, e in spans if e == end), None)
     if s_run is None or e_run is None:
         return False, f'locate fail s={s_run is not None} e={e_run is not None}'
-    # 切分
-    a, b = split_run(s_run, s_off)  # a=前半, b=后半(含锚点起点)
-    if a is not None:
-        s_run = b  # 锚点起点在后半 run
-    # 重新收集 runs 后对 end 切分（end 偏移可能因切分右移1个run，但字符位置不变）
-    if e_run is s_run:
-        # 起终点同 run：先按原始偏移处理——切 start 后该 run 文本从锚点开始，end 相对该 run = end-start
-        e_run, e_off = s_run, (end - start) if a is not None else e_off
-    a2, b2 = split_run(e_run, e_off)  # a2=锚点部分, b2=其后
-    # 插标记
     start_el = make_elem(p, 'w:commentRangeStart', cid)
     s_run.addprevious(start_el)
     end_el = make_elem(p, 'w:commentRangeEnd', cid)
-    (b2 if b2 is not None else e_run).addprevious(end_el)
+    nxt = e_run.getnext()
+    if nxt is None:
+        p.append(end_el)
+    else:
+        nxt.addprevious(end_el)
     # commentReference 放在 rangeEnd 之后
     ref = make_ref_run(p, cid)
     end_el.addnext(ref)

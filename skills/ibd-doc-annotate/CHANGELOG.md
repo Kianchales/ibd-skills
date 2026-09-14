@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.6] - 2026-09-14
+
+### 修复：后处理脚本 `fix_missing_ranges.py` 标记顺序颠倒（静默缺陷）
+
+- **问题**：同段多批注导致 range 丢失后的补插脚本，在「锚点完全落在同一个 run 内」（含锚点覆盖整个 run、起止不跨 run 的常见情形）时，`commentRangeEnd` 被插到锚点首 run **之前**，段落内标记顺序变成 `end → ref → start`——批注范围语义无效（Word 侧区间可能识别不到）
+- **为何静默**：交付门禁 `check_annotations.py` 校验的是 cs/ce/ref **对数**与四件套注册，顺序颠倒时对数依然相等 → PASS 放行；跨 run 锚点路径本身正常，故此前实测未暴露
+- **根因**：`inject_range_at()` 原按「先切 start 所在 run、再拿**旧偏移**切 end 所在 run」处理。起终点同 run 时，end 偏移落在已被截短的 run 上，`split_run` 退化为 `(run, None)`，end 标记遂被插到该 run 之前
+- **修法**：改为「先把 end / start 两个字符边界各自切成 run 边界（**先切后边界、再切前边界**；切分只改变 run 划分、不改变字符坐标）→ 按坐标定位锚点首/末 run → start 标记插首 run 前、end 标记插末 run 后、ref run 紧随 end」。文本为空的批注标记 run 天然不计入坐标，重复补插幂等
+- **验证**：新增 `scripts/tests/test_fix_missing_ranges.py` **8 项**（单 run 内 / 到 run 尾 / 覆盖整个 run / 跨 run / 段首 / 同段两条 / 锚点未命中 / 幂等），每条断言「标记顺序 start→end→ref」+「range 覆盖文本 == 锚点」+「段落文本零改动」；**用修复前版本反跑同一套测试失败 5 项**（顺序 `['end','ref','start']`），确证缺陷与测试有效性
+- **影响面**：仅后处理脚本；主链路 `annotate_docx.py` 为「按片段重建段落」写法，端到端实测顺序正确，规则与行为零改动
+
 ## [0.5.5] - 2026-09-12
 
 ### 修复：依赖下限未随交付口径收口而同步（死引用）
