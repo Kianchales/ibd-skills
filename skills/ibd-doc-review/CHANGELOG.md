@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.19.0] - 2026-09-15
+
+### 变更：批注任务单入口路由（ADR-0006）
+
+- **接口语义**：批注类任务（docx + PDF）以 `ibd-doc-annotate` 为唯一对外入口；`check_annotations.py`（尤其 PDF 侧 `--pdf`）**不再直接暴露**，由 doc-annotate 内部回调。deliver_gate `--annotated` / `--revised` 用法不变
+- interface.md §1 门禁说明 + §5 脚本表同步修订；§6 版本下限表加「单入口路由 ≥0.19.0」行、现行列全表刷新
+- 性质：对外接口语义变更（bump 次版本）；脚本本体零改动，下游 grep 四包确认无直接引用断链
+
 ## [0.18.0] - 2026-09-15
 
 ### 新增：问题清单 JSON Schema + 校验入口（ADR-0004 落地，C-分步第一步）

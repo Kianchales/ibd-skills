@@ -17,7 +17,7 @@ description: >
   输出修订稿 docx + 修改清单（已修订/待人工两区）。
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.5.6
+version: 0.6.0
 agent_created: true
 ---
 
@@ -50,6 +50,8 @@ agent_created: true
 | 修订稿生成（revise 默认） | 「生成修订稿」「出修订稿」「出一版修订稿」 |
 | 修订稿直接改好 / 双版 | 「直接改好」「干净版」「定稿」｜「两个都要」「修订版+干净版」 |
 
+> **单入口路由（ADR-0006，0.6.0 起）**：批注类任务（docx + PDF）以**本 skill 为唯一对外入口**——`ibd-doc-review` 的 `check_annotations.py`（尤其 PDF 侧 `--pdf`）由本 skill 内部回调，下游包/外部使用者不直接调用。
+>
 > 配合链路：**复核问题从哪来** → `ibd-doc-review`（格式核对/审阅）或专家团分析产出问题清单；**交付口径**（默认形态/触发语路由/批注纪律）→ `ibd-doc-review` 的 **delivery.md**；**批注格式规范** → `ibd-doc-review` 的 annotations.md、**修订稿规范** → `ibd-doc-review` 的 revisions.md（单一事实源，本 skill 只执行不另立规则）；**产出校验** → `ibd-doc-review` 的 check_annotations.py（批注）/ check_revisions.py（修订稿），交付前必跑，任一 FAIL 退回重做。
 >
 > ⚠️ **依赖声明（断链自助）**：`ibd-doc-review` 是本技能的外部依赖，**不随本包携带**——安装本技能后须自行另装 `ibd-doc-review`（获取途径 = GitHub 发布渠道：Kianchales/ibd-skills 集合仓库 `skills/` 子目录，与获取本技能同一来源），缺它则格式规范、校验门禁不可用（断链）。详见「依赖与工具」。
@@ -149,7 +151,7 @@ python <ibd-doc-review>/scripts/check_revisions.py --input <修订稿_clean.docx
 | 维度 | 说明 |
 |---|---|
 | 🔴 必须（Python 库） | `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）——仅用到对应载体时按需安装；Python 3 |
-| 🔴 必须（skill 依赖） | `ibd-doc-review` skill：格式规范单一事实源（annotations.md、revisions.md）+ 校验门禁（check_annotations.py、check_revisions.py）均在该 skill 内，本 skill 不重复维护、不随包携带。**依赖声明制**：本 skill 按「引用外部依赖」发布——使用方在缺少 `ibd-doc-review` 的环境（断链）自行下载安装该依赖后即可完整运行；获取途径 = `ibd-doc-review` 同渠道发布物（GitHub：Kianchales/ibd-skills 集合仓库），版本兼容见该 skill CHANGELOG。**版本下限：`ibd-doc-review ≥ 0.16.2`**（下限 = 交付口径单一事实源 `delivery.md` 的引入版；低于此版该指向成死引用。任一 skill 升版后须复核并同步下限） |
+| 🔴 必须（skill 依赖） | `ibd-doc-review` skill：格式规范单一事实源（annotations.md、revisions.md）+ 校验门禁（check_annotations.py、check_revisions.py）均在该 skill 内，本 skill 不重复维护、不随包携带。**依赖声明制**：本 skill 按「引用外部依赖」发布——使用方在缺少 `ibd-doc-review` 的环境（断链）自行下载安装该依赖后即可完整运行；获取途径 = `ibd-doc-review` 同渠道发布物（GitHub：Kianchales/ibd-skills 集合仓库），版本兼容见该 skill CHANGELOG。**版本下限：`ibd-doc-review ≥ 0.19.0`**（0.6.0 起对齐单入口路由语义引入版——旧版 interface.md 仍声明 PDF 侧直接调用，与本 skill 单入口契约冲突；低于此版须升依赖。任一 skill 升版后须复核并同步下限） |
 | 运行模式 | 单机直接调用；也可作为投行复核流水线（专家团/人工审查）的落地执行器 |
 
 **断链自助指引**：若执行校验门禁报「找不到 ibd-doc-review / check_annotations.py」，说明使用环境缺外部依赖——按 `ibd-doc-review` 的 GitHub 发布渠道（与获取本技能同一来源：Kianchales/ibd-skills 集合仓库 `skills/` 子目录）自行安装即可，无需等待组合包；本技能单跑注入脚本不受影响，仅规范合规校验（门禁）依赖该 skill。
