@@ -8,23 +8,32 @@ description: >
   ① 反馈回复（五步方法论调用链路 + 引用清单自检，references/response-chain.md）
   ② 招股书章节/分析报告/尽调报告/备忘录（文档结构规范，references/doc-structures.md）
   ③ 通用写作规范（投行语言词汇句法库 + 高频句法库/引用/语言风格，references/writing-style.md）
+  ④ 逐段协作模式（人机协作载体核心流程：写作状态双文件 + 口径漂移检测 + 敏感识别即停 + 交付四件套，references/paragraph-collab.md）
   模板触发映射见 references/templates-map.md；上下文管理/降级见 references/context-rules.md。
-  触发词：「写XX的反馈回复」「起草问询回复」「写XX问询回复」「XX反馈回复怎么写」「写招股书章节」「写尽调报告」「写备忘录」
-version: 0.13.0
+  触发词：「写XX的反馈回复」「起草问询回复」「写XX问询回复」「XX反馈回复怎么写」「写招股书章节」「写尽调报告」「写备忘录」「逐段写」「逐段协作」
+version: 0.14.0
 agent_created: true
 ---
 
 # ibd-doc-write（IBD 投行文档写作）
 
-A股 IPO 投行文档写作总入口。核心：让 AI 写文件像投行人、不是 AI，且**方法论强制引用、不引用即打回**。
+A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（ADR-0001：逐段协作、非 AI 独立成稿——AI 草拟、用户逐段裁定定稿），且**方法论强制引用、不引用即打回**。
 ## 何时使用
 
 - 写审核问询反馈回复 / 回复报告（「写XX的反馈回复」「起草问询回复」）
 - 写招股书章节 / 分析报告 / 尽调报告 / 备忘录（「写招股书」「写尽调报告」「写备忘录」）
+- **逐段协作写长文档**（「逐段写」「逐段协作」——招股书章节 / 问询回复定稿 / 盈利预测说明等）
 - 做财务对比表 / IPO 项目核对表（Excel）
 ## 使用流程
 
 > 最小复现示例（对话触发 → 执行链路 → 交付物结构）见 [examples.md](references/examples.md)。
+
+### 0. 协作模式路由（先选模式再写作 · ADR-0001）
+
+| 模式 | 适用场景 | 流程 |
+|---|---|---|
+| **逐段协作（默认推荐）** | 长文档逐段推进（招股书章节 / 问询回复定稿 / 盈利预测说明等）、口径敏感、需用户逐段把关 | [paragraph-collab.md](references/paragraph-collab.md)——状态双文件（口径卡/进度）→ 段前输入包 → 敏感识别即停 → 草拟/多版本 → 中档自检 → 交付四件套 → 复核定稿 |
+| 整篇委托 | 短文档 / 结构成熟 / 用户一次性交办 | 走下方 1-3 主流程 |
 
 ### 1. 文档类型路由（先识别类型再走对应 references）
 
@@ -108,6 +117,7 @@ A股 IPO 投行文档写作总入口。核心：让 AI 写文件像投行人、�
 | [templates-map.md](references/templates-map.md) | 模板映射 | 三大类模板触发映射（招股书章节/问询回复/备忘录）+ 知识库范例锚点 |
 | [writing-style.md](references/writing-style.md) | 通用 | 投行语言词汇句法库 + **高频句法库（五大类，自方法论沉淀）** + 引用规范 + 语言风格 |
 | [context-rules.md](references/context-rules.md) | 通用 | 上下文管理（长文档）+ 失败降级协议 + 输出格式 |
+| [paragraph-collab.md](references/paragraph-collab.md) | 通用（长文档逐段） | **逐段协作模式**（ADR-0001 核心流程）：写作状态双文件（口径卡/进度）+ 口径漂移检测协议 + 敏感识别即停 + 段后自检分档 + 交付四件套 |
 | [methods-guide.md](references/methods-guide.md) | 通用（新使用者） | **方法论库消费指引**（消费侧精简版）：最小起步结构 + 条目结构规范 + 边用边长回环 + 无库降级 + 空库模板；**完整规范**（目录/索引机制/规模化拆分/工具链）见可选依赖 ibd-methods-ops |
 
 ### 外部引用路径（skill 只引用路径，不复制内容）
