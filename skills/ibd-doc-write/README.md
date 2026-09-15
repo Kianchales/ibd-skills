@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%96%87%E6%A1%A3%E5%86%99%E4%BD%9C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.14.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.14.1-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -96,6 +96,7 @@ ibd-doc-write/
 
 ## 📌 近期更新
 
+- **2026-09-15 · v0.14.1**：paragraph-collab.md §7 演进与维护——文档类型拆分提示门槛定为复现 ≥3 次（用户裁定）
 - **2026-09-15 · v0.14.0**：**逐段协作模式落地**（ADR-0001 从定位声明到操作规程）——新增 [paragraph-collab.md](references/paragraph-collab.md)（状态双文件：口径卡+写作进度、口径漂移检测协议、敏感词族识别即停、段后自检三档、交付四件套）；SKILL.md 定位声明改写 + §0 协作模式路由；writing-style.md 增「写前红线」节（禁词单一事实源 = doc-review sensitive_terms.json，写侧只放指针+心法）
 - **2026-09-10 · v0.13.0**：**堵住「可跳过方法论」口子**（全文档类型均须走方法论链路；方法论库定为必须）
 - **2026-09-10 · v0.12.0**：④ 步检索按文档类型分流（W 回复向 / **P 招股书向**，P 系新建待补做）

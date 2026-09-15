@@ -11,7 +11,7 @@ description: >
   ④ 逐段协作模式（人机协作载体核心流程：写作状态双文件 + 口径漂移检测 + 敏感识别即停 + 交付四件套，references/paragraph-collab.md）
   模板触发映射见 references/templates-map.md；上下文管理/降级见 references/context-rules.md。
   触发词：「写XX的反馈回复」「起草问询回复」「写XX问询回复」「XX反馈回复怎么写」「写招股书章节」「写尽调报告」「写备忘录」「逐段写」「逐段协作」
-version: 0.14.0
+version: 0.14.1
 agent_created: true
 ---
 
