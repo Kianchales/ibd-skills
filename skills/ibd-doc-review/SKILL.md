@@ -180,6 +180,8 @@ agent_created: true
 
 **章节复核交付约定**（默认交付形态 / 执行链路 / 批注与修订职权划分 / 触发语路由 / 批注纪律）见 [delivery.md](references/delivery.md)——复核类委托的**交付口径单一事实源**。
 
+**对外接口契约**（交付口径 / 门禁 CLI / 问题清单 schema / 编号与词表 / 脚本对外入口 / 版本下限速查）见 [interface.md](references/interface.md)——下游包与外部使用者**只依赖本页所列内容**；接口语义变更须 bump 次版本 + 跑下游四包引用检查（变更纪律见该文件头部）。
+
 **版本历史**：变更记录见本包 CHANGELOG.md（当前代际 0.15.0 起）；0.1.0 – 0.14.1 共 24 个历史版本段已归档至 [changelog-archive.md](references/changelog-archive.md)。
 
 ## 依赖与工具

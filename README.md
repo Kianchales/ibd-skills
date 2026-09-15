@@ -63,6 +63,29 @@
 > [!TIP]
 > 带 🔴 依赖的包须连同依赖包一起安装——依赖**不随包携带**，缺依赖时的断链自助指引见各包 `SKILL.md`「依赖与工具」。
 
+### 🧪 5 分钟上手（装完先跑这个）
+
+装好后**不用找任何文档**，先跑自测确认环境可用（纯标准库，零安装；任一目录执行）：
+
+```bash
+# 1. 质量校验包自测（5 组用例）
+python skills/ibd-quality-gates/scripts/tests/test_check_gates.py
+# 2. 格式核对包自测（内容核对 20 项 + 交付门禁 26 项）
+python skills/ibd-doc-review/scripts/tests/test_check_content.py
+python skills/ibd-doc-review/scripts/tests/test_deliver_gate.py
+```
+
+三组全 OK（几秒内跑完）= 安装完好。然后拿一份你手头的 Word 文件试试第一个真实场景——**格式核对**（doc-review 最常用、零外部依赖）：
+
+```
+对 AI 说：「用 ibd-doc-review 帮我核对这份文档的格式」
+```
+
+AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式核对 → 交付门禁），产出核对报告。想看完整链路示例（触发 → 执行 → 产出）翻 `skills/ibd-doc-review/references/examples.md`；批注交付场景先读同目录 `delivery.md`（交付口径单一事实源）。
+
+> [!NOTE]
+> docx 套样式需一个 docx 处理工具（见「安装与依赖」平台工具行）；**格式核对与批注校验本身零依赖**，装完即可用。
+
 ## 🧩 集合内 7 个 skill
 
 | skill | 定位 | 版本 | 依赖 |
@@ -128,6 +151,33 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | Python 库 | doc-annotate 的 docx/pdf 链路按需装 `python-docx`/`lxml`/`pymupdf`（SKILL.md 已声明）；methods-ops 的 15 个脚本为纯标准库；其余脚本零依赖 |
 | 平台工具 | 样式套用依赖任一 docx 处理工具（tencent-docx / minimax-docx / 本地 Office），按 SKILL.md 依赖表自备 |
 
+### 依赖关系图（谁依赖谁）
+
+```
+                    ┌──────────────────────┐
+                    │   ibd-quality-gates  │  基座（零依赖）
+                    └──────────┬───────────┘
+                               │ 🔴 ≥0.7.0
+                    ┌──────────▼───────────┐      ┌─────────────────────┐
+ 写作线（草稿）─────▶│     ibd-doc-write    │─────▶│   ibd-methods-ops   │ 基座（零依赖）
+                    │  🔴 doc-review ≥0.15.7│ 🟢可选│  （蒸馏沉淀入库）    │
+                    └──────────┬───────────┘      └──────────▲──────────┘
+                               ▼                             │ 🟢 ≥1.5.0
+                    ┌──────────────────────┐                 │
+                    │    ibd-doc-review    │◀────────────────┘
+                    │  基座（零外部依赖）    │      ┌─────────────────────┐
+                    └──────────▲───────────┘      │  ibd-methods-query  │
+                               │ 🔴/🟢 ≥0.16.2    │  （定向检索，🔴ops）  │
+        ┌──────────────────────┼─────────────────┘└─────────────────────┘
+        │                      │
+┌───────┴──────────┐  ┌────────┴─────────┐
+│ ibd-finance-review│  │ ibd-doc-annotate │
+│  🟢可选回指       │  │  🔴 硬依赖        │
+└──────────────────┘  └──────────────────┘
+```
+
+> 🔴 = 硬依赖（缺则核心功能不可用）；🟢 = 可选依赖（缺则降级）。下限与口径见下方兼容矩阵；接口细节（门禁 CLI / 清单 schema / 词表）见 `skills/ibd-doc-review/references/interface.md`（对外契约单一事实源）。
+
 ### 依赖版本兼容矩阵（单包安装时对照）
 
 > 同 zip 全家桶安装天然满足下表（集合版本各包互验）；**单包安装**时按下表查版本下限，低于下限的旧组合可能行为不一致（依赖方升版后须复核下限，见各包 CHANGELOG）。
@@ -166,6 +216,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 - 每个包的使用文档 = 包内 `SKILL.md`（触发词 → 使用流程 → 依赖 → 边界），安装后即可查
 - 快速入口 = 各包 `README.md`（能力总览 + 命令附录）
 - 规则明细（批注规范 / 修订规范 / 样式映射 / 反模式清单等）在各包 `references/`
+- **包间分工与依赖**：上方「工作链路」+「依赖关系图」；doc-review 的对外契约（门禁 CLI / 问题清单 schema / 编号词表 / 版本下限）= [skills/ibd-doc-review/references/interface.md](skills/ibd-doc-review/references/interface.md)
+- **上手路径建议**：单包试用 → `ibd-doc-review` 或 `ibd-quality-gates`（零外部 skill 依赖）；写作线全家桶 → doc-write + gates + doc-review + methods-ops；复核线全家桶 → finance-review + doc-annotate + doc-review
 
 ## ⚖️ 许可
 
