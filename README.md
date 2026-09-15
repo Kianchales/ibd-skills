@@ -91,7 +91,7 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | skill | 定位 | 版本 | 依赖 |
 |---|---|---|---|
 | [ibd-doc-write](skills/ibd-doc-write/README.md) | 投行文档**写作规范与框架入口**：反馈回复五步方法论链路、招股书章节/报告/备忘录结构、投行语言规范。**定位=人机协作载体**（逐段协作，非 AI 独立成稿） | 0.13.0 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
-| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前质量校验**：数字五要素、反模式扫描、五项判据 G1-G5、数值自洽核对 | 0.8.3 | 零硬依赖（基座之一） |
+| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前质量校验**：数字五要素、反模式扫描、五项判据 G1-G5、数值自洽核对 | 0.8.4 | 零硬依赖（基座之一） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：招股书/申报文件 16 维清单，锚定企业会计准则与监管审核口径 | 0.8.5 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
 | [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验 + 交付门禁 `deliver_gate.py` | 0.18.0 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成 | 0.5.6 | 🔴 doc-review ≥0.16.2（规范 + 校验门禁 + 交付口径 delivery.md） |

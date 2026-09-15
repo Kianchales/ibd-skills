@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E8%B4%A8%E9%87%8F%E6%A0%A1%E9%AA%8C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.8.3-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.8.4-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -80,6 +80,7 @@ ibd-quality-gates/
 
 ## 📌 近期更新
 
+- **2026-09-15 · v0.8.4**：检查6 门禁追溯——`references/antipatterns.md` 随包资产补记留痕（内容零变更）；
 - **2026-09-10 · v0.8.3**：命名定稿「质量校验」（三轮迭代：门禁→把关→校验）；五项判据 G1-G5；SKILL 骨架标准化
 - **2026-09-10 · v0.8.1**：SKILL 语言全量顺一遍（规则零改动）
 

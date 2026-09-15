@@ -13,7 +13,7 @@ description: >
   与 ibd-doc-review 的分工：本 skill 管内容质量与数值自洽；排版样式、表格规范归 ibd-doc-review。
   触发词：「质量校验」「这篇能不能交」「交付前检查」「数字五要素」
   「绝对化扫描」「反模式扫描」「质量自评」「这篇打几分」
-version: 0.8.3
+version: 0.8.4
 agent_created: true
 ---
 
