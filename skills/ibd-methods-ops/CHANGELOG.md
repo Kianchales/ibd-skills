@@ -9,6 +9,7 @@
 - 护栏  补 （备份目录不强制 frontmatter）
 - 详见 references/govern/health-check.md「实测回归记录（2026-09-12）」
 
+- 资源补记（2026-09-15，检查6 门禁首跑追溯）：`references/library.config.template.json` 与 `scripts/add_frontmatter.py / add_fm_single.py / b_fmt_unify.py / c_scale_dedup.py / dryrun_case_migrate.py / split_domains.py / update_expert_md.py` 为首发期即随包的维护工具，历史上未单独记版本条目，此处一次性补记留痕
 ## [1.5.2] - 2026-09-12
 
 ### 修复：依赖来源标注与图例不一致

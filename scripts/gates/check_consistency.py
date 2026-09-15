@@ -68,6 +68,25 @@ def main():
         # 5. 集合 README 矩阵版本 == SKILL.md version
         if ver and matrix and pkg in matrix and matrix[pkg] != ver:
             fails.append(f'{pkg}: SKILL version {ver} != 集合 README 矩阵 {matrix[pkg]}')
+        # 6. 资源文件变更留痕：SKILL.md 引用的 references/scripts 文件必须在 CHANGELOG 出现过
+        #    （ADR-0002：变更时刻拦截；先例 = interface.md 裸奔进包无 CHANGELOG 条目）
+        if os.path.exists(cl):
+            cl_text = open(cl, encoding='utf-8').read()
+            # 分代归档的 CHANGELOG（references/changelog-archive*.md）同样算留痕
+            for archive_fn in os.listdir(os.path.join(d, 'references')) if os.path.isdir(os.path.join(d, 'references')) else []:
+                if archive_fn.startswith('changelog-archive'):
+                    cl_text += open(os.path.join(d, 'references', archive_fn), encoding='utf-8').read()
+            sk_text = text
+            for sub in ('references', 'scripts'):
+                sd = os.path.join(d, sub)
+                if not os.path.isdir(sd):
+                    continue
+                for fn in sorted(os.listdir(sd)):
+                    if fn.startswith('.') or fn.endswith('.pyc') or fn == '__pycache__' or os.path.isdir(os.path.join(sd, fn)):
+                        continue
+                    stem = os.path.splitext(fn)[0]
+                    if (fn in sk_text or stem in sk_text) and (fn not in cl_text and stem not in cl_text):
+                        fails.append(f'{pkg}: {sub}/{fn} 被 SKILL.md 引用但 CHANGELOG 无任何记录（变更留痕缺失）')
     if fails:
         print('FAIL:')
         for f in fails:
