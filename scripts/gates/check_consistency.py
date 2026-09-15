@@ -17,6 +17,12 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SKILLS = os.path.join(ROOT, 'skills')
+# 布局自适应（2026-09-15）：发布仓 = <root>/skills/<pkg>/；真身仓 = <root>/<pkg>/ 平铺。
+# 判据：skills/ 子目录存在且至少含一个 SKILL.md 才走集合布局，否则回退平铺。
+if not (os.path.isdir(SKILLS) and any(
+    os.path.exists(os.path.join(SKILLS, p, 'SKILL.md')) for p in os.listdir(SKILLS)
+)):
+    SKILLS = ROOT
 
 
 def load_matrix_versions(readme_path):
@@ -38,9 +44,15 @@ def load_matrix_versions(readme_path):
 def main():
     fails = []
     matrix = load_matrix_versions(os.path.join(ROOT, 'README.md'))
+    # 治理范围过滤（2026-09-15）：平铺布局（真身仓）下根目录混有第三方/私有 skill
+    # （anysearch、github、obsidian 等），不属 ibd-skills 集合治理域，不应被集合门禁扫描。
+    # 治理域 = ibd-* 全系 + skill-publish-pipeline / skills-constitution（发布治理自身）。
+    MANAGED = re.compile(r'^(ibd-|skill-publish-pipeline$|skills-constitution$)')
     for pkg in sorted(os.listdir(SKILLS)):
         d = os.path.join(SKILLS, pkg)
         if not os.path.isdir(d):
+            continue
+        if not MANAGED.match(pkg):
             continue
         skill = os.path.join(d, 'SKILL.md')
         if not os.path.exists(skill):

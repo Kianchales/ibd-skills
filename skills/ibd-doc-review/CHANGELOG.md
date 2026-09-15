@@ -1,10 +1,21 @@
 # Changelog
 
-## [0.17.3]
+## [0.18.0] - 2026-09-15
+
+### 新增：问题清单 JSON Schema + 校验入口（ADR-0004 落地，C-分步第一步）
+
+- **新增** [references/problems.schema.json](references/problems.schema.json)：问题清单的**机器可执行结构契约**——必填 6 字段（anchor/type/sev/title/desc/advice）、`sev` 白名单枚举 {高,中,低}、`type` 固定 10 项词表枚举、`code` 1-2 位大写字母 pattern、可选字段类型约束；语义源 = interface.md §3 + annotations.md §4，**两处规范源变更时须同步本文件并 bump 次版本**
+- **新增** [scripts/validate_schema.py](scripts/validate_schema.py)：清单校验入口（`python validate_schema.py <problems.json>`，返回码 0=PASS / 1=FAIL / 2=环境错误）；只做结构+白名单校验，语义级检查（锚点可命中、数量卫生）仍由 doc-annotate validate_issues.py / check_annotations.py 把关，不重复
+- **双向沙箱验证**：合法清单 PASS；自造标签 `数据·偏高` + 词表外取值 `sev:"blocker"` 被**精准拦截并定位到条目/字段**（白名单能力，grep 黑名单无法覆盖）
+- **性质**：消费端（doc-annotate 等）暂不强制接入（分步第二阶段，待运行稳定后推广）；本包 SKILL.md 资源索引挂链
+- **依赖**：`jsonschema`（Python 库，缺库时报 ENV-ERROR 退出码 2，不误判 FAIL）
+
+## [0.17.3] - 2026-09-12
 
 ### 补记（2026-09-15）
 
-- 新增 `references/interface.md`（对外接口契约：交付口径/门禁 CLI/问题清单 schema/编号词表/脚本对外入口/版本下限速查 + 变更纪律），SKILL.md 资源索引挂链。此条为补记——文件当日先行入库、CHANGELOG 漏记，由检查6 门禁首跑捕获 - 2026-09-12
+- 新增 `references/interface.md`（对外接口契约：交付口径/门禁 CLI/问题清单 schema/编号词表/脚本对外入口/版本下限速查 + 变更纪律），SKILL.md 资源索引挂链。此条为补记——文件当日先行入库、CHANGELOG 漏记，由检查6 门禁首跑捕获。
+- 资源补记（2026-09-15，检查6 门禁首跑追溯）：`references/sensitive_terms.json`（敏感词/地理清单）为首发期随包资产，历史上未单独记版本条目，此处一次性补记留痕。
 
 ### 修复：发布隐私门禁 BLOCK（P1）——平台路径与个人用户名泄露
 
@@ -18,7 +29,6 @@
 - **验证**：P1 复扫 **0 BLOCK**；`scripts/tests/` 五脚本测试全过；P4 骨架校验 0 ERROR / 0 WARN
 - **对外契约零变更**：CLI 参数 / 退出码 / 三态语义均不变
 
-- 资源补记（2026-09-15，检查6 门禁首跑追溯）：`references/sensitive_terms.json`（敏感词/地理清单）为首发期随包资产，历史上未单独记版本条目，此处一次性补记留痕
 ## [0.17.2] - 2026-09-11
 
 ### 修复：最小 fixture 部件级关系表路径重复（`word/word/document.xml`）

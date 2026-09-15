@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.17.3-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.18.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -86,6 +86,7 @@ ibd-doc-review/
 
 ## 📌 近期更新
 
+- **2026-09-15 · v0.18.0**：**新增问题清单 JSON Schema + 校验入口**——[problems.schema.json](references/problems.schema.json)（必填 6 字段 / sev 三档 / type 10 项词表白名单枚举）+ [validate_schema.py](scripts/validate_schema.py)（返回码 0/1/2），自造标签与词表外取值精准拦截（ADR-0004，C-分步第一步）；
 - **2026-09-12 · v0.17.3**：**修复发布隐私门禁 BLOCK**——P1 扫描报 12 项（内部配置目录路径 ×4 ＋ 本机用户名 ×8），均为上次发布后新引入：`deliver_gate.py` 的 officecli 探测列表改为**平台通用位置**并新增 `OFFICECLI_HOME`（`--officecli-path` 仍最优先），测试夹具 `author` 改中性值；CLI 参数 / 退出码 / 三态语义零变更
 - **2026-09-11 · v0.17.2**：修测试 fixture 的 OPC 关系表路径重复——构造器把包根级 rels 模板复用给 `word/_rels/document.xml.rels`，`Target` 被解析成 `word/word/document.xml`，真实解析器（python-docx）打开即 KeyError；新增 `RelsSemanticsTest` 4 项（纯标准库，校验全部 rels 的 Target 解析后必须指向包内部件；装了 python-docx 则真打开一次，未装 SKIP）。端到端：最小 fixture → 注入 → 门禁 9/9 PASS；五脚本 81 → 85 项
 - **2026-09-11 · v0.17.1**：`CHANGELOG.md` 分段归档——以 0.15.0 为代际切点，0.1.0–0.14.1 共 24 个版本段迁入 [references/changelog-archive.md](references/changelog-archive.md)（46.9 KB → 29.2 KB，降 37.7%；切分前后归一化 SHA-256 一致，零丢失零新增）

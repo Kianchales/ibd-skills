@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Kianchales/ibd-skills/skills/ibd-doc-review/references/problems.schema.json",
+  "title": "复核问题清单条目 schema",
+  "description": "ibd-doc-review 复核问题清单（JSON 数组）条目级结构契约。语义源 = interface.md §3；类型词表语义源 = annotations.md §4。本文件是机器可执行版，两处规范源变更时须同步本文件并 bump 次版本 + CHANGELOG 登记。",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["anchor", "type", "sev", "title", "desc", "advice"],
+    "additionalProperties": false,
+    "properties": {
+      "anchor": {
+        "type": "string",
+        "minLength": 1,
+        "description": "原文问题句段的精确子串，最小可定位文本"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "数据·口径",
+          "数据·勾稽",
+          "数据·完整性",
+          "数据·正负号",
+          "表述·绝对化",
+          "表述·衔接",
+          "表述·歧义",
+          "披露·充分性",
+          "披露·时效",
+          "合规·一致性"
+        ],
+        "description": "固定 10 项词表，新增须在 annotations.md §4 登记，禁止自造标签"
+      },
+      "sev": {
+        "type": "string",
+        "enum": ["高", "中", "低"],
+        "description": "高=必改 / 中=应改 / 低=建议改"
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "description": "问题短标题"
+      },
+      "desc": {
+        "type": "string",
+        "minLength": 1,
+        "description": "问题描述"
+      },
+      "advice": {
+        "type": "string",
+        "minLength": 1,
+        "description": "修改建议"
+      },
+      "author": {
+        "type": "string",
+        "description": "复核人名（可选）"
+      },
+      "code": {
+        "type": "string",
+        "pattern": "^[A-Z]{1,2}$",
+        "description": "1-2 位大写字母前缀，缺省回退 U"
+      },
+      "rev": {
+        "type": "string",
+        "description": "修订稿替换文本，缺则入「待人工」"
+      },
+      "page": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "PDF 限定页"
+      }
+    }
+  }
+}

@@ -45,6 +45,8 @@
 
 可选字段：`author`（复核人名）、`code`（1-2 位大写字母前缀，缺省回退 `U`）、`rev`（修订稿替换文本，缺则入「待人工」）、`page`（PDF 限定页）。数量卫生：≤200 条/文件，>400 拆分。
 
+**机器可执行版**：[problems.schema.json](problems.schema.json)——上表约束的白名单级机器校验，入口 `scripts/validate_schema.py`（返回码 0=PASS/1=FAIL/2=环境错误）。本节任何约束变更 → **同步 schema 文件 + bump 次版本**；schema 与文字描述冲突时以 annotations.md §4 / 本节语义为准并视为 schema 缺陷须即修。
+
 ## 4. 编号体系与类型词表
 
 **[references/annotations.md](annotations.md)** §3/§4 定义（单一事实源）：
@@ -68,12 +70,14 @@
 
 | 下游依赖本包的能力 | 引入版本 | 现行 |
 |---|---|---|
-| deliver_gate.py 交付门禁 | ≥ 0.15.7 | 0.17.3 |
-| delivery.md 交付口径单一事实源 | ≥ 0.16.2 | 0.17.3 |
-| 批注规范 annotations.md 现行体系 | ≥ 0.16.2 | 0.17.3 |
+| deliver_gate.py 交付门禁 | ≥ 0.15.7 | 0.18.0 |
+| delivery.md 交付口径单一事实源 | ≥ 0.16.2 | 0.18.0 |
+| 批注规范 annotations.md 现行体系 | ≥ 0.16.2 | 0.18.0 |
+| problems.schema.json 清单机器可执行 schema + validate_schema.py | ≥ 0.18.0 | 0.18.0 |
 
 ---
 
 ## 沿革
 
 - 2026-09-15 初版：从 delivery.md / annotations.md / 脚本 CLI 提炼对外承诺；细则指针化，下游断链自查方法（grep 四包）固化。
+- 2026-09-15 §3 增补：挂 problems.schema.json 机器可执行 schema 指针与 validate_schema.py 入口（ADR-0004，C-分步第一步）；§6 版本下限表同步。
