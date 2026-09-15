@@ -184,14 +184,14 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
-| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.8.3 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.17.3 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.16.2 | 0.17.3 | ✅ |
-| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.17.3 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.5.3 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.5.3 | ✅ |
+| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.8.4 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.19.0 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.19.0 | ✅ |
+| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.19.0 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.6.0 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.6.0 | ✅ |
 
-> 下限口径：`ibd-doc-write` 的 ≥0.15.7 = `deliver_gate.py` 引入版；`ibd-doc-annotate` / `ibd-finance-review` 的 ≥0.16.2 = 交付口径单一事实源 `references/delivery.md` 引入版（两包均回指该文件，低于此版该指向成死引用）。
+> 下限口径：`ibd-doc-write` 的 ≥0.15.7 = `deliver_gate.py` 引入版；`ibd-doc-annotate` 的 ≥0.19.0 = 批注任务单入口路由版（ADR-0006，check_annotations.py 转内部回调，低于此版单入口声明成死引用）；`ibd-finance-review` 的 ≥0.16.2 = 交付口径单一事实源 `references/delivery.md` 引入版（低于此版该指向成死引用）。
 
 验证方法：装齐后各包跑自测（gates `scripts/tests/test_check_gates.py`、doc-review `scripts/tests/`（5 脚本 85 项）、ops `scripts/check_methods_health.py`），全绿即组合可用。
 
@@ -203,6 +203,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 ## 📌 近期更新
 
+- **2026-09-15 · v0.3.1**：**根 README 元数据修复**——依赖版本兼容矩阵补齐 v0.3.0 批次欠账（annotate 下限 ≥0.16.2 → **≥0.19.0**（ADR-0006 单入口路由，原下限为假性兼容陷阱）；当前列同步 doc-review 0.19.0 / quality-gates 0.8.4 / methods-ops 1.6.0）；下限口径注脚同步 annotate 单入口语义。包内容零变更，与 v0.3.0 zip 等价。
+- **2026-09-15 · v0.3.0**：**问题清单结构化 + 单入口 + 逐段协作 + S7 三过滤批次**——`ibd-doc-review` 0.17.3 → **0.19.0**（0.18.0 新增 [problems.schema.json](skills/ibd-doc-review/references/problems.schema.json) 问题清单 JSON Schema + [validate_schema.py](skills/ibd-doc-review/scripts/validate_schema.py) 校验入口，ADR-0004 C-分步；0.19.0 批注任务单入口路由，check_annotations.py 转内部回调，ADR-0006）；`ibd-doc-annotate` 0.5.6 → **0.6.0**（唯一对外批注入口声明 + 依赖下限 ≥0.19.0）；`ibd-doc-write` 0.13.0 → **0.14.1**（0.14.0 [paragraph-collab.md](skills/ibd-doc-write/references/paragraph-collab.md) 逐段协作模式落地：状态双文件 + 口径漂移检测协议，ADR-0001 操作规程化；0.14.1 文档类型拆分门槛 = 复现 ≥3 次）；`ibd-methods-ops` 1.5.3 → **1.6.0**（S7 回写池三过滤 ADR-0007 + 库主从关系 ADR-0009）；`ibd-quality-gates` **0.8.4**（antipatterns.md 追溯补记）。版本矩阵同步。
 - **2026-09-14 · v0.2.6**：**annotate 0.5.6 + methods-ops 1.5.3 上提**——`ibd-doc-annotate` **0.5.5 → 0.5.6**（修复后处理脚本 `fix_missing_ranges.py` 在锚点落单 run 内时产出 end→ref→start 的标记顺序颠倒缺陷，新验收敛「标记顺序 + 覆盖文本 + 段落零改动」断言，补 `scripts/tests/test_fix_missing_ranges.py` **8 项自测**）；`ibd-methods-ops` 1.5.2 → **1.5.3**（解析器/护栏回归修复：身份编号字符类 `[FLIW]`→`[FLIWS]` 恢复体例域 `S-` 条目解析、W 系列新增 `### WL-xxxxxx` h3 形态解析 283→357 条消除 43 处交叉引用误报；§S5 双向提炼规程与治理细则同步）。版本矩阵/依赖兼容矩阵同步。
 - **2026-09-12 · v0.2.5**：**审计整改批次上提（doc-review 0.15.7 → 0.17.3）**——①**交付门禁成型**：`deliver_gate.py` 覆盖 `--md` 草稿预检与 `--docx` 交付件九项，新增复核产物门禁 `--annotated`/`--revised` 挂载与 officecli 物理扫描第三态 `[SKIP]`；②**脚本结构性重构**：`check_content.py` 按业务域拆为入口 + `content_common`/`content_text`/`content_table`（对外 CLI 契约不变），配套挖出并修复 `terms` 核对项**自诞生起静默失效**的生产 bug（另修 `<w:b w:val="0">` 加粗误判）；③**文档收口**：使用流程抽取 `references/workflow.md`（主文件瘦身 38%）、交付口径归一到 `references/delivery.md`（单一事实源）、`CHANGELOG` 分代归档（46.9 → 29.2 KB）；④**测试补齐**：`scripts/tests/` 从 0 → 5 脚本 **85 项全过**（含纯标准库 OPC 关系语义守卫）；⑤**规则新增**：格式铁律「数字前后不加空格」（标准号西文缩写与数字间空格为例外）。联动升版 `ibd-doc-annotate` 0.5.3 → **0.5.5**、`ibd-finance-review` 0.8.3 → **0.8.5**（两包交付口径回指 `delivery.md`，依赖下限坐实 doc-review ≥0.16.2）；`ibd-methods-ops` 1.5.1 → **1.5.2**（依赖来源标注与图例对齐）；隐私侧同时清零发布门禁 BLOCK（平台路径与本机用户名）。
 - **2026-09-11 · v0.2.4**：**编号体系统一 + 交付门禁**——各包 references 编号示例同步至现行体系（体例域 `S-` 前缀／案号 `AN{4位}`，与库内《编号体系说明》对齐，历史迁移记录按原形态保留）；`ibd-doc-review` 0.15.7 新增交付前综合核验 `deliver_gate.py`；README 补齐 `ibd-doc-write` 能力边界声明（**尚不成熟，不能独立撰写整段投行文件**）；版本矩阵同步至 write 0.13.0 / doc-review 0.15.7 / methods-ops 1.5.1；仓库加 `.gitignore` 防临时文件随包
