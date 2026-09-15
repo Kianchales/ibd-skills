@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## [1.6.0] - 2026-09-15
+
+### 新增：S7 回写池三过滤 + 库主从关系（ADR-0007/0009 落地，self-examination 拷问产出）
+
+- **SKILL.md S7③ 增补「回写池三过滤」**（ADR-0007，2026-09-15 用户裁定）：
+  - **复现 2 次即并入**——S6a「高重合」即一次复现实证，同规则跨 2 案例出现达并入线；仅 1 次的留蒸馏笔记层，不进最终方法论
+  - **冲突改旧**——新候选与既有条目冲突时修订旧条目，禁止同主题多版本并存
+  - **用户裁定再裁定**——与用户裁定条目冲突时提请用户重新裁定，禁止直接覆盖；裁定条目库内打标 `来源=用户裁定`
+- **SKILL.md S7 后增补「库主从关系」**（ADR-0009）：本地 `{METHODS_ROOT}` = 单一事实源；乐享等云知识库后端 = 只读发布镜像，写入属同步动作非创作动作，分叉以本地覆盖
+- **distill-methods.md §S6 重合度分级表同步**：高重合动作挂复现计数（达 2 次并入）、低重合动作挂笔记层沉淀上限；表后追三过滤 + 主从关系摘要块
+- **性质**：原「A-Mem 演化反向更新」与「修订留痕」规则不变，三过滤为其前置筛选层；与挂起的 Q1 硬门禁预留合并点
+
+### 资源补记（2026-09-15，检查6 门禁追溯）
+
+以下资源为首发期/迭代期随包资产，历史上未单独记版本条目，此处一次性补记留痕：`references/library.config.template.json`（库接入配置模板）、`scripts/add_frontmatter.py` / `scripts/add_fm_single.py`（frontmatter 补齐）、`scripts/b_fmt_unify.py`（体例统一）、`scripts/c_scale_dedup.py`（C 号缩位去重）、`scripts/split_domains.py`（域文件拆分）、`scripts/dryrun_case_migrate.py`（案号迁移干跑）、`scripts/update_expert_md.py`（S7 落库追加条目）。
+
 ## [1.5.3] - 2026-09-12
 
 ### 修复：解析器/护栏回归（体例域失联 + W 系列漏解析）
@@ -9,7 +25,6 @@
 - 护栏  补 （备份目录不强制 frontmatter）
 - 详见 references/govern/health-check.md「实测回归记录（2026-09-12）」
 
-- 资源补记（2026-09-15，检查6 门禁首跑追溯）：`references/library.config.template.json` 与 `scripts/add_frontmatter.py / add_fm_single.py / b_fmt_unify.py / c_scale_dedup.py / dryrun_case_migrate.py / split_domains.py / update_expert_md.py` 为首发期即随包的维护工具，历史上未单独记版本条目，此处一次性补记留痕
 ## [1.5.2] - 2026-09-12
 
 ### 修复：依赖来源标注与图例不一致

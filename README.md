@@ -95,7 +95,7 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：招股书/申报文件 16 维清单，锚定企业会计准则与监管审核口径 | 0.8.5 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
 | [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验 + 交付门禁 `deliver_gate.py` | 0.18.0 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成 | 0.5.6 | 🔴 doc-review ≥0.16.2（规范 + 校验门禁 + 交付口径 delivery.md） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **方法论库生产 + 维护**：蒸馏 S0-S7（材料来源由用户定）+ 维护域 3 步 + 15 个随包脚本（索引/落库/门禁/修复/拆分/迁移） | 1.5.3 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **方法论库生产 + 维护**：蒸馏 S0-S7（材料来源由用户定）+ 维护域 3 步 + 15 个随包脚本（索引/落库/门禁/修复/拆分/迁移） | 1.6.0 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **方法论库检索**：问题拆解 → 索引定位 → 定向读取 → 合成，按需只读命中条目不全文读库 | 0.2.0 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]
