@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.20.1] - 2026-09-18
+
+### 修复：`validate_schema.py` 去第三方依赖（改纯标准库实现）
+
+- **问题**：发布冒烟（`publish_collection.py` 的「零依赖审计」项，AST 扫描全包 import）拦下——`scripts/validate_schema.py`（0.18.0 引入）使用了非白名单模块 **`jsonschema`**，与本包「校验脚本全部 Python 3 标准库（zipfile + xml.etree），解压即跑」的对外承诺冲突。该脚本引入时未在「依赖与工具」声明按需安装，故冒烟白名单机制（口径 = 须与包内声明一致）不予放行
+- **修法对比**：① 补声明 + 入白名单（代价：把「零依赖」对外承诺降级为「按需依赖」）② **改纯标准库实现**（保住承诺，且无需放宽门禁）→ **选 ②**
+- **实现**：内置 JSON Schema 子集校验器，覆盖 `problems.schema.json` 实际用到的全部校验语义关键字——`type` / `required` / `properties` / `additionalProperties` / `items` / `enum` / `minLength` / `minimum` / `pattern`（`$schema`/`$id`/`title`/`description` 为元数据，忽略）。**schema 若出现未支持的关键字，脚本显式报错而非静默放行**——防「schema 加了约束却没被校验」的假绿
+- **契约不变**：CLI 与返回码 0/1/2 保持（返回码 2 的含义由「缺 `jsonschema` 库」改为「文件缺失 / 读取解析失败」）；输出格式保持（`PASS: …` / `FAIL [路径] 消息` / `FAIL: N 处…`）
+- **新增自测**：[scripts/tests/test_validate_schema.py](scripts/tests/test_validate_schema.py) **21 项**——含原库语义等价性回归（integer 不接受布尔、enum 词表、pattern、minimum、additionalProperties、schema 守卫、`--quiet`）
+- **本版另含**：2026-09-18 的纯文档修正（用词口径 Word 化 + P4 裸路径修复 + badge 同步，见下条，均未单独 bump）
+- 性质：修依赖违规（行为等价、去外部依赖）→ bump Z
+
 ## [未发布 · 纯文档] 2026-09-18
 
 ### 文案与措辞修正（规则/脚本/流程零变化 · 未 bump）
