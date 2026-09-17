@@ -17,7 +17,7 @@ description: >
   输出修订稿 docx + 修改清单（已修订/待人工两区）。
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.6.0
+version: 0.6.1
 agent_created: true
 ---
 
@@ -151,6 +151,7 @@ python <ibd-doc-review>/scripts/check_revisions.py --input <修订稿_clean.docx
 | 维度 | 说明 |
 |---|---|
 | 🔴 必须（Python 库） | `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）——仅用到对应载体时按需安装；Python 3 |
+| 使用者资产 | **无需自备**——任务输入 = 原文 docx/PDF + 复核问题清单 JSON（模板随包），不依赖方法论库 / KB 后端；接入点总表见 ibd-skills 集合仓 `ATTACHMENT-POINTS.md` |
 | 🔴 必须（skill 依赖） | `ibd-doc-review` skill：格式规范单一事实源（annotations.md、revisions.md）+ 校验门禁（check_annotations.py、check_revisions.py）均在该 skill 内，本 skill 不重复维护、不随包携带。**依赖声明制**：本 skill 按「引用外部依赖」发布——使用方在缺少 `ibd-doc-review` 的环境（断链）自行下载安装该依赖后即可完整运行；获取途径 = `ibd-doc-review` 同渠道发布物（GitHub：Kianchales/ibd-skills 集合仓库），版本兼容见该 skill CHANGELOG。**版本下限：`ibd-doc-review ≥ 0.19.0`**（0.6.0 起对齐单入口路由语义引入版——旧版 interface.md 仍声明 PDF 侧直接调用，与本 skill 单入口契约冲突；低于此版须升依赖。任一 skill 升版后须复核并同步下限） |
 | 运行模式 | 单机直接调用；也可作为投行复核流水线（专家团/人工审查）的落地执行器 |
 

@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E8%B4%A8%E9%87%8F%E6%A0%A1%E9%AA%8C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.8.4-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.9.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -71,7 +71,7 @@ ibd-quality-gates/
 ├── references/
 │   ├── wordlist-absolute.txt      # 绝对化用词表（G2）
 │   ├── wordlist-ai-flavor.txt     # AI 痕迹词表
-│   ├── antipatterns.md            # 反模式清单（四类 21 条）
+│   ├── antipatterns.md            # 反模式清单（四类 22 条）
 │   ├── rules.md                   # 完整规则（含 G1-G5 定义）
 │   ├── task-core.md               # 动笔前准备骨架
 │   └── examples.md                # 最小复现示例

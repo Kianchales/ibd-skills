@@ -91,6 +91,9 @@ LP_FULL, RP_FULL = "\uff08", "\uff09"
 # 数字前后不加空格（2026-09-11 用户裁定，rules.md 三·3）
 # 西文缩写与数字之间（GB 35114）不匹配——前邻字符为字母而非汉字，天然豁免
 RE_SPACE_CJK_NUM = re.compile(r"[\u4e00-\u9fff][ \t]+\d|\d[ \t]+[\u4e00-\u9fff]")
+# 中英文之间不加空格（2026-09-16 用户扩裁，与数字条款同口径）
+# 英文词与词之间（Total Solution）不匹配——两侧均为字母，天然豁免
+RE_SPACE_CJK_ALPHA = re.compile(r"[\u4e00-\u9fff][ \t]+[A-Za-z]|[A-Za-z][ \t]+[\u4e00-\u9fff]")
 
 
 # ----------------------------------------------------------------- 读取
@@ -132,18 +135,25 @@ def strip_punct(s):
 def check_punct(docx_text):
     half = docx_text.count(DQ_HALF) + docx_text.count(LP_HALF) + docx_text.count(RP_HALF)
     nspace = RE_SPACE_CJK_NUM.findall(docx_text)
-    ok = half == 0 and not nspace
+    nalpha = RE_SPACE_CJK_ALPHA.findall(docx_text)
+    ok = half == 0 and not nspace and not nalpha
     detail = (f"半角引号 {docx_text.count(DQ_HALF)} / 半角括号 "
               f"{docx_text.count(LP_HALF)}+{docx_text.count(RP_HALF)}；"
               f"全角引号 {docx_text.count(DQ_L)}+{docx_text.count(DQ_R)} / "
               f"全角括号 {docx_text.count(LP_FULL)}+{docx_text.count(RP_FULL)}；"
-              f"数字前后空格 {len(nspace)} 处")
+              f"数字前后空格 {len(nspace)} 处；中英文之间空格 {len(nalpha)} 处")
     fails = [] if half == 0 else [f"残留半角标点 {half} 处（中文语境须用全角）"]
     if nspace:
         sample = "；".join(f"「{s}」" for s in nspace[:5])
         more = f"（另有 {len(nspace) - 5} 处）" if len(nspace) > 5 else ""
         fails.append(
             f"中文与数字之间出现空格 {len(nspace)} 处（数字前后不加空格，"
+            f"rules.md 三·3）：{sample}{more}")
+    if nalpha:
+        sample = "；".join(f"「{s}」" for s in nalpha[:5])
+        more = f"（另有 {len(nalpha) - 5} 处）" if len(nalpha) > 5 else ""
+        fails.append(
+            f"中文与英文之间出现空格 {len(nalpha)} 处（中英文之间不加空格，"
             f"rules.md 三·3）：{sample}{more}")
     return "标点规范", ok, detail, fails
 

@@ -17,6 +17,7 @@ test_check_content.py — ibd-doc-review 格式核对模块自测（P2-⑧ 拆�
   F 组 · 核对行为（直调函数，不经 CLI，覆盖纯逻辑路径）
     · heading_seq 跳号 / 重号检出
     · spaces 数字前后空格（2026-09-11 新增子项）
+    · spaces 中英文之间空格 + 豁免不误报（2026-09-16 新增子项）
     · punctuation 中文语境半角标点
     · table_font 违规字号
     · table_empty vMerge 续格不计空
@@ -197,6 +198,20 @@ class TextChecksTest(unittest.TestCase):
         issues = content_text.check_spaces(items)
         self.assertTrue(any("数字" in i.problem for i in issues),
                         f"应报数字前后空格，实际：{[i.problem for i in issues]}")
+
+    def test_09b_spaces_cjk_alpha(self):
+        """中英文之间空格（2026-09-16 新子项，HIGH）。"""
+        items, _ = self._items([(None, "公司自研 XPU 芯片并符合 SVAC 国标要求。")])
+        issues = content_text.check_spaces(items)
+        self.assertTrue(any("英文" in i.problem for i in issues),
+                        f"应报中英文之间空格，实际：{[i.problem for i in issues]}")
+
+    def test_09c_spaces_cjk_alpha_exemptions(self):
+        """豁免：英文词间空格、标准号内部空格不得误报。"""
+        items, _ = self._items([(None, "产品命名为「Total Solution」，并遵循GB 35114标准。")])
+        issues = content_text.check_spaces(items)
+        self.assertFalse(any("英文" in i.problem for i in issues),
+                         f"英文词间/标准号内部空格不应误报，实际：{[i.problem for i in issues]}")
 
     def test_10_spaces_dup_punct(self):
         items, _ = self._items([(None, "这是测试文案内容，，出现了重复标点。")])

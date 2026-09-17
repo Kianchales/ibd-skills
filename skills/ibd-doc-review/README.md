@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.19.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.20.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -62,7 +62,7 @@ finance-review 复核清单 → doc-annotate 注入批注 → doc-review 校验�
 
 ## 📦 安装与依赖
 
-- 🔴 **必须**：任一 docx 处理工具（tencent-docx / minimax-docx 至少一，样式套用/新建用）+ 内置校验脚本（随包自带，零第三方依赖）
+- 🔴 **必须**：任一 Word 处理工具（tencent-docx / minimax-docx 至少一，样式套用/新建用）+ 内置校验脚本（随包自带，零第三方依赖）
 - 🟡 **推荐**：本地 Office 编辑（局部微调，体验最佳）
 - 🟢 **可选**：外部数据源（交叉验证）；officecli（渲染层物理缺陷扫描，独立二进制按需自备）
 
@@ -86,6 +86,7 @@ ibd-doc-review/
 
 ## 📌 近期更新
 
+- **2026-09-16 · v0.20.0**：**「中英文之间不加空格」纳入格式铁律并全链路闭环**——rules.md 三·3 由「数字前后不加空格」扩为「**中文与半角字符（数字＋字母）之间一律不加空格**」（唯一保留收拢为两处，均在两个半角字符之间：标准号内部缩写↔数字、英文词间）；`content_text.py` / `deliver_gate.py` 新增 `RE_SPACE_CJK_ALPHA` 检测并挂入 `spaces` 子项与「标点规范」项；同批 `ibd-doc-write` 写前红线同步该条（双包联动）
 - **2026-09-15 · v0.19.0**：**批注任务单入口路由**（ADR-0006）——`check_annotations.py`（尤其 PDF 侧）不再直接暴露，doc-annotate 为唯一对外入口、内部回调；interface.md §1/§5/§6 同步（bump 次版本，脚本本体零改动）
 - **2026-09-15 · v0.18.0**：**新增问题清单 JSON Schema + 校验入口**——[problems.schema.json](references/problems.schema.json)（必填 6 字段 / sev 三档 / type 10 项词表白名单枚举）+ [validate_schema.py](scripts/validate_schema.py)（返回码 0/1/2），自造标签与词表外取值精准拦截（ADR-0004，C-分步第一步）
 - **2026-09-12 · v0.17.3**：**修复发布隐私门禁 BLOCK**——P1 扫描报 12 项（内部配置目录路径 ×4 ＋ 本机用户名 ×8），均为上次发布后新引入：`deliver_gate.py` 的 officecli 探测列表改为**平台通用位置**并新增 `OFFICECLI_HOME`（`--officecli-path` 仍最优先），测试夹具 `author` 改中性值；CLI 参数 / 退出码 / 三态语义零变更

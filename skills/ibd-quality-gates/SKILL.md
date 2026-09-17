@@ -13,7 +13,7 @@ description: >
   与 ibd-doc-review 的分工：本 skill 管内容质量与数值自洽；排版样式、表格规范归 ibd-doc-review。
   触发词：「质量校验」「这篇能不能交」「交付前检查」「数字五要素」
   「绝对化扫描」「反模式扫描」「质量自评」「这篇打几分」
-version: 0.8.4
+version: 0.9.0
 agent_created: true
 ---
 
@@ -80,7 +80,7 @@ agent_created: true
 | G5 自评达标 | 自评 ≥25 分 + 报告随稿交付 | 检查三、四的通过标尺 |
 
 > 详细定义见 [rules.md](references/rules.md) §5。
-> **关于 G6**：docx 文件完整性检查（officecli validate + view issues）已移交 `ibd-doc-review` S6 补充门禁（见「与 ibd-doc-review 的分工」）——本 skill 只管内容，不管"文件能不能打开"。
+> **关于 G6**：Word 文件完整性检查（officecli validate + view issues）已移交 `ibd-doc-review` S6 补充门禁（见「与 ibd-doc-review 的分工」）——本 skill 只管内容，不管"文件能不能打开"。
 
 ### 第 4 步：执行顺序（照着走即可）
 
@@ -119,7 +119,7 @@ agent_created: true
 |------|------|
 | [rules.md](references/rules.md) | 四类检查 + 五项判据的完整规则，每条配正反例 |
 | [task-core.md](references/task-core.md) | 动笔前准备的通用骨架与多角色参数表 |
-| [antipatterns.md](references/antipatterns.md) | 反模式清单（四类 21 条），每条含"为什么不行、怎么改" |
+| [antipatterns.md](references/antipatterns.md) | 反模式清单（四类 22 条），每条含"为什么不行、怎么改" |
 | [wordlist-absolute.txt](references/wordlist-absolute.txt) | 绝对化用词黑名单（G2 用，本 skill 独有） |
 | [wordlist-ai-flavor.txt](references/wordlist-ai-flavor.txt) | AI 写作痕迹词黑名单 |
 | [examples.md](references/examples.md) | 最小复现示例（对话触发 / 命令 / 期望输出） |

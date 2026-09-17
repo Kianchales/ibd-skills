@@ -26,7 +26,7 @@ description: >
   「批注格式」「校验批注」「批注规范」「修订稿校验」「校验修订」「检查修订稿」
   「修订结构对不对」「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」
   「研究下XX节」「帮我看看这段」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
-version: 0.19.0
+version: 0.20.0
 agent_created: true
 ---
 
@@ -145,7 +145,7 @@ agent_created: true
 > **完整细则 → [workflow.md](references/workflow.md) 第二节**（含命令块、两大组别 10 项核对矩阵、边界说明）
 >
 > - **只读审查**，适用于任意投行 Word 文档（中性通用规则）；命令：`check_content.py --input <docx> [--checks text|table|geo,table_na]`，出 `<input>_格式核对报告.md`
-> - **两大组别**：文字类 text（序号连续性 / 用词规范 / 日期写法 / 多余空格·数字前后空格·重复标点 / 释义简称 / 地理表述）+ 表格类 table（字号体系 / 数字右对齐 / 空单元格 / NA 标记统一），按 HIGH/MEDIUM/LOW 分级
+> - **两大组别**：文字类 text（序号连续性 / 用词规范 / 日期写法 / 多余空格·数字与英文前后空格·重复标点 / 释义简称 / 地理表述）+ 表格类 table（字号体系 / 数字右对齐 / 空单元格 / NA 标记统一），按 HIGH/MEDIUM/LOW 分级
 > - **边界**：本模式查格式层自洽；**数值自洽**（勾稽/前后一致）与**内容质量溯源**归 `ibd-quality-gates`（check_data.py）。敏感词/地理清单见 [sensitive_terms.json](references/sensitive_terms.json)
 
 ### 5. 批注与修订复核交付模式（规范 + 只读校验）
@@ -190,16 +190,16 @@ agent_created: true
 
 | 维度 | 说明 |
 |---|---|
-| 🔴 **必须** | 任一 docx 处理工具（`minimax-docx`〔🟨官方市场〕 或 `tencent-docx`〔🟦内置〕至少一，套样式/新建用）+ 内置脚本 `check_styles.py` / `check_content.py`〔含 `content_common.py` / `content_text.py` / `content_table.py` 三配套模块〕 / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py`〔⬛随包自带，docx 侧零依赖；仅 `check_annotations.py --pdf` 的 PDF 侧需 pymupdf，缺失时跳过并提示〕 |
+| 🔴 **必须** | 任一 Word 处理工具（`minimax-docx`〔🟨官方市场〕 或 `tencent-docx`〔🟦内置〕至少一，套样式/新建用）+ 内置脚本 `check_styles.py` / `check_content.py`〔含 `content_common.py` / `content_text.py` / `content_table.py` 三配套模块〕 / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py`〔⬛随包自带，docx 侧零依赖；仅 `check_annotations.py --pdf` 的 PDF 侧需 pymupdf，缺失时跳过并提示〕 |
 | 🟡 **推荐** | `tencent-local-office-edit`〔🟦内置〕（局部样式微调，体验最佳）；模板 docx（`assets/templates/`〔⬛随包自带〕，可替换即定制样式） |
 | 🟢 **可选** | 外部数据源（金融数据终端，仅交叉验证时用）；知识库后端（KB_BACKEND：知识库/云文档/本地目录任选——检索同类范例，非必需）；`officecli`（渲染层物理缺陷扫描 + OpenXML 架构校验，S6 补充门禁，独立二进制按需自备） |
 | **运行模式** | 单用户直接使用；也可作为 `ibd-doc-write` 的格式层被串联调用（见「上游接口与边界」） |
 
 ### 工具说明（安装时读 · 每个工具为什么是这个层级）
 
-**🔴 必须 · `tencent-docx`〔🟦内置〕 / `minimax-docx`〔🟨官方市场〕（docx 处理，二选一）**
+**🔴 必须 · `tencent-docx`〔🟦内置〕 / `minimax-docx`〔🟨官方市场〕（Word 处理，二选一）**
 - 用途：套样式（minimax-docx `apply-template`）/ 新建文档（tencent-docx `create`）
-- 为什么必须：本 skill 的所有 docx 操作都建立在 docx 工具之上；**没有它无法读/写 Word 文档**，只能输出 Markdown + 样式说明
+- 为什么必须：本 skill 的所有 Word 操作都建立在 Word 处理工具之上；**没有它无法读/写 Word 文档**，只能输出 Markdown + 样式说明
 
 **🔴 必须 · 内置脚本（`check_styles.py` / `check_content.py` / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py`）**
 - 用途：样式校验（必备样式/裸段落/空段落/跳级/内容一致）+ 格式核对 14 项（只读）+ 批注产物校验（4 段结构/加粗分布/编号/四件套，只读）+ 修订稿产物校验（ins/del 对/author/id/trackRevisions/落定证明，只读）+ **交付前综合核验九项（一次跑完 · 极简输出，PASS 不展开、FAIL 才给明细）**
@@ -233,6 +233,7 @@ agent_created: true
 - **⚠️ 文字规范必须在「套样式之前」先查（2026-09-10 实测）**：标点全半角（引号/括号）虽是格式核对项，但**返工成本的落点不同**——若等套样式之后才发现文字层问题，改文字会导致样式重做。实测一份交付件有 384 处半角引号一路漏到套样式之后才被抓出，白跑一轮样式。故完整顺序应为：
   **内容定稿 → `check_content.py --checks text`（先把标点全角化）→ 套样式 → `deliver_gate.py` 综合核验（复核产物加 `--annotated`/`--revised`）→ 交付**
 - **交付前一律先跑 `deliver_gate.py`**：基础九项一次跑完、只输出结论行，复核产物再加 `--annotated` / `--revised`；不要用「分散的多条核验命令」替代（实测同一指标被反复统计 5-8 次，输出本身成为 token 大头）
+- **SKIP 须向用户点名**（2026-09-16 · ADR-0015）：deliver_gate 输出含 SKIP 项（officecli 未装/未启用、pymupdf 缺失等）时，AI 必须在回复中注明「本次 N 项 SKIP 未执行（原因）」——脚本层已保证「可见的未跑」，本条保证「被看到」；静默跳过与静默失败同罪
 - **上游开放**：本 skill 是格式层公共服务，**不限于 write 接入**——人工撰写、其他 AI 流程、外部导入的 Word 文档均可调用套样式 / 格式核对（触发词见上表）
 - **批注版链路**：章节复核产出批注版原文 → 执行器 `ibd-doc-annotate` 注入（规范依据 = 本 skill [annotations.md](references/annotations.md)）→ 本 skill `check_annotations.py` 门禁 → 交付（批注版 + 精简总览双轨）；门禁归入主理人 G5 把关范围
 - **下游协作**：本 skill 只改格式不改内容（铁律 0）；**内容质量（数字五要素/反模式/来源可溯）归 `ibd-quality-gates`**（内容层公共服务，上游同样开放）；格式核对中的「文档内数据自洽」与本 skill 边界见「格式核对模式」
@@ -259,4 +260,5 @@ agent_created: true
 ## 维护
 
 - 格式规则（样式映射/核对项/批注与修订规范）修改只改本 skill——`ibd-doc-annotate`（执行器）与 `ibd-doc-write`（写作）引用本 skill 规范，不重复维护；规则变更同步 CHANGELOG
+- **规则变更同步清单（漏一环该规则即形同不存在）**：改一条格式铁律须同步 **6 环**——① 规则本体 [rules.md](references/rules.md)；② **检测脚本**（`content_text.py` ＋ `deliver_gate.py` **双处同源正则**，漏一处则门禁放行）；③ 核对项名（`CHECK_REGISTRY` / 模块 docstring / `workflow.md` 表格 / SKILL.md 资源索引）；④ **写作侧预防**（`ibd-doc-write` 的写作红线 `writing-style.md`——写作环节不加载本 skill，规则不落写作侧则产出即违例）；⑤ CHANGELOG ＋ 版本 bump ＋ README 变更摘要；⑥ 测试（**命中 ＋ 豁免不误报**双用例）＋ 端到端探针。**历史教训**：「中文不加空格」曾只做 ①③⑤，②④ 从未覆盖字母 → 中英之间长期无条款、无拦截，产出文件照旧带空格
 - 本 skill 升版后须复核下游版本下限（doc-annotate ≥0.15.1 / doc-write ≥0.15.0），同步各包依赖声明

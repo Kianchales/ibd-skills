@@ -8,7 +8,7 @@
         heading_seq 标题层级序号连续性（含 第X节/第X章、问题X 自定义编号）   HIGH
         terms       用词规范性（错别字/异形词；支持外部清单扩展）            MEDIUM
         dates       日期写法统一（中文/分隔符/斜杠/连写/英文月缩写/年月）      MEDIUM
-        spaces      多余空格/数字前后空格/重复标点                          HIGH
+        spaces      多余空格/数字与英文前后空格/重复标点                          HIGH
         abbr        释义简称统一（冲突/前置使用/未定义复用/引号风格）          MEDIUM-LOW
         geo         国家城市表述合规（--geo-file 外部清单驱动）              HIGH
         punctuation 中英文标点（前后字符判定）                              HIGH
@@ -76,7 +76,7 @@ CHECK_REGISTRY = [
     {"id": "heading_seq", "group": "text", "name": "标题层级序号连续性（跳号/重号/倒退）", "severity": "HIGH"},
     {"id": "terms", "group": "text", "name": "用词规范性（错别字/异形词）", "severity": "MEDIUM"},
     {"id": "dates", "group": "text", "name": "日期写法统一（十种形式识别）", "severity": "MEDIUM"},
-    {"id": "spaces", "group": "text", "name": "多余空格/数字前后空格/重复标点", "severity": "HIGH"},
+    {"id": "spaces", "group": "text", "name": "多余空格/数字与英文前后空格/重复标点", "severity": "HIGH"},
     {"id": "punctuation", "group": "text", "name": "中英文标点（前后字符判定）", "severity": "HIGH"},
     {"id": "abbr", "group": "text", "name": "释义简称统一（含未定义使用检出）", "severity": "MEDIUM"},
     {"id": "geo", "group": "text", "name": "国家/城市表述合规（外部清单）", "severity": "HIGH"},

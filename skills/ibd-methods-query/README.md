@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E6%A3%80%E7%B4%A2-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.2.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.2.1-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -62,6 +62,7 @@ CHANGELOG.md                        版本记录
 
 ## 📌 近期更新
 
+- **2026-09-18 · v0.2.1**：接入点声明补第三问**缺失降级**（索引缺失→Grep 全库扫描兜底档 / 调用方另有内嵌流程 / 零脚本无运行时依赖）——本包正式入 `ATTACHMENT-POINTS` 总表（公开包口径 5→7）后，满足 P2+ 三问齐备要求
 - **2026-09-10 · v0.2.0**：公开首版——索引资产「使用者自建」模型；按能力档位适配（A 文件型走行号定向 / B 检索型走连接器搜索）
 - 更早版本见 [CHANGELOG.md](CHANGELOG.md)
 

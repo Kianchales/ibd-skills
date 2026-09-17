@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E8%B4%A2%E5%8A%A1%E7%AB%A0%E8%8A%82%E6%B7%B1%E5%BA%A6%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.8.5-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.8.6-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E8%BD%AF%E4%BB%B6%E4%BE%9D%E8%B5%96-3776AB" alt="no-deps">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -70,6 +70,7 @@ ibd-finance-review/
 
 ## 📌 近期更新
 
+- **2026-09-18 · v0.8.6**：接入点声明入 `ATTACHMENT-POINTS` 总表 + 机检脚本指向明确化（`check_data.py` 归 `ibd-quality-gates`）；描述补全，规则/流程零变化
 - **2026-09-12 · v0.8.5**：补交付落地链依赖下限（`ibd-doc-review ≥ 0.16.2` = `delivery.md` 引入版）
 - **2026-09-11 · v0.8.4**：交付口径回指 `delivery.md`（单一事实源）
 - **2026-09-10 · v0.8.3**：SKILL 骨架标准化（英文标题中文化、触发词/示例归位）

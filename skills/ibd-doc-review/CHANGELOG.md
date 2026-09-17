@@ -1,5 +1,25 @@
 # Changelog
 
+## [未发布 · 纯文档] 2026-09-18
+
+### 文案与措辞修正（规则/脚本/流程零变化 · 未 bump）
+
+- **用词口径**：依赖表与 README 的「任一 docx 处理工具」→「任一 **Word** 处理工具」，「docx 处理，二选一」→「Word 处理，二选一」，SKILL.md「所有 docx 操作/`docx` 工具」→「Word 操作/Word 处理工具」。**动因**：`docx` 既像文件类型又像 skill 名，曾致下游门禁（`skill-publish-pipeline` P2.5 依赖声明检查）在本包误判 4 处；**技术对照语境保留不改**——`docx 侧` vs `PDF 侧`（格式分支标识，非工具名）
+- **P4 门禁两处裸路径引用修复**：① 同步清单「规则本体 `references/rules.md`」改为 markdown 链接 [references/rules.md](references/rules.md)；② 写作侧预防条 `ibd-doc-write` `references/writing-style.md` 改为「`ibd-doc-write` 的写作红线 `writing-style.md`」（跨包路径本就无法解析为链接，改用反引号文件名规避裸路径判据）
+- **README badge 版本同步**：version badge 0.19.0 → 0.20.0（与 SKILL.md 当前版本对齐，清 P4「badge 滞后」WARN）
+- 性质：**纯文档修正，未 bump**（依 P5「模板/文档更新在 CHANGELOG 留痕不 bump」及本文件 0.15.5「纯文档未 bump」先例）
+
+## [0.20.0] - 2026-09-16
+
+### 变更：「中文与半角字符之间不加空格」成立并全链路闭环（用户裁定）
+
+- **触发**：原规则（0.16.0 / 0.16.2）只覆盖「中文 ↔ 阿拉伯数字」；中星微等项目大量出现的 XPU／SVAC／AI 类术语在中文语境中的空格**无条款可依**，且检测正则 `RE_SPACE_CJK_NUM` 只认数字（`\d`）不认字母，故产出文件仍带空格。用户裁定：**中英文之间同口径，一律不加空格**
+- **规则本体**：`references/rules.md` 三·3 由「数字前后不加空格」扩为「**中文与半角字符（阿拉伯数字、拉丁字母）之间一律不加空格**」；**唯一保留收拢为两处、均在两个半角字符之间**——标准号内部（GB 35114，西文缩写↔数字）与英文词间（Total Solution）；标准号整体与中文交界处（如「符合GB 35114标准」）仍按本条款去空格
+- **检测闭环**：`content_text.py` / `deliver_gate.py` 新增 `RE_SPACE_CJK_ALPHA`（`[\u4e00-\u9fff][ \t]+[A-Za-z]` 双向式），分别挂入 `spaces` 子项与「标点规范」项；报告与 detail 分列「数字前后空格 N 处 / 中英文之间空格 N 处」，check_content 核对项名与 `CHECK_REGISTRY` 同步改名
+- **双包联动**：`ibd-doc-write` `references/writing-style.md` 写前红线同步该条（写作时即规避，而非事后拦截）
+- **验证**：`test_check_content.py` 增 2 项（命中 ＋ 豁免不误报），五脚本 85 → 87 项全过；端到端探针（「XPU 芯片／SVAC 国标」报 4 处，「Total Solution」「GB 35114」零误报）
+- **性质**：新增核对能力（bump 次版本）
+
 ## [0.19.0] - 2026-09-15
 
 ### 变更：批注任务单入口路由（ADR-0006）

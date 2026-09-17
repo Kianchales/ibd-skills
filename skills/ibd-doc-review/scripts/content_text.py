@@ -8,7 +8,7 @@
   · `heading_seq`  标题层级序号连续性（跳号/重号/倒退）                HIGH
   · `terms`        用词规范性（错别字/异形词；支持外部清单扩展）        MEDIUM
   · `dates`        日期写法统一（十种形式识别）                        MEDIUM
-  · `spaces`       多余空格 / 数字前后空格 / 重复标点                  HIGH
+  · `spaces`       多余空格 / 数字与英文前后空格 / 重复标点                  HIGH
   · `abbr`         释义简称统一（冲突/前置使用/未定义复用/引号风格）    MEDIUM
   · `geo`          国家城市表述合规（外部清单驱动）                    HIGH
   · `punctuation`  中英文标点（前后字符判定）                          HIGH
@@ -274,6 +274,9 @@ RE_PUNCT_MIX = re.compile(r"。\.|\.。|，,|,，|；;|::")
 # 数字前后不加空格（2026-09-11 用户裁定）：中文/全角标点 与 阿拉伯数字 之间不得有空格。
 # 西文缩写与数字之间（GB 35114）不匹配——前邻字符是字母而非汉字，天然豁免。
 RE_SPACE_CJK_NUM = re.compile(r"[\u4e00-\u9fff][ \t]+\d|\d[ \t]+[\u4e00-\u9fff]")
+# 中英文之间不加空格（2026-09-16 用户扩裁，与数字条款同口径）：中文 与 拉丁字母 之间不得有空格。
+# 英文词与词之间（Total Solution）不匹配——两侧均为字母，天然豁免。
+RE_SPACE_CJK_ALPHA = re.compile(r"[\u4e00-\u9fff][ \t]+[A-Za-z]|[A-Za-z][ \t]+[\u4e00-\u9fff]")
 
 
 def check_spaces(items):
@@ -307,6 +310,15 @@ def check_spaces(items):
                 "spaces", "多余空格/标点", "正文" + f"#{i + 1}" +
                 f"「…{t[ctx_l:m.end() + 10]}…」", m.group(0),
                 "中文与数字之间出现空格（数字前后不加空格）",
+                "删除该空格", "HIGH"))
+        for m in RE_SPACE_CJK_ALPHA.finditer(t):
+            if layout_spacing or re.search(r"目\s{2,}录", t):
+                continue
+            ctx_l = max(0, m.start() - 10)
+            issues.append(Issue(
+                "spaces", "多余空格/标点", "正文" + f"#{i + 1}" +
+                f"「…{t[ctx_l:m.end() + 10]}…」", m.group(0),
+                "中文与英文之间出现空格（中英文之间不加空格）",
                 "删除该空格", "HIGH"))
         for m in RE_DUP_CN_PUNCT.finditer(t):
             ctx_l = max(0, m.start() - 10)
