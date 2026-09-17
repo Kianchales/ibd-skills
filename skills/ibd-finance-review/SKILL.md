@@ -76,7 +76,7 @@ A 股 IPO 招股书及申报文件的**财务专业内容复核**执行规范—
 | [check-dimensions.md](references/check-dimensions.md) | 财务复核 16 维清单（四组）：核查要点/关注信号/常见问题类型映射 |
 | [execution-discipline.md](references/execution-discipline.md) | 复核执行纪律：全量核对铁律（每数必核零遗漏）/分母三态还原+注释优先/算式留痕/验证 A·B·C 分级/跨章引用一致性/锚点唯一可定位/逐数台账模板 |
 | [term-caliber.md](references/term-caliber.md) | 术语与数据口径辨析：高频混用术语对的细微差距/翻车点/判定流程 |
-| [case-signals.md](references/case-signals.md) | 监管案例信号库：按 16 维组织的争议场景与监管口径（《案例解析 2024》/《典型案例集 2022》/年报会计监管报告/年报通知与专项规定/实弹复核定案，名称层引用） |
+| [case-signals.md](references/case-signals.md) | 监管案例信号库：按 16 维组织的争议场景与监管口径（《案例解析 2024》/《典型案例集 2022》/年报会计监管报告/年报通知与专项规定/实战复核定案，名称层引用） |
 | [interpretation-notes.md](references/interpretation-notes.md) | 准则解释判断要点：解释 1-20 号全文精读提炼（权益性交易/限制性股票/试运行销售/补偿性资产等） |
 | [issue-list-format.md](references/issue-list-format.md) | 复核问题清单字段规范：code/类型词表/严重度/锚点 |
 | [integration-and-fallbacks.md](references/integration-and-fallbacks.md) | 对接声明与替代管理：复核结论交付协议/依据检索降级路径/边界 |

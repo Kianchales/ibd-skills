@@ -92,7 +92,7 @@ python scripts/deliver_gate.py --docx <批注版.docx> --annotated --expect-anno
 
 **细则落点**：`ibd-finance-review` execution-discipline 铁律 2 + 细则 9、issue-list-format §1.1、`ibd-doc-annotate` validate_issues、[annotations.md](annotations.md) §3。
 
-**驱动案例**：中星微 v3 遗留 7 项低危 → v4 全部转批注 Z-12~Z-18。
+**驱动案例**：某芯片设计项目 v3 遗留 7 项低危 → v4 全部转批注 Z-12~Z-18。
 
 ---
 
