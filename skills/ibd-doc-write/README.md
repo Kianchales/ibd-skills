@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%96%87%E6%A1%A3%E5%86%99%E4%BD%9C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.14.3-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.14.5-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -96,6 +96,8 @@ ibd-doc-write/
 
 ## 📌 近期更新
 
+- **2026-09-18 · v0.14.5**：新增**交付形态默认值**——「**改稿型**」（用户直接粘贴自己写好的段落要求修改）默认**只返文本定稿 ＋ 逐条修改点**，**不出 Word、不跑样式落地与门禁**；走文档链路仅在用户明确要文件时触发。§0 路由新增「改稿协作（粘贴即改）」行，触发词补「帮我改这段」。边界：仍过敏感即停 ＋ 中档自检，不因不出文件而降质
+- **2026-09-18 · v0.14.4**：写前红线补「**文件类型名写产品名形态**」——统一写 Word/Excel/PPT/PDF，不写 `docx`/`xlsx`/`pptx`（防歧义：曾致 P2.5 依赖声明门禁误判 4 处）；技术对照语境等例外保留原形
 - **2026-09-16 · v0.14.3**：写前红线补「**中文与半角字符之间不留空格**」——`writing-style.md` 增心法（规则本体 = doc-review `rules.md`「中文与半角字符之间不加空格」，本节只放指针 + 心法，不复制示例清单）；机械校验走 doc-review `check_content.py --checks spaces` / `deliver_gate.py`
 - **2026-09-16 · v0.14.2**：写前红线补「**自立场材料不作论据**」——公司自编或委托编制的预测/测算类文件（募投可研报告、内部测算表）只能说明「公司做过该项预测」，不能用来证明结论；规则本体 = quality-gates `antipatterns.md` 反模式 **A-8**
 - **2026-09-15 · v0.14.1**：paragraph-collab.md §7 演进与维护——文档类型拆分提示门槛定为复现 ≥3 次（用户裁定）
