@@ -1,13 +1,5 @@
 # Changelog
 
-## [未发布 · 纯文档] 2026-09-18
-
-### 交付口径更新：总览报告双格式（MD + Word）· 未 bump
-
-- **用户裁定（2026-09-18）**：总览报告交付时**同时交付 MD 版和 Word 版**——MD 供程序读取/检索归档，Word 供批阅流转
-- **落点**：`references/delivery.md` §一 配套交付物 + §七 沿革（本文 = 交付形态单一事实源）；执行侧由 `ibd-doc-annotate` 0.7.0 新增 `overview_to_docx.py` 同链路自动产出（见该包 CHANGELOG）
-- 性质：**交付口径留痕，规则/脚本零变化，未 bump**（本包不执行总览生成）
-
 ## [0.20.1] - 2026-09-18
 
 ### 修复：`validate_schema.py` 去第三方依赖（改纯标准库实现）
@@ -28,6 +20,14 @@
 - **P4 门禁两处裸路径引用修复**：① 同步清单「规则本体 `references/rules.md`」改为 markdown 链接 [references/rules.md](references/rules.md)；② 写作侧预防条 `ibd-doc-write` `references/writing-style.md` 改为「`ibd-doc-write` 的写作红线 `writing-style.md`」（跨包路径本就无法解析为链接，改用反引号文件名规避裸路径判据）
 - **README badge 版本同步**：version badge 0.19.0 → 0.20.0（与 SKILL.md 当前版本对齐，清 P4「badge 滞后」WARN）
 - 性质：**纯文档修正，未 bump**（依 P5「模板/文档更新在 CHANGELOG 留痕不 bump」及本文件 0.15.5「纯文档未 bump」先例）
+
+## [未发布 · 纯文档] 2026-09-18
+
+### 交付口径更新：总览报告双格式（MD + Word）· 未 bump
+
+- **用户裁定（2026-09-18）**：总览报告交付时**同时交付 MD 版和 Word 版**——MD 供程序读取/检索归档，Word 供批阅流转
+- **落点**：`references/delivery.md` §一 配套交付物 + §七 沿革（本文 = 交付形态单一事实源）；执行侧由 `ibd-doc-annotate` 0.7.0 新增 `overview_to_docx.py` 同链路自动产出（见该包 CHANGELOG）
+- 性质：**交付口径留痕，规则/脚本零变化，未 bump**（本包不执行总览生成）
 
 ## [0.20.0] - 2026-09-16
 
