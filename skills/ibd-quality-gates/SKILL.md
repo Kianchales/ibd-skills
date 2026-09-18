@@ -13,9 +13,11 @@ description: >
   与 ibd-doc-review 的分工：本 skill 管内容质量与数值自洽；排版样式、表格规范归 ibd-doc-review。
   Excel 交付物另设「公式写入三档 + 交付前重算」规范（rules.md §7）：经典函数裸写、单值型新函数
   带 `_xlfn.` 前缀、溢出型函数禁 openpyxl；交程序读的文件先重算或写静态值。
+  **改写既有工作簿另设四条纪律（rules.md §8）**：改前体检结构、写后读回验证、汇总默认全公式、
+  参照值限明细行。
   触发词：「质量校验」「这篇能不能交」「交付前检查」「数字五要素」
   「绝对化扫描」「反模式扫描」「质量自评」「这篇打几分」「Excel 交付检查」
-version: 0.10.0
+version: 0.11.0
 agent_created: true
 ---
 
@@ -65,6 +67,8 @@ agent_created: true
 **检查二·附：Excel 交付物专项（含公式即触发）**
 
 Excel 文件含公式的，按「公式写入三档」核对写入通道（A 经典裸写 / B 单值型带 `_xlfn.` / C 溢出型禁 openpyxl），并按「交付前重算」原则确认缓存值状态——交程序读的文件必须先重算或全静态值。完整规则见 [rules.md](references/rules.md) §7；机器检查跑 `skills-patch/xlsx_gate.py`（BLOCK=0 放行）。
+
+**改写既有工作簿**（对照表／底稿／汇总表，尤其是被人手工改过的）另按 §8 四条纪律办：① 动手前体检结构（表头 ＋ 列序 ＋ 公式引用列）② 写后必须读回验证（工具「返回成功」≠ 已落盘）③ 汇总默认全公式，静态快照须标注取值时点与「不随源更新」④ 构造参照值前先分离「明细」与「合计」行。
 
 **检查三：交稿前自检——10 条逐条过，一条不过不交**
 
@@ -124,7 +128,7 @@ Excel 文件含公式的，按「公式写入三档」核对写入通道（A 经
 
 | 文件 | 内容 |
 |------|------|
-| [rules.md](references/rules.md) | 四类检查 + 五项判据的完整规则，每条配正反例；§7 为 Excel 公式三档写入 + 交付前重算 |
+| [rules.md](references/rules.md) | 四类检查 + 五项判据的完整规则，每条配正反例；§7 为 Excel 公式三档写入 + 交付前重算，§8 为改写既有工作簿四条纪律 |
 | [task-core.md](references/task-core.md) | 动笔前准备的通用骨架与多角色参数表 |
 | [antipatterns.md](references/antipatterns.md) | 反模式清单（四类 23 条），每条含"为什么不行、怎么改" |
 | [wordlist-absolute.txt](references/wordlist-absolute.txt) | 绝对化用词黑名单（G2 用，本 skill 独有） |
