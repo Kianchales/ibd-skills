@@ -160,6 +160,7 @@ python scripts/migrate_case_no.py ...      [--apply]           # 编号位宽迁
 ## 边界与协作
 
 - **与 ibd-methods-query 互补**：本 skill 管生产+维护（写入侧），query 管检索消费（读取侧）——查询方法论走 query 的标准检索链路，不经本 skill
+- **冷启动分工（ADR-0008 延伸裁定，2026-09-18）**：首次使用无库时，query 的**冷启动引导档**可就地建空库骨架（4 文件 + 最小 `library.config.json`，纯结构零内容）——建库骨架属「检索前置条件自举」，不属蒸馏生产；方法论内容生产仍归本 skill，用户随后的蒸馏/四问引导均按既有流程接管该库
 - **被依赖声明**：`ibd-doc-write` / `ibd-methods-query` 可选依赖本 skill（≥1.5.0：库规范 + 脚本工具链 + 库接入配置）
 - **库结构规范单一事实源**：本 skill 的 [methods-guide.md](references/methods-guide.md)；`ibd-doc-write` 的库指引为其消费侧精简版（无库降级），二者同源
 - **高频句法反哺 doc-write**（可选依赖，未装则跳过）：蒸馏产出的通用高频句式同步至 ibd-doc-write 的「高频句法库」（该包 references 下；本包只存通用高频，案例级条目留 `{METHODS_ROOT}/`，双轨不混）
