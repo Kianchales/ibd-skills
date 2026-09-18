@@ -74,3 +74,30 @@
 - **格式问题**（序号、标点、表格样式、金额**呈现格式**——表格内对齐/字号/合计加粗）→ 交给 `ibd-doc-review`，本 skill 不查
 - **数值自洽**（金额**文本格式**（千分位/小数位）、前后一致、跨表一致、合计校验）→ 本 skill 自带 `scripts/check_data.py`（md/txt/docx 双载体，写作链 md 草稿阶段前置跑），本 skill 的自检第 3/9 条直接引用其结果
 - **去 AI 痕迹的改写** → 可配合 humanizer 类工具使用；本 skill 负责查出来，改写工具负责改
+
+## §7 Excel 交付物：公式写入三档 + 交付前重算（2026-09-18 真机实测定案）
+
+适用：交付物为 xlsx 且含公式（勾稽表、底稿、报送表等）。反模式定义见 [antipatterns.md](antipatterns.md) D-8。
+
+### 三档写入规范
+
+| 档 | 函数 | 写入要求 |
+|---|---|---|
+| **A** 经典 | `SUM` `INDEX` `MATCH` `VLOOKUP` `IF`… | 裸写即可 |
+| **B** 单值型 | `XLOOKUP` `XMATCH` `IFS` `SWITCH` `MAXIFS`/`MINIFS` `TEXTJOIN` `LET`… | **必须带 `_xlfn.` 前缀**（`LET` 变量名另加 `_xlpm.`）。裸写 → `#NAME?`，并可能触发「文件需修复」静默剥离公式 |
+| **C** 溢出型 | `SORT` `FILTER` `UNIQUE` `SEQUENCE` `RANDARRAY`… | **禁走 openpyxl**（无 spill 元数据 → 只出左上角首值，静默半对）。走 xlsxwriter `write_dynamic_array_formula`（仅交付给人看）；**交付给程序的一律写静态值** |
+
+### 交付前重算原则
+
+openpyxl / xlsxwriter 写的公式**无有效缓存值**（openpyxl 无缓存；xlsxwriter 恒为 0 假值）：
+
+| 交付对象 | 要求 |
+|---|---|
+| 人（Excel 打开） | 公式可保留，Excel 打开自动重算 |
+| 程序（`data_only=True`） | **先重算一次**（真机 Excel 打开存盘 / LibreOffice 重算），或**直接写静态值**；无法重算时必须在交付说明中显式声明「未经重算」 |
+
+### 交稿前检查动作
+
+1. 跑 `skills-patch/xlsx_gate.py <file.xlsx>` —— BLOCK=0 才放行（查：UDF 形态 / 裸写现代函数 / 溢出型缺 spill 元数据 / 无缓存值）
+2. 程序读取场景：写静态值用 `skills-patch/xlsx_dyn.py fill`（自带写后回读验证），或确认已重算
+3. 抽查 2-3 个公式格：读回值与业务预期对得上（防「半对」假值混出）

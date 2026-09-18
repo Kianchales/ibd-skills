@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.7.0] - 2026-09-18
+
+### 新增：总览报告双格式交付（MD + Word）
+
+- **动因（用户裁定 2026-09-18）**：总览报告交付时**同时交付 MD 版和 Word 版**——MD 供程序读取/检索归档，Word 供批阅流转；交付口径已同步 `ibd-doc-review` delivery.md §一（格式单一事实源）
+- **落地**：
+  - 新脚本 `scripts/overview_to_docx.py`：总览 md → docx 转换器（覆盖 write_overview 产出子集——标题/引导行/表格（首行表头加粗）/两级列表/行内加粗；依赖 python-docx 既有依赖，零新增第三方包）
+  - `annotate_docx.py` / `annotate_pdf.py`：`write_overview` 出 md 后自动同产 `_批注总览.docx`，输出清单同步
+- **实测**：fixtures 端到端（2 条问题全锚定）——md + docx 双产出 ✅；Word 版结构验证（Title / 斜体引导行 / 5 列表格 / 表头加粗）✅；未锚定条目分支（H2 + 两级列表 List Bullet/List Bullet 2）✅
+- 性质：交付形态新增输出 = Y
+
 ## [0.6.1] - 2026-09-18
 
 ### 补充：接入点声明入 `ATTACHMENT-POINTS` 总表（描述补全 · 补 bump Z）

@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%89%B9%E6%B3%A8%E4%B8%8E%E4%BF%AE%E8%AE%A2%E4%BA%A4%E4%BB%98-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.6.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.7.0-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -28,7 +28,7 @@
 
 | 形态 | 输入 | 输出 | 用途 |
 |---|---|---|---|
-| **批注版** | 问题清单 + 原文 docx/pdf | `<原文>_批注版.docx/pdf` + `_批注总览.md` | 只加批注不改原文，意见钉在问题句段上 |
+| **批注版** | 问题清单 + 原文 docx/pdf | `<原文>_批注版.docx/pdf` + `_批注总览.md` + `_批注总览.docx` | 只加批注不改原文，意见钉在问题句段上 |
 | **修订稿** | 问题清单（含 rev 替换文本）+ 原文 docx | `<原文>_修订稿.docx(+_clean.docx)` + `_修改清单.md` | 修改建议落到原文：revise/clean/both 三形态 |
 
 修订稿形态由**用户确认**（revise=Word 修订 / clean=直接改好 / both=双版），不按请求措辞自动推断。
@@ -72,6 +72,7 @@ ibd-doc-annotate/
 
 ## 📌 近期更新
 
+- **2026-09-18 · v0.7.0**：**总览报告双格式交付（MD + Word）**——新脚本 `overview_to_docx.py`，批注注入后自动同产 `_批注总览.docx`（与 md 同源同内容）；交付口径同步 `ibd-doc-review` delivery.md
 - **2026-09-18 · v0.6.1**：接入点声明入 `ATTACHMENT-POINTS` 总表——补一行**使用者资产**声明（本包**无需自备资产**，模板随包），指向集合仓总表；描述补全，规则/脚本零变化
 - **2026-09-15 · v0.6.0**：**批注任务单入口路由声明**（ADR-0006）——本 skill 为 docx/PDF 批注唯一对外入口，doc-review 校验脚本转为内部回调；依赖下限升至 `ibd-doc-review ≥ 0.19.0`；
 - **2026-09-14 · v0.5.6**：`fix_missing_ranges.py` 修复标记顺序颠倒——锚点落在单个 run 内时曾产出 `end→ref→start`（门禁只比对对数，会静默放行）；补 8 项自测（4 项行为 + 1 项未命中 + 1 项幂等 + 2 项顺序确证），修复前版本反跑失败 5 项

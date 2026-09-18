@@ -11,9 +11,11 @@ description: >
   引用可追溯、依据有对照、自评达标。附自动化脚本：绝对化用词扫描、AI 痕迹词扫描、裸数字粗筛、
   数值自洽核对（check_data.py：金额写法/前后一致/合计勾稽）。
   与 ibd-doc-review 的分工：本 skill 管内容质量与数值自洽；排版样式、表格规范归 ibd-doc-review。
+  Excel 交付物另设「公式写入三档 + 交付前重算」规范（rules.md §7）：经典函数裸写、单值型新函数
+  带 `_xlfn.` 前缀、溢出型函数禁 openpyxl；交程序读的文件先重算或写静态值。
   触发词：「质量校验」「这篇能不能交」「交付前检查」「数字五要素」
-  「绝对化扫描」「反模式扫描」「质量自评」「这篇打几分」
-version: 0.9.0
+  「绝对化扫描」「反模式扫描」「质量自评」「这篇打几分」「Excel 交付检查」
+version: 0.10.0
 agent_created: true
 ---
 
@@ -29,6 +31,7 @@ agent_created: true
 | 检查数字是否可信 | 「数字五要素」「数字有来源吗」「裸数字检查」 |
 | 查说过头的话 | 「绝对化扫描」「有没有说大话」 |
 | 查 AI 写作痕迹 | 「反模式扫描」「AI 痕迹检查」 |
+| Excel 交付物（勾稽表/底稿）含公式 | 「Excel 交付检查」「公式三档」「交付前重算」 |
 | 给文档打分 | 「质量自评」「这篇打几分」 |
 
 ## 使用流程
@@ -57,7 +60,11 @@ agent_created: true
 
 **检查二：反模式扫描——照清单给常见的"投行文档病"过一遍**
 
-常见毛病分四类：**数据类**（无来源、口径混用）、**论证类**（观点没支撑、风险不披露）、**表述类**（AI 腔、套话、堆形容词）、**编造类**（红线，出现即整段作废）。完整清单见 [antipatterns.md](references/antipatterns.md)。
+常见毛病分四类：**数据类**（无来源、口径混用、Excel 公式假值）、**论证类**（观点没支撑、风险不披露）、**表述类**（AI 腔、套话、堆形容词）、**编造类**（红线，出现即整段作废）。完整清单见 [antipatterns.md](references/antipatterns.md)。
+
+**检查二·附：Excel 交付物专项（含公式即触发）**
+
+Excel 文件含公式的，按「公式写入三档」核对写入通道（A 经典裸写 / B 单值型带 `_xlfn.` / C 溢出型禁 openpyxl），并按「交付前重算」原则确认缓存值状态——交程序读的文件必须先重算或全静态值。完整规则见 [rules.md](references/rules.md) §7；机器检查跑 `skills-patch/xlsx_gate.py`（BLOCK=0 放行）。
 
 **检查三：交稿前自检——10 条逐条过，一条不过不交**
 
@@ -117,9 +124,9 @@ agent_created: true
 
 | 文件 | 内容 |
 |------|------|
-| [rules.md](references/rules.md) | 四类检查 + 五项判据的完整规则，每条配正反例 |
+| [rules.md](references/rules.md) | 四类检查 + 五项判据的完整规则，每条配正反例；§7 为 Excel 公式三档写入 + 交付前重算 |
 | [task-core.md](references/task-core.md) | 动笔前准备的通用骨架与多角色参数表 |
-| [antipatterns.md](references/antipatterns.md) | 反模式清单（四类 22 条），每条含"为什么不行、怎么改" |
+| [antipatterns.md](references/antipatterns.md) | 反模式清单（四类 23 条），每条含"为什么不行、怎么改" |
 | [wordlist-absolute.txt](references/wordlist-absolute.txt) | 绝对化用词黑名单（G2 用，本 skill 独有） |
 | [wordlist-ai-flavor.txt](references/wordlist-ai-flavor.txt) | AI 写作痕迹词黑名单 |
 | [examples.md](references/examples.md) | 最小复现示例（对话触发 / 命令 / 期望输出） |

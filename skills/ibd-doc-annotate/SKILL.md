@@ -8,16 +8,17 @@ description: >
   ① 批注版（现役）：接收结构化复核问题清单（作者/类型/严重度/锚点/标题/描述/建议）与原文
   docx 或 PDF，自动把每条问题变成一条 Word 审阅批注或 PDF 高亮注释锚定在原文问题句段上，
   并同步生成与批注编号一一对应的精简总览报告（**双轨并存、批注优先**——交付口径见
-  `ibd-doc-review` skill 的 delivery.md；总览兼作兜底：无法自动锚定的条目在其中列出
+  `ibd-doc-review` skill 的 delivery.md；总览**双格式交付 = MD + Word**，2026-09-18 用户裁定；
+  总览兼作兜底：无法自动锚定的条目在其中列出
   待人工定位）。脚本自动完成：编号分配（清单 code 字段 + 该前缀序号，脚本不内置任何
   人名/代号映射）、锚点定位（docx 跨 run 拆分且保留原格式 / PDF 字符级容忍空白）、
-  批注正文 4 行紧凑排版、Word comments 四件套补全、总览生成。
+  批注正文 4 行紧凑排版、Word comments 四件套补全、总览生成（md + docx 双格式）。
   ② 修订稿（现役）：用户明确「生成修订稿」时，先与用户确认输出形态（Word 修订模式 /
   直接改好 / 双版，**不按措辞自动路由**），按问题清单的 rev 替换文本把改动落到原文，
   输出修订稿 docx + 修改清单（已修订/待人工两区）。
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.6.1
+version: 0.7.0
 agent_created: true
 ---
 
@@ -101,7 +102,7 @@ python scripts/revise_docx.py --docx <原文.docx> --issues issues.json --mode c
 python scripts/revise_docx.py --docx <原文.docx> --issues issues.json --mode both     # 双版（+_clean.docx）
 ```
 
-批注脚本自动完成：编号分配（按清单顺序，作者代号+序号）→ 锚点定位 → 批注注入（正文 4 行紧凑排版）→ 总览生成。
+批注脚本自动完成：编号分配（按清单顺序，作者代号+序号）→ 锚点定位 → 批注注入（正文 4 行紧凑排版）→ 总览生成（md + docx 双格式，2026-09-18 用户裁定）。
 修订脚本自动完成：编号分配 → 锚点定位 → 按 rev 落定（revise 模式原文本包 `w:del`、新文本包 `w:ins`，作者=复核人，并开 `trackRevisions`）→ 修改清单生成；缺 rev/复杂 run/重叠/未锚定条目记「待人工」不硬撑。
 
 ### 3. 校验门禁（交付前必跑）
@@ -127,6 +128,7 @@ python <ibd-doc-review>/scripts/check_revisions.py --input <修订稿_clean.docx
 |---|---|
 | `<原文>_<YYYYMMDD>_v<N>_批注版.docx/pdf` | 批注版第一交付物（Word 审阅面板 / PDF hover 弹注） |
 | `<原文>_<YYYYMMDD>_v<N>_批注版_批注总览.md` | 双轨兜底：编号×类型×严重度×锚点摘要×作者×状态；未锚定条目列清单待人工定位 |
+| `<原文>_<YYYYMMDD>_v<N>_批注版_批注总览.docx` | 总览 **Word 版**——与 md 同源同内容（双格式交付，2026-09-18 用户裁定：MD 供程序/检索、Word 供批阅流转）；由 `overview_to_docx.py` 同链路自动产出 |
 | `<原文>_<YYYYMMDD>_v<N>_修订稿.docx` | 修订稿（revise=Word 修订模式可审阅接受/拒绝；clean=直接改好） |
 | `<原文>_<YYYYMMDD>_v<N>_修订稿_clean.docx` | both 模式另出的干净版（接受全部修订后） |
 | `<原文>_<YYYYMMDD>_v<N>_修订稿_修改清单.md` | 已修订 N 条（原文 → 改为）+ 待人工 M 条（原因+建议），编号同批注体系 |
@@ -140,6 +142,7 @@ python <ibd-doc-review>/scripts/check_revisions.py --input <修订稿_clean.docx
 | 校验门禁（批注 docx+pdf / 修订稿） | `ibd-doc-review` 的 check_annotations.py / check_revisions.py | 🔗 外部依赖 |
 | 问题清单模板（含 rev 字段示例） | [issues.example.json](scripts/issues.example.json) | 📦 本包 |
 | 入口校验器（issues 结构早拦：CLI 独立跑 + 三脚本注入前自动校验） | [validate_issues.py](scripts/validate_issues.py) | 📦 本包 |
+| 总览 Word 转换器（总览 md → docx，双格式交付） | [overview_to_docx.py](scripts/overview_to_docx.py) | 📦 本包 |
 | 批注注入脚本（docx / pdf） | [annotate_docx.py](scripts/annotate_docx.py) / [annotate_pdf.py](scripts/annotate_pdf.py) | 📦 本包 |
 | 修订稿生成脚本（docx，三 mode） | [revise_docx.py](scripts/revise_docx.py) | 📦 本包 |
 | 后处理：补插丢失的批注 range（同段多批注冲突） | [fix_missing_ranges.py](scripts/fix_missing_ranges.py) | 📦 本包 |

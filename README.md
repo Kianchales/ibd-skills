@@ -91,10 +91,10 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | skill | 定位 | 版本 | 依赖 |
 |---|---|---|---|
 | [ibd-doc-write](skills/ibd-doc-write/README.md) | 投行文档**写作规范与框架入口**：反馈回复五步方法论链路、招股书章节/报告/备忘录结构、投行语言规范。**定位=人机协作载体**（逐段协作，非 AI 独立成稿） | 0.14.3 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
-| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前质量校验**：数字五要素、反模式扫描、五项判据 G1-G5、数值自洽核对 | 0.9.0 | 零硬依赖（基座之一） |
+| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前质量校验**：数字五要素、反模式扫描、五项判据 G1-G5、数值自洽核对、Excel 公式三档写入与交付前重算 | 0.10.0 | 零硬依赖（基座之一） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：招股书/申报文件 16 维清单，锚定企业会计准则与监管审核口径 | 0.8.6 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
 | [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式层单一事实源**：样式应用、格式核对、批注/修订规范与校验 + 交付门禁 `deliver_gate.py` | 0.20.1 | 零外部 skill 依赖（基座） |
-| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成 | 0.6.1 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由 ADR-0006） |
+| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核结论落地执行器**：批注版（Word/PDF 原位批注）与修订稿生成，总览双格式交付 | 0.7.0 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由 ADR-0006） |
 | [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **方法论库生产 + 维护**：蒸馏 S0-S7（材料来源由用户定）+ 维护域 3 步 + 15 个随包脚本（索引/落库/门禁/修复/拆分/迁移） | 1.6.1 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **方法论库检索**：问题拆解 → 索引定位 → 定向读取 → 合成，按需只读命中条目不全文读库 | 0.2.1 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
@@ -184,7 +184,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
-| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.9.0 | ✅ |
+| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.10.0 | ✅ |
 | ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.20.1 | ✅ |
 | ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.20.1 | ✅ |
 | ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.20.1 | ✅ |
@@ -203,6 +203,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 ## 📌 近期更新
 
+- **2026-09-18 · v0.3.3**：**Excel 交付规则 + 总览双格式 + 发布流程补强**——`ibd-quality-gates` 0.9.0 → **0.10.0**（新增 rules.md §7「公式写入三档 + 交付前重算」：A 经典裸写 / B 单值型带 `_xlfn.` 前缀 / C 溢出型禁 openpyxl，交程序读须先重算或写静态值；反模式新增 **D-8**「Excel 交付物的公式假值 / 静默截断」，清单扩为四类 23 条）；`ibd-doc-annotate` 0.6.1 → **0.7.0**（**总览报告双格式交付 = MD + Word**：新脚本 `overview_to_docx.py`，批注注入后自动同产 `_批注总览.docx`，交付口径同步 doc-review delivery.md）；`ibd-doc-review` 0.20.1（delivery.md 总览双格式口径留痕，纯文档未 bump）。版本矩阵与依赖兼容矩阵同步。
 - **2026-09-18 · v0.3.2**：**接入点声明 + 两条写作红线 + A-8 反模式批次**——`ibd-doc-review` 0.19.0 → **0.20.1**（0.20.0「中文与半角字符之间不加空格」规则成立并**全链路闭环**：规则本体 + 检测脚本双处同源 + 写作侧预防 + 门禁，四处同步；0.20.1 `validate_schema.py` **去第三方依赖**改纯标准库实现 + 新增 21 项自测）；`ibd-doc-write` 0.14.1 → **0.14.3**（0.14.2 写前红线「自立场材料不作论据」回指 A-8；0.14.3 写前红线「中文与半角字符不留空格」，单一事实源指向 doc-review）；`ibd-quality-gates` 0.8.4 → **0.9.0**（论证类反模式 **A-8**「拿自立场材料当论据」）；**四包补齐接入点三问声明**（`ibd-doc-annotate` 0.6.0 → **0.6.1**：无需自备资产；`ibd-finance-review` 0.8.5 → **0.8.6**：自备项全为可选 + 机检脚本指向明确化；`ibd-methods-ops` 1.6.0 → **1.6.1**、`ibd-methods-query` 0.2.0 → **0.2.1**：缺失降级档），公开包总表口径由 **5 扩为 7**（补入两个方法包）。版本矩阵与依赖兼容矩阵同步。
 - **2026-09-15 · v0.3.1**：**根 README 元数据修复**——依赖版本兼容矩阵补齐 v0.3.0 批次欠账（annotate 下限 ≥0.16.2 → **≥0.19.0**（ADR-0006 单入口路由，原下限为假性兼容陷阱）；当前列同步 doc-review 0.19.0 / quality-gates 0.8.4 / methods-ops 1.6.0）；下限口径注脚同步 annotate 单入口语义。包内容零变更，与 v0.3.0 zip 等价。
 - **2026-09-15 · v0.3.0**：**问题清单结构化 + 单入口 + 逐段协作 + S7 三过滤批次**——`ibd-doc-review` 0.17.3 → **0.19.0**（0.18.0 新增 [problems.schema.json](skills/ibd-doc-review/references/problems.schema.json) 问题清单 JSON Schema + [validate_schema.py](skills/ibd-doc-review/scripts/validate_schema.py) 校验入口，ADR-0004 C-分步；0.19.0 批注任务单入口路由，check_annotations.py 转内部回调，ADR-0006）；`ibd-doc-annotate` 0.5.6 → **0.6.0**（唯一对外批注入口声明 + 依赖下限 ≥0.19.0）；`ibd-doc-write` 0.13.0 → **0.14.1**（0.14.0 [paragraph-collab.md](skills/ibd-doc-write/references/paragraph-collab.md) 逐段协作模式落地：状态双文件 + 口径漂移检测协议，ADR-0001 操作规程化；0.14.1 文档类型拆分门槛 = 复现 ≥3 次）；`ibd-methods-ops` 1.5.3 → **1.6.0**（S7 回写池三过滤 ADR-0007 + 库主从关系 ADR-0009）；`ibd-quality-gates` **0.8.4**（antipatterns.md 追溯补记）。版本矩阵同步。

@@ -18,7 +18,8 @@ issues.json（与 annotate_docx.py 同构；可选 "page": 页码(1 起)，限�
   - 定位：rawdict 字符级匹配（容忍空格/换行/数字单位间断字）→ 高亮 + 弹注（hover 查看）
   - 弹注正文 4 行紧凑（纯文本无加粗，行间 \n）：标签行 / 标题行 / 问题描述… / 建议…
   - --pages "5-6"：仅抽取该页范围（演示/节选场景）；缺省保留全文
-  - 输出：<原文名>_批注版.pdf（或 --out）+ <输出>_批注总览.md
+  - 输出：<原文名>_批注版.pdf（或 --out）+ <输出>_批注总览.md + <输出>_批注总览.docx
+    （总览双格式交付：MD + Word——2026-09-18 用户裁定）
   - 找不到锚点的条目计入总览「未锚定」，不报错中断
 
 依赖：pymupdf
@@ -207,8 +208,16 @@ def main():
         doc.save(out_pdf, garbage=3, deflate=True)
     doc.close()
     overview = write_overview(out_pdf, issues, misses)
+    # 总览双格式交付（2026-09-18 用户裁定）：md 之外同产 Word 版
+    try:
+        from overview_to_docx import convert as _md2docx
+    except ImportError:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from overview_to_docx import convert as _md2docx
+    overview_docx = os.path.splitext(overview)[0] + ".docx"
+    _md2docx(overview, overview_docx)
     print("saved:", out_pdf)
-    print("overview:", overview)
+    print("overview:", overview, "+", overview_docx)
     print(f"未锚定 {len(misses)} 条（详见总览）" if misses else "全部锚定 ✅")
     return 0
 

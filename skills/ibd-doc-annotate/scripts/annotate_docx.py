@@ -23,7 +23,8 @@ issues.json（数组，每元素一条复核关注点）:
   - 锚点定位：正文段落 + 表格单元格段落；跨 run 按字符拆分注入并**保留原 run 格式**
   - 边界：锚点段落含复杂 run（换行 w:br / 制表 w:tab / 多 w:t 的 run 等）或锚点骑跨超链接 →
     不自动注入，记入总览「未锚定」清单（人工定位），不报错中断
-  - 输出：<原文名>_批注版.docx（或 --out）+ <输出>_批注总览.md（双轨兜底，编号一一对应）
+  - 输出：<原文名>_批注版.docx（或 --out）+ <输出>_批注总览.md + <输出>_批注总览.docx
+    （总览双格式交付：MD 供程序/检索、Word 供批阅流转——2026-09-18 用户裁定；编号一一对应）
   - 批注正文 4 行紧凑：标签行/标题行整行加粗，问题描述/建议仅引导词加粗
   - 只注入批注，不修改原文文字
 
@@ -398,8 +399,16 @@ def main():
             z.writestr(name, data)
     os.remove(tmp)
     overview = write_overview(out_docx, issues, misses)
+    # 总览双格式交付（2026-09-18 用户裁定）：md 之外同产 Word 版
+    try:
+        from overview_to_docx import convert as _md2docx
+    except ImportError:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from overview_to_docx import convert as _md2docx
+    overview_docx = os.path.splitext(overview)[0] + ".docx"
+    _md2docx(overview, overview_docx)
     print("saved:", out_docx)
-    print("overview:", overview)
+    print("overview:", overview, "+", overview_docx)
     print(f"未锚定 {len(misses)} 条（详见总览）" if misses else "全部锚定 ✅")
     return 0
 

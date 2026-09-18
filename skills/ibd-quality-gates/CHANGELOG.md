@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.10.0] - 2026-09-18
+
+### 新增：Excel 交付物专项——公式写入三档 + 交付前重算
+
+- **动因（用户裁定，承接 2026-09-18 真机实测）**：真机 Excel 探针定案——openpyxl 写溢出型函数（SORT/FILTER/UNIQUE/SEQUENCE）无 spill 元数据，Excel 按隐式交集**只出左上角首值**（静默半对）；xlsxwriter 缓存值恒为 0（假值）；裸写 post-2007 函数触发 `#NAME?` 甚至「文件需修复」静默剥离。原「禁用 O365 函数」口径同日被用户推翻（本机装有原生 Excel），改为三档规范
+- **落地**：
+  - `references/rules.md` 新增 **§7 Excel 交付物：公式写入三档 + 交付前重算**（A 经典裸写 / B 单值型带 `_xlfn.` 前缀 / C 溢出型禁 openpyxl；交付对象为人/程序分路：程序读须先重算或写静态值；交稿前三动作——`xlsx_gate.py` BLOCK=0、静态值走 `xlsx_dyn.py`、抽查 2-3 格对预期）
+  - `references/antipatterns.md` 数据类新增 **D-8「Excel 交付物的公式假值 / 静默截断」**，清单扩为四类 23 条
+  - `SKILL.md`：description 补 Excel 三档 + 触发词「Excel 交付检查」；何时使用补触发行；检查二补「Excel 交付物专项」段；资源索引 rules.md 行注 §7、antipatterns 23 条
+- **配套工具**：`skills-patch/xlsx_gate.py`（交付门禁）与 `skills-patch/xlsx_dyn.py`（档 C 静态值写入器，自带写后回读验证）——均不在本包内（属本地 skills-patch 定制层，本 skill 只挂指针）
+- 性质：校验覆盖面扩大（新领域规则）= Y
+
 ## [未发布 · 纯文档] 2026-09-18
 
 ### 文案修正（规则/流程/依赖零变化 · 未 bump）
