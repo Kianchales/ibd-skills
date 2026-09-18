@@ -3,7 +3,10 @@
 
 逐包检查：
   1. SKILL.md 存在且 frontmatter 含 version
-  2. CHANGELOG.md 最新节版本 == SKILL.md version
+  2. CHANGELOG.md 最新**正式版本**节版本 == SKILL.md version
+     （「未发布」性质的节跳过不参与版本比对；且不得置顶——置顶会被误当
+      最新版本号，2026-09-18 事故：doc-review「未发布·纯文档」节置顶
+      连续 5 轮 CI failure，修法 = 节下移 + 本门禁显式拦截置顶形态）
   3. README.md 在位
   4. SKILL.md/README.md 活跃文案无已下线渠道字样（渠道统一 GitHub）
   5. 集合 README 版本矩阵行 == SKILL.md version（2026-09-15 加：防矩阵笔误，
@@ -66,9 +69,22 @@ def main():
         cl = os.path.join(d, 'CHANGELOG.md')
         if os.path.exists(cl):
             head = open(cl, encoding='utf-8').read()
-            hm = re.search(r'^## \[([^\]]+)\]', head, re.M)
+            # 「未发布」性质的节（如 `## [未发布 · 纯文档]`）不携带版本号，
+            # 跳过版本比对；首个正式版本节才算「最新正式版本」。
+            is_unreleased = re.compile(r'^## \[[^\]]*未发布[^\]]*\]', re.M)
+            hm = None
+            unreleased_top = False
+            for m in re.finditer(r'^## \[([^\]]+)\]', head, re.M):
+                if is_unreleased.match(m.group(0)):
+                    if hm is None:
+                        unreleased_top = True  # 在任何正式版本节之前出现 = 置顶
+                    continue
+                if hm is None:
+                    hm = m
             if hm and ver and hm.group(1).strip() != ver:
-                fails.append(f'{pkg}: SKILL version {ver} != CHANGELOG 最新节 {hm.group(1)}')
+                fails.append(f'{pkg}: SKILL version {ver} != CHANGELOG 最新正式版本节 {hm.group(1)}')
+            if unreleased_top:
+                fails.append(f'{pkg}: CHANGELOG「未发布」节置顶——须移至最新正式版本节之后（会破坏版本比对，2026-09-18 事故先例）')
         else:
             fails.append(f'{pkg}: 缺 CHANGELOG.md')
         if not os.path.exists(os.path.join(d, 'README.md')):
