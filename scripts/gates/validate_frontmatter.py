@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """P4 标准模板校验器（skill-publish-pipeline）
 
 用法：
@@ -22,9 +21,13 @@
 退出码：0 = 全过（WARN 不阻塞）；1 = 有 ERROR。
 """
 import io
+import json
 import os
 import re
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 REQUIRED_SECTIONS = ("何时使用", "使用", "示例", "When to trigger", "Usage", "Examples")
 SECTION_ANY = ("触发", "使用", "示例", "trigger", "usage", "example")
@@ -196,11 +199,22 @@ def validate(skill_dir):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("用法: python validate_frontmatter.py <skill-dir>")
-        return 2
-    issues, warns, summary = validate(sys.argv[1])
-    print("== P4 标准模板校验: %s" % sys.argv[1])
+    import argparse
+    ap = argparse.ArgumentParser(description="P4 标准模板校验（骨架门禁）")
+    ap.add_argument("skill_dir", help="待检 skill 目录")
+    ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
+    a = ap.parse_args()
+    issues, warns, summary = validate(a.skill_dir)
+    if a.json:
+        print(json.dumps({
+            "tool": "validate_frontmatter", "target": a.skill_dir, "summary": summary,
+            "verdict": "FAIL" if issues else "PASS",
+            "error": len(issues), "warn": len(warns),
+            "issues": ([{"level": "ERROR", "msg": str(m)} for m in issues] +
+                       [{"level": "WARN", "msg": str(m)} for m in warns]),
+        }, ensure_ascii=False))
+        return 1 if issues else 0
+    print("== P4 标准模板校验: %s" % a.skill_dir)
     for i in issues:
         print("  [ERROR] %s" % i)
     for w in warns:

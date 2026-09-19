@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """check_consistency.py — ibd-skills 集合一致性门禁（CI 用）
 
 逐包检查：
@@ -14,9 +14,14 @@
 
 任一失败 → exit 1。纯标准库，零依赖。
 """
+import argparse
+import json
 import os
 import re
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SKILLS = os.path.join(ROOT, 'skills')
@@ -45,6 +50,9 @@ def load_matrix_versions(readme_path):
 
 
 def main():
+    ap = argparse.ArgumentParser(description="集合一致性门禁（版本/README 矩阵/发布渠道/变更留痕）")
+    ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
+    args = ap.parse_args()
     fails = []
     matrix = load_matrix_versions(os.path.join(ROOT, 'README.md'))
     # 治理范围过滤（2026-09-15）：平铺布局（真身仓）下根目录混有第三方/私有 skill
@@ -115,12 +123,22 @@ def main():
                     stem = os.path.splitext(fn)[0]
                     if (fn in sk_text or stem in sk_text) and (fn not in cl_text and stem not in cl_text):
                         fails.append(f'{pkg}: {sub}/{fn} 被 SKILL.md 引用但 CHANGELOG 无任何记录（变更留痕缺失）')
+    n_pkgs = len([x for x in os.listdir(SKILLS) if os.path.isdir(os.path.join(SKILLS, x))])
+    if args.json:
+        print(json.dumps({
+            "tool": "check_consistency", "target": SKILLS,
+            "verdict": "FAIL" if fails else "PASS",
+            "error": len(fails), "warn": 0, "scanned": n_pkgs,
+            "issues": [{"level": "ERROR", "msg": m} for m in fails],
+        }, ensure_ascii=False))
     if fails:
-        print('FAIL:')
-        for f in fails:
-            print(' -', f)
+        if not args.json:
+            print('FAIL:')
+            for f in fails:
+                print(' -', f)
         sys.exit(1)
-    print(f'OK: {len([x for x in os.listdir(SKILLS) if os.path.isdir(os.path.join(SKILLS, x))])} 包版本/README/渠道一致')
+    if not args.json:
+        print(f'OK: {n_pkgs} 包版本/README/渠道一致')
 
 
 if __name__ == '__main__':
