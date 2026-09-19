@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## [1.17.0] - 2026-09-19
+
+### 入口资产改接 junction：`app/` 目录化落地，移除 `sync_root_assets.py` 镜像通道
+
+- **用户裁定**：1.16.5 的「镜像入仓」只解决「入仓可回滚」，**不同步给副机** ⇒ 用户指令「改接 junction」，改用**入口目录化**
+- **实测前置（决定方案）**：文件级符号链接在本机**沙箱内外一致报「此操作需要管理员权限」**（开发者模式虽为 1 亦不行）⇒ 文件无法靠链接同源；**junction 免管理员**（实测通过）⇒ 唯一免管理员解 ＝ 把入口资产装进一个目录、该目录接 junction
+- **落地**：5 个入口资产（daily_distill.py／config.json／wind_client.py／README.md／注册计划任务.ps1）由库根移入 `workflow/app/`，本机在库根 `app/` 处接 junction 指向之（与既有 6 个子目录同型，免管理员）
+  - `daily_distill.py` 路径语义：`SCRIPT_DIR`（= `app/`）读 `config.json`，新增 `ROOT_DIR`（= 上一级 ＝ 库根）定位 `methods/scripts/state/tasks/archive`（7 处 SCRIPT_DIR→ROOT_DIR；stderr 计数行补「（非互斥计数）」防误加）
+  - 计划任务「IPO每日蒸馏选材」重注册指向 `app/daily_distill.py`；automation prompt 6 处调用路径同步；存活文档（专家团 6 agent ＋ 2 references ＋ 2 README）15 处调用路径同步
+- **移除 `scripts/sync_root_assets.py`**（1.16.5 新增）：入口资产实体已在仓内，镜像通道失去对象——**一次只保留一套机制**，避免两个入口并存漂移
+- **顺带修正**：「依赖与工具」脚本数 16 → **24**（与实际不符的陈旧计数）
+- **实测**：从库根 `python app/daily_distill.py --select --top 20` → RC=0，`今日候选.json` 与改动前**逐字节一致**（md5 相同）；入仓实体与原件 md5 **5/5**
+
+## [1.16.5] - 2026-09-19
+
+### 同步范围收口：新增 `sync_root_assets.py`（工作区根入口资产镜像入仓）＋ 计划任务参数校正
+
+- **缘起**：用户问「为什么入口脚本 `daily_distill.py` 不在同步范围」→ 实测**工作区根目录本身未纳入同步范围**（只有部分子目录挂载入仓）⇒ 根下入口资产（`daily_distill.py`／`config.json`／`wind_client.py`／`README.md`／`注册计划任务.ps1`）**既不在云盘同步范围、也不在 git 仓内**（incident-log **I-0029**）
+- **未采用原建议「主脚本移入 `scripts/` ＋ 根下薄壳」**，改用工单化镜像（理由三条）：① `daily_distill.py` 以 `__file__` 定位库根（`SCRIPT_DIR`），移入 `scripts/` 会使全部相对路径（`state/`／`methods/`／`cases/`…）错位；② `scripts/` 现定位为「**库内薄壳转发层**」（12 个脚本全为薄壳），放入真身脚本会与既有语义冲突；③ 处于蒸馏前夜，不宜改动无人值守链路入口
+- **新增 `scripts/sync_root_assets.py`**：白名单式（内置 5 项，`--add` 可扩，生成物默认排除）；增量比对（md5）**幂等**；**落盘回读自校验**；**默认 dry-run**，`--apply` 才写；**零私有绑定**（源/镜像由参数或 `ROOT_ASSETS_SRC`／`ROOT_ASSETS_MIRROR` 给出，镜像默认由 **git 仓根推导**）
+- **计划任务参数校正**：`注册计划任务.ps1` 内 `--select --top 8` → **`--top 20`**（与 automation prompt 对齐；原 `top 8` 实测前 14 名曾全被已学案占满），并已 `Set-ScheduledTask` 更新**实机任务**（`IPO每日蒸馏选材`，STATE=Ready，NEXT=2026-09-20 09:00）
+- **实测**：镜像 5 文件入仓（md5 **5/5** 通过）；幂等复跑「待写 0 ／ 已一致 5」
+
 ## [1.16.4] - 2026-09-19
 
 ### 发布前 P1 隐私扫描修复：清掉包内本机私有路径与私有库名（5 处 BLOCK → 0）
@@ -73,7 +96,7 @@
 - 写入方式：**同行插入、行数守恒**（分卷 5 文件总行数 18,623 不变，行号零漂移）
 
 **② `sync_cases_md.py` 带病入库（工程范式 1 ERROR ＋ 1 WARN）**
-- `A9 硬编码绝对路径`：默认源/镜像写死 `C://…` 与含 `OneDrive` 的绝对路径 ⇒ 改为
+- `A9 硬编码绝对路径`：默认源/镜像写死 `C://…` 与含云盘根目录的绝对路径 ⇒ 改为
   `os.path.expanduser("~")` ＋ **由 git 仓根推导镜像落点**（env `CASES_SRC`/`CASES_MIRROR` 可覆盖），零私有绑定
 - `A4 含破坏性写操作但无 --dry-run`：虽有 `--apply` 开关语义，但字面无 `--dry-run` ⇒ 补显式 `--dry-run` 参数（与默认同义）
 - 副作用改进：**在工作区外运行不再静默错落点**，改为明确用法错（exit 2）＋ 提示
