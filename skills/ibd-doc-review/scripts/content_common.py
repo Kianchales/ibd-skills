@@ -19,6 +19,10 @@ import os
 import re
 import zipfile
 
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 SKILL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TERM_RULES_FILE = os.path.join(SKILL_DIR, "references", "term_rules.json")
 
@@ -35,7 +39,7 @@ def load_docx(path):
                 out["word/document.xml"] = z.read("word/document.xml").decode("utf-8", errors="ignore")
             return out or None
     except Exception as e:
-        print(f"[ERROR] 读取失败 {path}: {e}")
+        print(f"[ERROR] 读取失败 {path}: {e}", file=sys.stderr)
         return None
 
 

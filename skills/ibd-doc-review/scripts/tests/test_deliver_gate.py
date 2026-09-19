@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 test_deliver_gate.py — deliver_gate.py 自测（含批注/修订挂载开关）
 
@@ -37,6 +36,9 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 import zipfile
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 SKILL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SCRIPT = os.path.join(SKILL_DIR, "scripts", "deliver_gate.py")

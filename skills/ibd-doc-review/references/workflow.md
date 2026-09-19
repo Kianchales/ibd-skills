@@ -80,7 +80,7 @@
 
 ## 二、格式核对模式（check_content.py，只读不改文件 · 分组框架）
 
-> 敏感词/地理表述清单见 [sensitive_terms.json](sensitive_terms.json)（--geo-file 驱动，可扩展维护）。
+> 敏感词/地理表述清单见 [sensitive-terms.json](sensitive-terms.json)（--geo-file 驱动，可扩展维护）。
 
 触发：「核对格式」「格式自查」「投行格式核对」「检查序号/日期/标点/表格样式」「文件质量核查」等**只读审查类请求**。适用于任意投行 Word 文档（中性通用规则）。数值自洽核对（金额文本格式/数值前后一致/勾稽）请用 `ibd-quality-gates` 的 check_data.py（md/docx 双载体）。
 

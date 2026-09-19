@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 ibd-doc-review · check_revisions.py — 复核修订稿只读校验门禁（规范：references/revisions.md）
 
@@ -21,10 +20,14 @@ ibd-doc-review · check_revisions.py — 复核修订稿只读校验门禁（规
 依赖：纯标准库（zipfile + xml.etree.ElementTree），零 pip 包。
 """
 import argparse
+import json
 import os
 import sys
 import zipfile
 import xml.etree.ElementTree as etree
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 XML_SPACE = '{http://www.w3.org/XML/1998/namespace}space'
@@ -84,7 +87,7 @@ def clean_tree(doc):
     return root
 
 
-def check(input_path, mode, expect, report):
+def check(input_path, mode, expect, report, as_json=False):
     fails = []
     notes = []
     doc, settings = load_doc(input_path)
@@ -154,6 +157,15 @@ def check(input_path, mode, expect, report):
     else:
         report_lines += ["", "结果：**PASS** ✅"]
     body = "\n".join(report_lines)
+    if as_json:
+        print(json.dumps({
+            "tool": "check_revisions", "target": input_path, "mode": mode,
+            "verdict": "FAIL" if fails else "PASS",
+            "error": len(fails), "warn": 0,
+            "notes": notes,
+            "issues": [{"level": "ERROR", "msg": str(m)} for m in fails],
+        }, ensure_ascii=False))
+        return 1 if fails else 0
     print("\n".join([f"[{'FAIL' if fails else 'OK'}] {n}" for n in notes + fails]) or "(no checks)")
     print("结果：", "FAIL ❌" if fails else "PASS ✅")
     if report:
@@ -171,8 +183,9 @@ def main():
                     help="revise=Word 修订模式稿（默认）| clean=干净版")
     ap.add_argument("--expect", type=int, default=None, help="期望已修订条数（修改清单「已修订 N 条」）")
     ap.add_argument("--report", action="store_true", help="写校验报告 md")
+    ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     args = ap.parse_args()
-    sys.exit(check(args.input, args.mode, args.expect, args.report))
+    sys.exit(check(args.input, args.mode, args.expect, args.report, args.json))
 
 
 if __name__ == "__main__":

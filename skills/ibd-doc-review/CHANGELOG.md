@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.21.1] - 2026-09-19 · references 命名统一（kebab-case）
+
+- `references/sensitive_terms.json` → **`references/sensitive-terms.json`**（下划线 → kebab-case，对齐 `docs/ENGINEERING.md` §3 命名规范）
+- 同步引用：`SKILL.md`、`references/workflow.md`、`scripts/content_text.py`（常量路径 ＋ 文档字符串）；
+  跨包活跃引用 `ibd-doc-write/references/writing-style.md`、`skill-publish-pipeline/references/source-sync.md`
+- **历史条目不改写**（`v0.21.0` 及更早提及旧名处以历史为准）；实证：`content_text.SENSITIVE_TERMS_FILE` 指向新名且文件可达
+
+## [0.21.0] - 2026-09-19
+
+### 新增：本包 5 个门禁脚本支持 `--json`（工程范式 A5 对齐）
+
+- `validate_schema.py`：输出 `{tool, target, verdict, error, warn, total, issues[{where,msg}]}`
+- `check_revisions.py`：`check()` 增 `as_json=False` 参数（默认不变，不影响既有调用）；JSON 含 `mode`／`notes`／`issues`；`--report` 写报告仅在人类模式下执行
+- `check_annotations.py`：`{…, verdict, error（FAIL 计数）, warn, issues[{level,msg}]}`
+- `check_content.py`：含 `files[{file, counts, report}]`（`counts` 为各级严重度计数）；`--output` 仍写报告
+- `check_styles.py`：入口新增统一出口 `finish()`，覆盖 diff／check_numbering／verify_content／revise／默认五条分支，`mode` 字段标明分支
+- **JSON 模式抑制过程打印**：被检函数内部的报告输出重定向到缓冲，只保留最终机器可读结果（`check_annotations`／`check_styles` 两处）
+- 退出码契约不变（schema 不合 = 1／修订 FAIL = 1）；5 个脚本的 JSON 契约与人类输出回归均通过
+- 依据：`docs/ENGINEERING.md` §4.5 P7
+
 ## [0.20.1] - 2026-09-18
 
 ### 修复：`validate_schema.py` 去第三方依赖（改纯标准库实现）
@@ -12,7 +32,7 @@
 - **本版另含**：2026-09-18 的纯文档修正（用词口径 Word 化 + P4 裸路径修复 + badge 同步，见下条，均未单独 bump）
 - 性质：修依赖违规（行为等价、去外部依赖）→ bump Z
 
-## [未发布 · 纯文档] 2026-09-18
+## [未发布 · 纯文档] - 2026-09-18
 
 ### 文案与措辞修正（规则/脚本/流程零变化 · 未 bump）
 
@@ -21,7 +41,7 @@
 - **README badge 版本同步**：version badge 0.19.0 → 0.20.0（与 SKILL.md 当前版本对齐，清 P4「badge 滞后」WARN）
 - 性质：**纯文档修正，未 bump**（依 P5「模板/文档更新在 CHANGELOG 留痕不 bump」及本文件 0.15.5「纯文档未 bump」先例）
 
-## [未发布 · 纯文档] 2026-09-18
+## [未发布 · 纯文档] - 2026-09-18
 
 ### 交付口径更新：总览报告双格式（MD + Word）· 未 bump
 

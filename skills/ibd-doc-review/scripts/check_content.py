@@ -39,6 +39,7 @@
 import argparse
 import datetime
 import glob
+import json
 import os
 import sys
 from collections import Counter
@@ -71,6 +72,9 @@ from content_text import (
 
 
 # ---------------------------------------------------------------- 登记 & 主流程
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 CHECK_REGISTRY = [
     {"id": "heading_seq", "group": "text", "name": "标题层级序号连续性（跳号/重号/倒退）", "severity": "HIGH"},
@@ -227,15 +231,17 @@ def main():
                     help="国家/城市敏感词清单 JSON：[{\"term\":\"...\",\"note\":\"...\",\"suggestion\":\"...\"}]")
     ap.add_argument("--terms-file", default=None,
                     help="术语规则清单 JSON 扩展：[{\"pattern\":\"...\",\"problem\":\"...\",\"suggestion\":\"...\"}]")
+    ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     args = ap.parse_args()
 
     files = resolve_files(args.input)
     if not files:
-        print(f"[ERROR] 未找到 docx: {args.input}")
+        print(f"[ERROR] 未找到 docx: {args.input}", file=sys.stderr)
         sys.exit(1)
 
     check_ids = resolve_checks(args.checks)
     exit_ok = True
+    json_files = []
     for f in files:
         result = run(f, check_ids, geo_file=args.geo_file, terms_file=args.terms_file)
         if result is None:
@@ -252,6 +258,9 @@ def main():
         for cid in check_ids:
             for it in results[cid]:
                 sev_cnt[it.severity] += 1
+        json_files.append({"file": f, "counts": dict(sev_cnt), "report": out})
+        if args.json:
+            continue
         for sev in SEV_ORDER:
             label = SEV_LABEL[sev]
             mark = "✅ 0" if sev_cnt.get(sev, 0) == 0 else f"⚠️ {sev_cnt[sev]}"
@@ -261,6 +270,17 @@ def main():
             print(f"  {line_txt}")
         print(f"  → 报告已写入：{out}")
 
+    if args.json:
+        tot = Counter()
+        for jf in json_files:
+            for k, v in jf["counts"].items():
+                tot[k] += v
+        print(json.dumps({
+            "tool": "check_content", "target": args.input,
+            "verdict": "PASS" if (exit_ok and not tot.get("HIGH", 0)) else "FAIL",
+            "error": tot.get("HIGH", 0), "warn": tot.get("MEDIUM", 0),
+            "files": json_files,
+        }, ensure_ascii=False))
     sys.exit(0 if exit_ok else 2)
 
 

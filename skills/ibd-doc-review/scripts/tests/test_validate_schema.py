@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 test_validate_schema.py — validate_schema.py 自测（纯标准库实现版）
 
@@ -43,6 +42,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.abspath(os.path.join(TESTS_DIR, "..", ".."))

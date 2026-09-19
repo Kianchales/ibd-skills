@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 check_styles.py — IPO 文档样式应用检查脚本（ibd-doc-review skill 附带）
 功能：
@@ -16,12 +15,17 @@ check_styles.py — IPO 文档样式应用检查脚本（ibd-doc-review skill �
 import argparse
 import datetime
 import glob
+import io
+import json
 import os
 import re
 import sys
 import zipfile
 
 # 各场景必备样式：正文 + 一级（必检）；002 及以上由跳级检测兜底
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 REQUIRED = {
     "招股书": ["000", "001"],
     "报告": ["000", "001"],
@@ -557,56 +561,68 @@ def main():
                     help="生成 Word 修订稿：以原文件为基底，将 --input（样式化结果）的格式改动转为 Word 修订（w:pPrChange 格式更改），并开启 trackChanges；输出 <原文件>_修订稿.docx（--output 可覆盖）")
     ap.add_argument("--output", default=None, help="--revise 的输出路径（默认 <原文件>_修订稿.docx）")
     ap.add_argument("--verbose", action="store_true")
+    ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     args = ap.parse_args()
+    if args.json:
+        # JSON 模式下抑制检查过程的报告打印，只保留最终的机器可读结果
+        sys.stdout = io.StringIO()
+
+    def finish(all_ok, ok_msg, bad_msg, tag):
+        """统一出口：--json 输出结构化，否则人读；退出码 0（通过）／2（未通过）。"""
+        if args.json:
+            print(json.dumps({
+                "tool": "check_styles", "target": args.input, "mode": tag,
+                "verdict": "PASS" if all_ok else "FAIL",
+                "error": 0 if all_ok else 1, "warn": 0,
+                "issues": ([] if all_ok else [{"level": "ERROR", "msg": bad_msg}]),
+            }, ensure_ascii=False), file=sys.__stdout__)
+        else:
+            print(f"\n{ok_msg if all_ok else bad_msg}")
+        sys.exit(0 if all_ok else 2)
 
     files = resolve_files(args.input)
     if not files:
-        print(f"[ERROR] 未找到 docx: {args.input}")
+        print(f"[ERROR] 未找到 docx: {args.input}", file=sys.stderr)
         sys.exit(1)
 
     if args.diff:
         orig_files = resolve_files(args.diff)
         if not orig_files:
-            print(f"[ERROR] 未找到原文: {args.diff}")
+            print(f"[ERROR] 未找到原文: {args.diff}", file=sys.stderr)
             sys.exit(1)
         all_ok = all(cmd_diff(f, orig_files[0]) for f in files)
-        print(f"\n{'格式修改清单生成完成 ✅' if all_ok else '生成失败 ❌'}")
-        sys.exit(0 if all_ok else 2)
+        finish(all_ok, "格式修改清单生成完成 ✅", "生成失败 ❌", "diff")
 
     if args.check_numbering:
         all_ok = all(check_numbering(f) for f in files)
-        print(f"\n{'序号段落核对完成 ✅' if all_ok else '核对异常 ❌'}")
-        sys.exit(0 if all_ok else 2)
+        finish(all_ok, "序号段落核对完成 ✅", "核对异常 ❌", "check_numbering")
 
     if args.verify_content:
         orig_files = resolve_files(args.verify_content)
         if not orig_files:
-            print(f"[ERROR] 未找到原文: {args.verify_content}")
+            print(f"[ERROR] 未找到原文: {args.verify_content}", file=sys.stderr)
             sys.exit(1)
         # 内容校验：--input 每个文件与原文对比（单文件对单文件）
         all_ok = True
         for f in files:
             all_ok &= verify_content(f, orig_files[0])
-        print(f"\n{'内容完整性全部通过 ✅' if all_ok else '内容被修改 ❌（严禁修改原文内容）'}")
-        sys.exit(0 if all_ok else 2)
+        finish(all_ok, "内容完整性全部通过 ✅", "内容被修改 ❌（严禁修改原文内容）", "verify_content")
 
     if args.revise:
         orig_files = resolve_files(args.revise)
         if not orig_files:
-            print(f"[ERROR] 未找到原文件: {args.revise}")
+            print(f"[ERROR] 未找到原文件: {args.revise}", file=sys.stderr)
             sys.exit(1)
         print(f"\n=== 生成 Word 修订稿（--input 为样式化结果，--revise 为原文件）===")
         all_ok = True
         for f in files:
             out = args.output or os.path.splitext(orig_files[0])[0] + "_修订稿.docx"
             all_ok &= make_revision(orig_files[0], f, out)
-        print(f"\n{'修订稿生成完成 ✅' if all_ok else '生成失败 ❌'}")
-        sys.exit(0 if all_ok else 2)
+        finish(all_ok, "修订稿生成完成 ✅", "生成失败 ❌", "revise")
 
     fn = check_template if args.mode == "template" else check_document
     all_ok = all(fn(f, args.scenario) for f in files)
-    print(f"\n{'全部通过 ✅' if all_ok else '存在需修正项 ❌'}")
-    sys.exit(0 if all_ok else 2)
+    finish(all_ok, "全部通过 ✅", "存在需修正项 ❌", args.mode)
 
 
 if __name__ == "__main__":

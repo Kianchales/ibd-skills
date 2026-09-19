@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """交付前综合核验（一次跑完 · 极简输出）
 
 把交付前反复核验的物理项**合并为一次调用**，输出「一行一指标」：
@@ -68,6 +67,9 @@ import subprocess
 import sys
 import zipfile
 import xml.etree.ElementTree as ET
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 

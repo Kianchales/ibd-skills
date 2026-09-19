@@ -26,7 +26,7 @@ description: >
   「批注格式」「校验批注」「批注规范」「修订稿校验」「校验修订」「检查修订稿」
   「修订结构对不对」「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」
   「研究下XX节」「帮我看看这段」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
-version: 0.20.1
+version: 0.21.1
 agent_created: true
 ---
 
@@ -146,7 +146,7 @@ agent_created: true
 >
 > - **只读审查**，适用于任意投行 Word 文档（中性通用规则）；命令：`check_content.py --input <docx> [--checks text|table|geo,table_na]`，出 `<input>_格式核对报告.md`
 > - **两大组别**：文字类 text（序号连续性 / 用词规范 / 日期写法 / 多余空格·数字与英文前后空格·重复标点 / 释义简称 / 地理表述）+ 表格类 table（字号体系 / 数字右对齐 / 空单元格 / NA 标记统一），按 HIGH/MEDIUM/LOW 分级
-> - **边界**：本模式查格式层自洽；**数值自洽**（勾稽/前后一致）与**内容质量溯源**归 `ibd-quality-gates`（check_data.py）。敏感词/地理清单见 [sensitive_terms.json](references/sensitive_terms.json)
+> - **边界**：本模式查格式层自洽；**数值自洽**（勾稽/前后一致）与**内容质量溯源**归 `ibd-quality-gates`（check_data.py）。敏感词/地理清单见 [sensitive-terms.json](references/sensitive-terms.json)
 
 ### 5. 批注与修订复核交付模式（规范 + 只读校验）
 

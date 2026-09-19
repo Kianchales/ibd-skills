@@ -22,6 +22,10 @@ from content_common import Issue
 
 # ---------------------------------------------------------------- table_font
 
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 FONT_OK_SIZES = {21, 18}   # 半点值：21 = 10.5pt 五号；18 = 9pt 小五
 
 

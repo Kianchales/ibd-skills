@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 check_annotations.py — 批注复核产物校验脚本（ibd-doc-review skill 附带 · 规范见 references/annotations.md）
 功能（只读校验，不改文件）：
@@ -21,11 +20,16 @@ check_annotations.py — 批注复核产物校验脚本（ibd-doc-review skill �
 """
 import argparse
 import glob
+import io
+import json
 import os
 import re
 import sys
 import zipfile
 import xml.etree.ElementTree as ET
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 CT = "{http://schemas.openxmlformats.org/package/2006/content-types}"
@@ -222,7 +226,11 @@ def main():
     ap.add_argument("--pdf", help="带注释的 PDF 文件")
     ap.add_argument("--expect", type=int, default=None, help="PDF 期望批注条数")
     ap.add_argument("--report", action="store_true", help="同时写出 <文件>_批注校验报告.md")
+    ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     args = ap.parse_args()
+    if args.json:
+        # JSON 模式下抑制校验过程的逐条打印，只保留最终的机器可读结果
+        sys.stdout = io.StringIO()
 
     ok = True
     report_lines = []
@@ -258,6 +266,17 @@ def main():
             fh.write("\n".join(report_lines))
         print("report:", out)
 
+    if args.json:
+        n_fail = sum(1 for ln in report_lines if ln.startswith("- [FAIL]"))
+        n_warn = sum(1 for ln in report_lines if ln.startswith("- [WARN]"))
+        print(json.dumps({
+            "tool": "check_annotations", "target": args.pdf or args.input,
+            "verdict": "PASS" if ok else "FAIL",
+            "error": n_fail, "warn": n_warn,
+            "issues": [{"level": "ERROR" if ln.startswith("- [FAIL]") else "WARN", "msg": ln[4:]}
+                       for ln in report_lines if ln.startswith("- [")],
+        }, ensure_ascii=False), file=sys.__stdout__)
+        sys.exit(0 if ok else 1)
     print("结果：", "PASS ✅" if ok else "FAIL ❌（存在硬性不符，不交付）")
     sys.exit(0 if ok else 1)
 

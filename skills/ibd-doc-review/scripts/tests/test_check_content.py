@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 test_check_content.py — ibd-doc-review 格式核对模块自测（P2-⑧ 拆组配套）
 
@@ -31,6 +30,9 @@ import sys
 import tempfile
 import unittest
 import zipfile
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 SKILL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SCRIPTS = os.path.join(SKILL_DIR, "scripts")

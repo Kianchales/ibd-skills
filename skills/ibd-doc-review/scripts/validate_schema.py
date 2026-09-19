@@ -21,6 +21,9 @@ import re
 import sys
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "references" / "problems.schema.json"
 
 # 已实现的 schema 关键字：元数据（无校验语义）+ 校验关键字
@@ -121,6 +124,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="复核问题清单 JSON Schema 校验")
     parser.add_argument("problems", help="问题清单 JSON 文件路径")
     parser.add_argument("--quiet", action="store_true", help="仅输出结果行")
+    parser.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     args = parser.parse_args()
 
     problems_path = Path(args.problems)
@@ -137,6 +141,14 @@ def main() -> int:
 
     errors = sorted(validate(data, schema), key=lambda item: item[0])
 
+    if args.json:
+        print(json.dumps({
+            "tool": "validate_schema", "target": str(problems_path),
+            "verdict": "FAIL" if errors else "PASS",
+            "error": len(errors), "warn": 0, "total": len(data),
+            "issues": [{"level": "ERROR", "where": str(p), "msg": str(m)} for p, m in errors],
+        }, ensure_ascii=False))
+        return 1 if errors else 0
     if not errors:
         print("PASS: %d 条全部符合 schema（%s）" % (len(data), SCHEMA_PATH.name))
         return 0

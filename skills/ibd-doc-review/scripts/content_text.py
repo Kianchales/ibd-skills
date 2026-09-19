@@ -40,6 +40,10 @@ from content_common import (
 # ---------------------------------------------------------------- heading_seq
 
 
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 def check_heading_seq(items):
     """标题层级序号连续性 v3：
     - 跳过目录条目（以 1~4 位纯数字结尾 = 带页码特征的行）
@@ -450,12 +454,12 @@ def check_abbr(doc_text):
 
 # ---------------------------------------------------------------- geo 国家/城市表述合规
 
-SENSITIVE_TERMS_FILE = os.path.join(SKILL_DIR, "references", "sensitive_terms.json")
+SENSITIVE_TERMS_FILE = os.path.join(SKILL_DIR, "references", "sensitive-terms.json")
 LEVEL_MAP = {"CRITICAL": "HIGH", "IMPORTANT": "MEDIUM", "MINOR": "LOW"}
 
 
 def load_geo_rules(geo_file):
-    """敏感词清单：默认加载 skill 内置 references/sensitive_terms.json；
+    """敏感词清单：默认加载 skill 内置 references/sensitive-terms.json；
     --geo-file 提供的清单会**追加**进来。支持 [{pattern|term, level, note, suggestion}]。"""
     rules = []
     sources = [SENSITIVE_TERMS_FILE]
