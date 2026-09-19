@@ -91,11 +91,11 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
 | [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.14.5 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
-| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.10.0 | 零硬依赖（基座之一） |
+| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.12.0 | 零硬依赖（基座之一） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.8.6 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.20.1 | 零外部 skill 依赖（基座） |
-| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.7.0 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由 ADR-0006） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.6.1 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.21.1 | 零外部 skill 依赖（基座） |
+| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.8.0 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由 ADR-0006） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.16.4 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.3.0 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]
@@ -195,12 +195,12 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
-| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.10.0 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.20.1 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.20.1 | ✅ |
-| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.20.1 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.6.1 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.6.1 | ✅ |
+| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.12.0 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.21.1 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.21.1 | ✅ |
+| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.21.1 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.16.4 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.16.4 | ✅ |
 
 > 下限口径：`ibd-doc-write` 的 ≥0.15.7 = `deliver_gate.py` 引入版；`ibd-doc-annotate` 的 ≥0.19.0 = 批注任务单入口路由版（ADR-0006，check_annotations.py 转内部回调，低于此版单入口声明成死引用）；`ibd-finance-review` 的 ≥0.16.2 = 交付口径单一事实源 `references/delivery.md` 引入版（低于此版该指向成死引用）。
 
@@ -214,6 +214,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 ## 📌 近期更新
 
+- **2026-09-19 · v0.3.5**：**方法论库治理收口 ＋ 三包输出契约 ＋ 命名统一**——`ibd-methods-ops` 1.6.1 → **1.16.4**（当日连续演进：**案名规范**（规范案名＝证券简称 ＋ 白名单门禁 A4）、**案号体系**（AN 号全量落地、占位编号 `S-TBD`／`PL-TBD` 废除）、**P 系列 442 条 ＋ 体例域批次卷 276 条纳入索引**（分卷「静默缺席」修复：此前 718 条在目录与索引中为 0）、**六项遗留缺口收口**（分卷来源案 716/716／cases 字段 1,324 处归一／cases md 镜像入 git／状态载体跨目录索引／行号抽查挂入 **10 项护栏**）、**回写硬门禁定案「软执行 ＋ dry-run 报告」**（四项指标、不阻断）、库内脚本薄壳化（单一事实源收归 skill 包）；新增脚本 `normalize_case_names`／`apply_case_no`／`check_index_locator`／`replay_gate_report`／`sync_cases_md` 等）；`ibd-doc-review` 0.20.1 → **0.21.1**（**references 命名统一**：`sensitive_terms.json` → `sensitive-terms.json`（kebab-case，对齐工程范式 §3），同步 SKILL／workflow／脚本常量；**历史条目不改写**）；`ibd-quality-gates` 0.11.0 → **0.12.0**（**JSON 输出契约**：`check_gates.py`／`check_data.py` 结构化 `issues[]` ＋ `--output` 报告，退出码不变）；`ibd-doc-annotate` 0.7.0 → **0.8.0**（输出契约 `{tool, target, verdict, error, warn, total, issues[]}`，`--json` 与人类输出二选一；依据工程范式 §4.5 P7「人读摘要／机读 JSON／退出码三值同时成立」）；`ibd-doc-write` 0.14.5（`writing-style.md` 纯文档级，未 bump）；`ibd-methods-query` 0.3.0（CHANGELOG 留痕，未 bump）。版本矩阵与依赖兼容矩阵同步。
 - **2026-09-19 · v0.3.4**：**冷启动引导档 + 改写工作簿纪律 + 改稿协作批次**——`ibd-methods-query` 0.2.1 → **0.3.0**（**冷启动引导档**：外部用户反馈首次使用「方法论调用索引读取失败」——库未建时检索必失败，原降级只覆盖索引缺失不覆盖库不存在；缺失降级重构三态：正常 / Grep 兜底 / **冷启动引导**——一问定路径 + 按 ops methods-guide 模板建空库骨架 + 生成最小 library.config.json + 交付「无命中 + 待沉淀登记」）；`ibd-quality-gates` 0.10.0 → **0.11.0**（rules.md 新增 **§8「改写既有工作簿：四条纪律」**——改前体检结构 / 写后读回验证 / 汇总默认全公式 / 参照值限明细行，源自 I-0008~I-0011 四连事故；与 §7 分工：§7 管**公式怎么写**、§8 管**既有簿怎么改**）；`ibd-doc-write` 0.14.3 → **0.14.5**（0.14.5 **交付形态默认值**：**改稿型**——用户直接粘贴自己写好的段落要求修改——默认只返**文本定稿 + 逐条修改点（改前→改后）**，不出 Word、不跑样式落地与门禁，起草型仍走完整文档链路；0.14.4 写前红线「文件类型统一写产品名」Word / Excel / PPT / PDF，技术对照语境例外）；`ibd-methods-ops` 1.6.1「边界与协作」补冷启动分工裁定（建骨架=检索前置自举非生产，零变更未 bump）；`ibd-doc-review` 0.20.1（CHANGELOG「未发布」节序修正，清 consistency 存量 FAIL，未 bump）；根 README 包清单 query 一句话说明补冷启动能力、门面章节白话化。版本矩阵与依赖兼容矩阵同步。
 - **2026-09-18 · v0.3.3**：**Excel 交付规则 + 总览双格式 + 发布流程补强**——`ibd-quality-gates` 0.9.0 → **0.10.0**（新增 rules.md §7「公式写入三档 + 交付前重算」：A 经典裸写 / B 单值型带 `_xlfn.` 前缀 / C 溢出型禁 openpyxl，交程序读须先重算或写静态值；反模式新增 **D-8**「Excel 交付物的公式假值 / 静默截断」，清单扩为四类 23 条）；`ibd-doc-annotate` 0.6.1 → **0.7.0**（**总览报告双格式交付 = MD + Word**：新脚本 `overview_to_docx.py`，批注注入后自动同产 `_批注总览.docx`，交付口径同步 doc-review delivery.md）；`ibd-doc-review` 0.20.1（delivery.md 总览双格式口径留痕，纯文档未 bump）。版本矩阵与依赖兼容矩阵同步。
 - **2026-09-18 · v0.3.2**：**接入点声明 + 两条写作红线 + A-8 反模式批次**——`ibd-doc-review` 0.19.0 → **0.20.1**（0.20.0「中文与半角字符之间不加空格」规则成立并**全链路闭环**：规则本体 + 检测脚本双处同源 + 写作侧预防 + 门禁，四处同步；0.20.1 `validate_schema.py` **去第三方依赖**改纯标准库实现 + 新增 21 项自测）；`ibd-doc-write` 0.14.1 → **0.14.3**（0.14.2 写前红线「自立场材料不作论据」回指 A-8；0.14.3 写前红线「中文与半角字符不留空格」，单一事实源指向 doc-review）；`ibd-quality-gates` 0.8.4 → **0.9.0**（论证类反模式 **A-8**「拿自立场材料当论据」）；**四包补齐接入点三问声明**（`ibd-doc-annotate` 0.6.0 → **0.6.1**：无需自备资产；`ibd-finance-review` 0.8.5 → **0.8.6**：自备项全为可选 + 机检脚本指向明确化；`ibd-methods-ops` 1.6.0 → **1.6.1**、`ibd-methods-query` 0.2.0 → **0.2.1**：缺失降级档），公开包总表口径由 **5 扩为 7**（补入两个方法包）。版本矩阵与依赖兼容矩阵同步。
