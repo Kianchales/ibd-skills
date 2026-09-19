@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """入口生成器（可复用）：glob 域文件 → 重写 通用方法论_最终版.md 路由入口
 扩展性：新增域文件（通用方法论_<域>域.md / 投行语言专项_<域>.md）后，重跑本脚本即自动纳入路由表，零改码。
-计数口径与 parse_titles 对齐（域文件=条目数；W 系列=WD+WD_LIST 条目数，不用 h3 计数——h3 会把归组章节头误计入）；
+计数口径与 parse_titles 对齐（域文件=条目数；W 系列=WD+WD_LIST+h3（### WL-xxxxxx）条目数——h3 归组章节头不以 WL- 开头，不会误计入）；
 入口模板含 frontmatter（type/domain/version/updated，updated 动态取各域文件 frontmatter 最大值）。
 
 用法：
@@ -13,6 +13,10 @@
 """
 import argparse, io, os, re, glob, datetime
 from pathlib import Path
+
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="生成方法论入口（路由薄壳）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
@@ -54,19 +58,22 @@ def _current_entry_version():
 ENTRY_VERSION = _args.version or _current_entry_version()
 
 # 域文件命名规范：通用方法论_<域>域.md（以「域」字结尾，避开单案文件）+ 投行语言专项_*.md
+# 2026-09-19 补：纳入 `分卷/*.md`（P 系列 PL- 与体例域批次卷 S- 的正文唯一存放地）
 DOMAIN_FILES = sorted(
     glob.glob(os.path.join(METHODS, "通用方法论_*域.md"))
-) + sorted(glob.glob(os.path.join(METHODS, "投行语言专项_*.md")))
+) + sorted(glob.glob(os.path.join(METHODS, "投行语言专项_*.md"))) \
+  + sorted(glob.glob(os.path.join(METHODS, "分卷", "*.md")))
 
 
 def count_entries(fname, content):
-    """计数口径与 parse_v26_titles.py 一致：域文件=(N) 或 v37 身份编号条目；W 系列=WD 加粗 + WD_LIST 列表条目。"""
+    """计数口径与 parse_titles.py 一致：域文件=(N) 或 v37 身份编号条目；W 系列=WD 加粗 + WD_LIST 列表 + h3 形态。"""
     if fname.startswith("投行语言专项"):
-        n_wd = len(re.findall(r"^\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)", content, re.M))
-        n_wdl = len(re.findall(r"^-\s*\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\*\*", content, re.M))
-        return n_wd + n_wdl
+        n_wd = len(re.findall(r"^\*\*((?:WL|W|PL)-[A-Za-z0-9\-·~]+)", content, re.M))
+        n_wdl = len(re.findall(r"^-\s*\*\*((?:WL|W|PL)-[A-Za-z0-9\-·~]+)\*\*", content, re.M))
+        n_h3 = len(re.findall(r"^### ((?:WL|W|PL)-\d{6})", content, re.M))   # h3 形态（2026-09-19 补；章节头不以 WL- 开头，不会误计）
+        return n_wd + n_wdl + n_h3
     # v37 身份编号 ### F-010001 + 兼容 v36 旧格式 ### （N）
-    return len(re.findall(r"^### [FLIW]-\d{6}|^### （\d+）", content, re.M))
+    return len(re.findall(r"^### [FLIWS]-\d{6}|^### （\d+）", content, re.M))
 
 
 def max_updated(files):

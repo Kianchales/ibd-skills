@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 test_fix_missing_ranges.py — fix_missing_ranges.py 自测（最小测试集）
 
@@ -29,6 +28,9 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 import zipfile
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 SKILL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SCRIPT = os.path.join(SKILL_DIR, "scripts", "fix_missing_ranges.py")

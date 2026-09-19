@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
 S4 专家产出自检脚本（格式门禁 · 与 distill-methods.md §S4 编号规范配套）
 
@@ -25,8 +25,12 @@ S4 专家产出自检脚本（格式门禁 · 与 distill-methods.md §S4 编号
   C7 无加粗条目、无 1 位序号；案代号/2 位案号历史形态 WARN
 """
 import glob as _glob
+import json
 import re
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 KNOW_HEAD = re.compile(r"^### [FIL]-AN\d{4}-\d{2}｜")
 PARA_HEAD = re.compile(r"^### W-AN\d{4}-[FILABCD]\d{2}｜")
@@ -108,15 +112,23 @@ def check_file(path):
         FAIL.append(f"{tag} C6 二、写作范式声明 {sec2_n} 条，实际 {n_para} 条标题")
 
 
+import argparse
+
+
 def main(argv):
+    ap = argparse.ArgumentParser(description="S4 专家产出自检门禁")
+    ap.add_argument("files", nargs="*", help="待检 md 文件（可多个）")
+    ap.add_argument("--dir", help="案工作目录：自动扫目录下 产出_*.md")
+    ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
+    a = ap.parse_args(argv)
     total_fail = False
-    if "--dir" in argv:
-        d = argv[argv.index("--dir") + 1].rstrip("/\\")
-        targets = sorted(_glob.glob(d + "/*产出_*.md"))
+    results = []
+    if a.dir:
+        targets = sorted(_glob.glob(a.dir.rstrip("/\\") + "/*产出_*.md"))
     else:
-        targets = [a for a in argv if a.endswith(".md")]
+        targets = [f for f in a.files if f.endswith(".md")]
     if not targets:
-        print(__doc__)
+        print(__doc__, file=sys.stderr)
         return 2
     for p in targets:
         FAIL.clear()
@@ -124,11 +136,21 @@ def main(argv):
         check_file(p)
         if FAIL:
             total_fail = True
-        print(f"{'PASS' if not FAIL else 'FAIL'}  {p}")
-        for w in WARN:
-            print(f"   WARN  {w}")
-        for e in FAIL:
-            print(f"   FAIL  {e}")
+        results.append((p, list(FAIL), list(WARN)))
+        if not a.json:
+            print(f"{'PASS' if not FAIL else 'FAIL'}  {p}")
+            for w in WARN:
+                print(f"   WARN  {w}")
+            for e in FAIL:
+                print(f"   FAIL  {e}")
+    if a.json:
+        print(json.dumps({
+            "tool": "check_expert_output", "target": a.dir or a.files,
+            "verdict": "FAIL" if total_fail else "PASS",
+            "error": sum(len(f) for _, f, _ in results),
+            "warn": sum(len(w) for _, _, w in results),
+            "files": [{"file": p, "fail": f, "warn": w} for p, f, w in results],
+        }, ensure_ascii=False))
     return 1 if total_fail else 0
 
 

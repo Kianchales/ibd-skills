@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """B 档：方法论域文件结构归一（2026-08-31）
 
 四类动作（全部同行替换 · 行号守恒 · 铁律全保留 · 幂等可重跑）：
@@ -17,6 +17,10 @@ import io, os, re, sys, shutil
 
 import argparse
 from pathlib import Path
+
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="域文件结构归一（B 档）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),

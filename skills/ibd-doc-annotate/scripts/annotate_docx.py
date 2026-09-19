@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 ibd-doc-annotate · annotate_docx.py — 在 docx 原文上注入复核批注（Word 审阅批注）
 
@@ -43,6 +42,9 @@ from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from lxml import etree
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 CT_NS = 'http://schemas.openxmlformats.org/package/2006/content-types'

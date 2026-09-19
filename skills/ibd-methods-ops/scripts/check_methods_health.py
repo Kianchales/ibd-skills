@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-"""方法论全库健康护栏（8 项检查 · 防结构漂移）
+#!/usr/bin/env python3
+"""方法论全库健康护栏（10 项检查 · 防结构漂移）
 
 用法：
     python check_methods_health.py [--methods-root <库根目录>] [--quiet]
@@ -21,13 +21,18 @@
 
 退出码：0 = 全部通过（WARN 不阻塞）；1 = 存在 ERROR
 """
-import argparse, io, os, re, glob, sys
+import argparse, io, json, os, re, glob, random, sys
 from pathlib import Path
 
-_ap = argparse.ArgumentParser(description="方法论全库健康护栏（8 项检查）")
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
+_ap = argparse.ArgumentParser(description="方法论全库健康护栏（10 项检查）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--quiet", action="store_true", help="只输出异常项")
+_ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
 _args = _ap.parse_args()
 
 _ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
@@ -67,18 +72,21 @@ ERRORS, WARNS = [], []
 
 
 def count_entries(fname, content):
-    """与 parse_v26_titles.py / gen_entry_p0.py 同口径：域文件=(N) 或 v37 身份编号条目；W 系列=WD+WD_LIST。"""
+    """与 parse_titles.py / gen_entry.py 同口径：域文件=(N) 或 v37 身份编号条目；W 系列=WD+WD_LIST+h3。"""
     if fname.startswith("投行语言专项"):
-        n_wd = len(re.findall(r"^\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)", content, re.M))
-        n_wdl = len(re.findall(r"^-\s*\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\*\*", content, re.M))
-        return n_wd + n_wdl
-    return len(re.findall(r"^### [FLIW]-\d{6}|^### （\d+）", content, re.M))
+        n_wd = len(re.findall(r"^\*\*((?:WL|W|PL)-[A-Za-z0-9\-·~]+)", content, re.M))
+        n_wdl = len(re.findall(r"^-\s*\*\*((?:WL|W|PL)-[A-Za-z0-9\-·~]+)\*\*", content, re.M))
+        n_h3 = len(re.findall(r"^### ((?:WL|W|PL)-\d{6})", content, re.M))   # h3 形态（2026-09-19 补 PL-）
+        return n_wd + n_wdl + n_h3
+    # 2026-09-19 补 S-（体例域批次卷）
+    return len(re.findall(r"^### [FLIWS]-\d{6}|^### （\d+）", content, re.M))
 
 
 # ---------- 收集全部 md ----------
 # 检查范围 = 方法论正文本体：methods 根目录活跃文件 + 行业方法论_单份细分版/（活跃子集）
-# 排除：archive/（历史归档，2026-09-01 起原 _backup/ 并入）、notes/（历史蒸馏笔记）——铁律归档，不强制 frontmatter
-SKIP_DIRS = {"archive", "notes"}
+# 排除：archive/（历史归档，2026-09-01 起原 _backup/ 并入）、notes/（历史蒸馏笔记）、
+#     分卷/（域文件分卷产物，无独立 # 标题结构，不适用 frontmatter 后须有 h1 的规则；2026-09-19 补）
+SKIP_DIRS = {"archive", "notes", "_backup", "__pycache__"}   # 2026-09-19：分卷纳入（手写条目正文外置件）
 md_files = []
 for root, dirs, files in os.walk(METHODS):
     parts = root.split(os.sep)
@@ -162,10 +170,12 @@ for p in md_files:
                 missing = sorted(set(range(1, max(old_nums) + 1)) - set(old_nums))
                 ERRORS.append("编号不连续(旧格式) %s: %d 条，缺 %s" % (rel, len(old_nums), missing[:10]))
     elif fn.startswith("投行语言专项"):
-        # W 系列：粗体 + 列表条目编号进唯一性集合（族内不要求连续——主题族框架跳号天然免疫）
+        # W 系列：粗体 + 列表条目 + h3 形态（### WL-xxxxxx）编号进唯一性集合
+        # （族内不要求连续——主题族框架跳号天然免疫；h3 归组章节头不以 WL- 开头，不会误收；2026-09-19 补）
         content = "\n".join(lines)
         wids = list(re.finditer(r"^\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)", content, re.M)) + \
-               list(re.finditer(r"^-\s*\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\*\*", content, re.M))
+               list(re.finditer(r"^-\s*\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\*\*", content, re.M)) + \
+               list(re.finditer(r"^### ((?:WL|W)-\d{6})", content, re.M))
         for m in wids:
             wid = m.group(1)
             if wid in all_ids:
@@ -203,6 +213,9 @@ if os.path.exists(ENTRY):
     for fn, declared in route.items():
         p = os.path.join(METHODS, fn)
         if not os.path.exists(p):
+            # 2026-09-19：路由表条目可能位于 分卷/ 子目录
+            p = os.path.join(METHODS, "分卷", fn)
+        if not os.path.exists(p):
             ERRORS.append("路由表指向不存在文件: %s" % fn)
             continue
         with io.open(p, encoding="utf-8") as f:
@@ -216,24 +229,53 @@ if os.path.exists(PARSED):
         first = f.readline().strip()
     m = re.match(r"TOTAL=(\d+)", first)
     total_actual = 0
-    for df in sorted(glob.glob(os.path.join(METHODS, "通用方法论_*域.md"))) + sorted(glob.glob(os.path.join(METHODS, "投行语言专项_*.md"))):
+    _scan = sorted(glob.glob(os.path.join(METHODS, "通用方法论_*域.md"))) \
+          + sorted(glob.glob(os.path.join(METHODS, "投行语言专项_*.md"))) \
+          + sorted(glob.glob(os.path.join(METHODS, "分卷", "*.md")))   # 2026-09-19 纳入分卷
+    for df in _scan:
         with io.open(df, encoding="utf-8") as f:
             total_actual += count_entries(os.path.basename(df), f.read())
     if m and int(m.group(1)) != total_actual:
         ERRORS.append("parsed_titles 陈旧: TOTAL=%s vs 实算 %d（需重跑 parse → gen_toc → gen_index）" % (m.group(1), total_actual))
 
-# ---------- 6. W 编号唯一性（v37：WL- 新格式 + 兼容 W- 旧格式） ----------
+# ---------- 6. 回写清单一致性（2026-09-19 加：防「追加新轮次后汇总未回填」） ----------
+_WS = os.path.dirname(METHODS)
+CL = os.path.join(_WS, "tasks", "建议回写清单.md")
+if not os.path.exists(CL):
+    CL = os.path.join(_WS, "state", "建议回写清单.md")
+cl_checked = 0
+if os.path.exists(CL):
+    with io.open(CL, encoding="utf-8") as f:
+        cl = f.read()
+    rows = [x for x in cl.splitlines() if x.startswith("| [")]
+    done = sum(1 for x in rows if x.startswith("| [x]"))
+    m_sum = re.search(r"合计回写候选[：:]\s*(\d+)", cl)
+    m_prog = re.search(r"已回写\s*(\d+)\s*[/／]\s*待回写\s*(\d+)", cl)
+    if m_sum and int(m_sum.group(1)) != len(rows):
+        ERRORS.append("回写清单汇总口径与明细不符: 汇总 %s 条 vs 明细 %d 行（追加新轮次后须回填汇总）"
+                      % (m_sum.group(1), len(rows)))
+    if m_prog:
+        if int(m_prog.group(1)) != done:
+            ERRORS.append("回写清单进度行与状态列不符: 进度记已回写 %s vs 状态列 [x] %d"
+                          % (m_prog.group(1), done))
+        if int(m_prog.group(1)) + int(m_prog.group(2)) != len(rows):
+            ERRORS.append("回写清单进度行合计与明细不符: %s＋%s vs %d 行"
+                          % (m_prog.group(1), m_prog.group(2), len(rows)))
+    cl_checked = len(rows)
+
+# ---------- 7. W 编号唯一性（v37：WL- 新格式 + 兼容 W- 旧格式） ----------
 for df in sorted(glob.glob(os.path.join(METHODS, "投行语言专项_*.md"))):
     with io.open(df, encoding="utf-8") as f:
         content = f.read()
     ids = re.findall(r"^\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)", content, re.M) + \
-          re.findall(r"^-\s*\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\*\*", content, re.M)
+          re.findall(r"^-\s*\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\*\*", content, re.M) + \
+          re.findall(r"^### ((?:WL|W)-\d{6})", content, re.M)   # 2026-09-19 补 h3 形态
     from collections import Counter
     dups = {k: v for k, v in Counter(ids).items() if v > 1}
     if dups:
         ERRORS.append("W 编号重复 %s: %s" % (os.path.basename(df), dups))
 
-# ---------- 7. 交叉引用有效性（v37 新增，D6 裁定） ----------
+# ---------- 8. 交叉引用有效性（v37 新增，D6 裁定） ----------
 # 范围：5 个方法论正文本体；规则：引用编号（[FLIW]L?-\d{6}）必须存在于 all_ids；
 # 旧 W 系列形态（W-00xxxx）为历史注记/索引区保留项，跳过不报。
 for df in sorted(glob.glob(os.path.join(METHODS, "通用方法论_*域.md"))) + sorted(glob.glob(os.path.join(METHODS, "投行语言专项_*.md"))):
@@ -251,7 +293,7 @@ for df in sorted(glob.glob(os.path.join(METHODS, "通用方法论_*域.md"))) + 
             if ref not in all_ids:
                 ERRORS.append("交叉引用无效 %s L%d: %s（目标编号不存在，需核对登记表/迁移）" % (rel, i + 1, ref))
 
-# ---------- 8. 域文件体积警戒线（2026-09-03 新增） ----------
+# ---------- 9. 域文件体积警戒线（2026-09-03 新增） ----------
 # 对象：四域文件 + 投行语言专项（与拆分代次同一口径）；超线 WARN 不阻塞，提示族级拆分预案
 for df in sorted(glob.glob(os.path.join(METHODS, "通用方法论_*域.md"))) + sorted(glob.glob(os.path.join(METHODS, "投行语言专项_*.md"))):
     size = os.path.getsize(df)
@@ -261,11 +303,65 @@ for df in sorted(glob.glob(os.path.join(METHODS, "通用方法论_*域.md"))) + 
             "外置部分入 archive/ 并在路由表登记指针；蒸馏只追加不重排）" % (os.path.basename(df), size / 1024)
         )
 
+# ---------- 10. 索引行号定位抽查（2026-09-19 新增） ----------
+# 背景：编号 →「文件 + 行号」是定向读取的唯一键；改内容未刷索引 ⇒ 行号漂移 ⇒ 定向读会读到
+# **别的条目且不报错**（静默缺陷）。既有各项只校验「条目数」一致，不校验行号指向。
+_TOC = os.path.join(METHODS, "方法论_条目标题目录.md")
+if os.path.exists(_TOC):
+    _rows, _grp, _appx = [], None, None
+    for _ln in io.open(_TOC, encoding="utf-8", errors="replace").read().splitlines():
+        if _ln.startswith("## "):
+            _tt = _ln[3:].strip()
+            _am = re.match(r"^附：([WP]) 系列", _tt)
+            _appx = _am.group(1) if _am else None
+            _grp = None if _appx else re.sub(r"（.*?）$", "", _tt).strip().strip("` ")
+            continue
+        _m = re.match(r"^\| ([A-Z]{1,3}-\d{6}) \| (.+?) \| (.+?) \|$", _ln)
+        if not _m:
+            continue
+        _cells = [c.strip() for c in _ln.strip().strip("|").split("|")]
+        if len(_cells) == 4 and _cells[3].isdigit():
+            _rows.append((_m.group(1), _cells[2], int(_cells[3])))
+        elif len(_cells) == 3 and _cells[2].isdigit():
+            if _grp:
+                _rows.append((_m.group(1), _grp, int(_cells[2])))
+            elif _appx == "W":
+                _rows.append((_m.group(1), "投行语言专项_W系列.md", int(_cells[2])))
+    if _rows:
+        random.seed(20260919)
+        _miss = []
+        for _eid, _fn, _lnno in random.sample(_rows, min(12, len(_rows))):
+            _p = next((x for x in (os.path.join(METHODS, _fn), os.path.join(METHODS, "分卷", _fn))
+                       if os.path.exists(x)), None)
+            if _p is None:
+                _miss.append("%s(文件缺失)" % _eid)
+                continue
+            _ls = io.open(_p, encoding="utf-8", errors="replace").read().splitlines()
+            if not (0 < _lnno <= len(_ls)) or _eid not in _ls[_lnno - 1]:
+                _miss.append("%s→%s:%d" % (_eid, _fn, _lnno))
+        if _miss:
+            ERRORS.append("索引行号定位漂移: 抽查 12 条中 %d 条未命中（编号 → 文件:行号 不符；"
+                          "多为改内容后未刷索引）—— %s" % (len(_miss), "、".join(_miss[:5])))
+        _locator_checked = len(_rows)
+    else:
+        _locator_checked = 0
+else:
+    _locator_checked = 0
+
 # ---------- 输出 ----------
+if _args.json:
+    print(json.dumps({
+        "tool": "check_methods_health", "target": METHODS,
+        "verdict": "FAIL" if ERRORS else "PASS",
+        "error": len(ERRORS), "warn": len(WARNS), "scanned": fm_checked,
+        "issues": ([{"level": "ERROR", "msg": m} for m in ERRORS] +
+                   [{"level": "WARN", "msg": m} for m in WARNS]),
+    }, ensure_ascii=False))
+    sys.exit(1 if ERRORS else 0)
 quiet = _args.quiet
 if not quiet:
     print("=== 方法论全库健康检查 ===")
-    print("正文文件（frontmatter 校验）: %d 个" % fm_checked)
+    print("正文文件（frontmatter 校验）: %d 个｜索引行号抽查: %d 条" % (fm_checked, _locator_checked))
 print("ERROR %d 项" % len(ERRORS))
 for e in ERRORS:
     print("  [ERROR] %s" % e)

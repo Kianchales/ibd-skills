@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """overview_to_docx.py — 复核总览报告 MD → Word 转换器
 
 为什么存在（2026-09-18 用户裁定）：
@@ -19,6 +18,9 @@ import argparse
 import os
 import re
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 try:
     from docx import Document
@@ -58,7 +60,7 @@ def _flush_table(doc, rows):
 
 def convert(md_path, out_path=None):
     if not os.path.isfile(md_path):
-        print(f"[ERROR] 总览 md 不存在: {md_path}")
+        print(f"[ERROR] 总览 md 不存在: {md_path}", file=sys.stderr)
         return 1
     out = out_path or os.path.splitext(md_path)[0] + ".docx"
     with open(md_path, encoding="utf-8") as fh:

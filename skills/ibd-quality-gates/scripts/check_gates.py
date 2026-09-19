@@ -13,9 +13,13 @@
     必须人工按 references/antipatterns.md 核对，脚本不能替代人工。
 """
 import argparse
+import json
 import os
 import re
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 DEFAULT_WORDLIST_DIR = os.path.join(os.path.dirname(__file__), "..", "references")
 
@@ -83,10 +87,11 @@ def main():
     ap = argparse.ArgumentParser(description="ibd-quality-gates 自动化扫描")
     ap.add_argument("file", help="待扫描的 .md / .txt 文件")
     ap.add_argument("--wordlist-dir", default=DEFAULT_WORDLIST_DIR, help="黑名单目录")
+    ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     args = ap.parse_args()
 
     if not os.path.exists(args.file):
-        print(f"错误：文件不存在 {args.file}")
+        print(f"错误：文件不存在 {args.file}", file=sys.stderr)
         sys.exit(2)
 
     with open(args.file, encoding="utf-8") as f:
@@ -103,6 +108,19 @@ def main():
     order = {"HIGH": 0, "WARN": 1, "INFO": 2}
     hits.sort(key=lambda h: order[h["severity"]])
 
+    if args.json:
+        print(json.dumps({
+            "tool": "check_gates", "target": args.file,
+            "verdict": "FAIL" if any(h["severity"] == "HIGH" for h in hits) else "PASS",
+            "error": sum(1 for h in hits if h["severity"] == "HIGH"),
+            "warn": sum(1 for h in hits if h["severity"] == "WARN"),
+            "info": sum(1 for h in hits if h["severity"] == "INFO"),
+            "scanned": len(lines),
+            "issues": [{"level": h["severity"], "gate": h["gate"],
+                        "where": "L%d" % h["line"], "word": h["word"], "msg": h["text"]}
+                       for h in hits],
+        }, ensure_ascii=False))
+        sys.exit(1 if any(h["severity"] == "HIGH" for h in hits) else 0)
     print(f"=== ibd-quality-gates 扫描报告：{os.path.basename(args.file)} ===")
     print(f"扫描行数：{len(lines)}；命中：{len(hits)}（HIGH {sum(1 for h in hits if h['severity']=='HIGH')} / WARN {sum(1 for h in hits if h['severity']=='WARN')} / INFO {sum(1 for h in hits if h['severity']=='INFO')}）")
     for h in hits:

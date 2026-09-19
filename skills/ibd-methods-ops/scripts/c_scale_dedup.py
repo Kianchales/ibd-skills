@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
 C 档动作 1：质量自评量表收敛（2026-08-31）
 - 权威定义 = ibd-quality-gates skill（SKILL.md §2.4 + references/rules.md §4），不造第二源
@@ -13,6 +13,9 @@ import sys
 
 import argparse, json
 from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="质量自评量表收敛（C 档）")
 _ap.add_argument("--plan", default="", help="条目修复计划 JSON（[[file,title_old,header_old,total_old],...]）")

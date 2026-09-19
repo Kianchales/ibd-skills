@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """索引体系一键刷新：按序调用 parse_titles → gen_index → gen_toc → gen_entry。
 任一环节失败即停止（保证索引/目录/入口三者一致，不会半新半旧）。
 
@@ -15,6 +15,10 @@
 """
 import argparse, os, subprocess, sys
 from pathlib import Path
+
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="索引体系一键刷新（四件套编排）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
@@ -59,7 +63,7 @@ def main():
     print("=== 索引体系刷新（库根: %s）===" % _ROOT)
     for script, desc in STEPS:
         if not run_step(script, desc):
-            print("!! 中断：后续步骤未执行（索引/目录/入口可能不一致，请修复后重跑）")
+            print("!! 中断：后续步骤未执行（索引/目录/入口可能不一致，请修复后重跑）", file=sys.stderr)
             return 1
     print("=== 全部完成：索引 / 条目标题目录 / 路由入口 已同步 ===")
     return 0

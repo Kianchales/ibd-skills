@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
 案号 4 位化迁移 · DRY-RUN 预检 v2（只统计不改文件）
 
@@ -21,6 +21,9 @@ import sys
 from collections import Counter, OrderedDict
 
 import argparse
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="案号迁移 · dry-run 预检（只统计不改文件）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """库拆分执行器（配置驱动 · 通用引擎）：单体大文件 → 域文件 + archive 备份 + 薄壳入口
 铁律：只搬位置、不改内容（纯行号切割）；内置自校验：G1 条目守恒 + G2 内容零改动。
 
@@ -25,12 +25,16 @@
 }
 
 说明：
-  - 拆分前自动备份源文件至 methods/archive/；源文件已是薄壳（行数 < 100）时跳过切割
+  - 拆分前自动备份源文件至库外 archive/methods/backups/；源文件已是薄壳（行数 < 100）时跳过切割
   - 校验：G1 条目数守恒（源切片条目集 == 各域文件条目集）+ G2 内容零改动（逐段比对）
   - 新模式：本脚本为通用引擎，行号段等库实例信息一律置于配置，脚本本体零私有常量
 """
 import argparse, io, json, os, re, sys, shutil
 from pathlib import Path
+
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="库拆分执行器（配置驱动）")
 _ap.add_argument("--config", default="", help="拆分配置 JSON（默认 {库根}/tasks/split_domains_config.json）")
@@ -117,7 +121,7 @@ n_dom = sum(len(entries_of(io.open(os.path.join(METHODS, d["file"]), encoding="u
             for d in DOMAINS) if not _args.dry_run else n_src
 print("G1 条目守恒：源切片 %d 条 vs 域文件合计 %d 条 → %s" % (n_src, n_dom, "PASS" if n_src == n_dom else "FAIL"))
 if n_src == 0:
-    print("!! G1 校验失效：源切片未识别到条目（h3）——请检查配置的 range 行号段是否正确")
+    print("!! G1 校验失效：源切片未识别到条目（h3）——请检查配置的 range 行号段是否正确", file=sys.stderr)
     sys.exit(1)
 if n_src != n_dom:
     sys.exit(1)

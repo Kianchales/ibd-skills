@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 ibd-doc-annotate · annotate_pdf.py — 在 PDF 原文上注入复核批注（高亮 + 弹注）
 
@@ -30,6 +29,9 @@ import datetime
 import json
 import os
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 def _derive_code(it):
     """编号前缀推导：清单 code 字段 > ASCII 复核人名首字母 > 回退 U（提示补 code）。

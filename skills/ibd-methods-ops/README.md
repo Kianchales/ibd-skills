@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BB%B4%E6%8A%A4-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-1.6.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-1.16.4-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -17,7 +17,7 @@
 > **设计原则 · 双向开放**：资料来源与沉淀去向都由用户自己确定——材料从哪来（对话给文件/文件夹/项目，或已接入的库）、沉淀到哪去（本地/Obsidian/云知识库等），全部由用户定；skill 提供流程、规范与工具，不绑定私有环境。
 
 - **蒸馏域**：S0-S7 全流程——**材料来源由用户定**（单文件/文件夹/项目/已接入的库）→ 材料准备（三阅读包）→ 多专家并行蒸馏 → 综合成文（写作范式）→ 模拟回复演练 → 共通点蒸馏 → 沉淀入库（索引刷新 + 护栏校验）
-- **维护域**：库结构健康——8 项护栏体检 → 修复工具箱（先 dry-run）→ 复验幂等
+- **维护域**：库结构健康——10 项护栏体检 → 修复工具箱（先 dry-run）→ 复验幂等
 - **随包工具链**：15 个脚本（索引体系 / 落库 / 门禁 / 修复 / 拆分 / 迁移），全部支持 `--methods-root` 或 `$METHODS_ROOT`
 - **库规范单一事实源**：[references/methods-guide.md](references/methods-guide.md)（目录结构 / 条目结构 / 索引机制 / 规模化拆分）
 
@@ -30,7 +30,7 @@
 
 # 库维护（命令示例）
 python scripts/refresh_index.py --methods-root ~/methods        # 索引一键刷新（四件套编排）
-python scripts/check_methods_health.py --methods-root ~/methods # 8 项护栏体检（0 ERROR 交付）
+python scripts/check_methods_health.py --methods-root ~/methods # 10 项护栏体检（0 ERROR 交付）
 python scripts/update_expert_md.py --entries batch.json --methods-root ~/methods  # 条目落库
 ```
 
@@ -75,7 +75,7 @@ scripts/                 15 个随包脚本
   gen_entry.py             重写入口（路由表 + 摘要保留）
   update_expert_md.py      条目落库（h3/表格双形态 + 超线归档）
   check_expert_output.py   S4.5 产出自检门禁
-  check_methods_health.py  8 项护栏体检
+  check_methods_health.py  10 项护栏体检
   add_frontmatter.py / add_fm_single.py / b_fmt_unify.py / c_scale_dedup.py   结构修复工具箱
   split_domains.py         单体库 → 域文件拆分（配置驱动）
   dryrun_case_migrate.py / migrate_case_no.py   编号迁移（预检 + 执行）
@@ -89,6 +89,18 @@ CHANGELOG.md             版本记录
 
 ## 📌 近期更新
 
+- **2026-09-19 · v1.16.2**：**回写硬门禁定案「软执行 ＋ dry-run 报告」**（用户裁定）——新增 `replay_gate_report.py`（四项指标、**不阻断**）；首轮基线 4/4 通过；契约勘误（§5/§8 与 §6 的自相矛盾）；跨案层 224 处短式 `实证` 判定合规
+- **2026-09-19 · v1.16.1**：**1.16.0 残余闭环** —— 分卷「来源案」补完 **160 块 ⇒ 716/716（100%）**（槽位正则放宽为白名单式：`- **xxx**：`／`**xxx**：`／`- xxx：` 三种形态全支持）；`sync_cases_md.py` 工程范式清零（A9 硬编码路径 → git 仓根推导；补显式 `--dry-run`）
+- **2026-09-19 · v1.16.0**：**六项遗留缺口全景收口**（分卷 TBD 2,600→0；裸 PAGE 改补案级归属；cases 字段 1,324 处归一；cases md 镜像入 git；状态载体跨目录索引；行号护栏挂 health）
+- **2026-09-19 · v1.15.0**：**health 挂入第 10 项「索引行号定位抽查」**（8 项 → 10 项；补登第 6 项「回写清单一致性」；全局表述同步；阳性对照已验）
+- **2026-09-19 · v1.14.0**：**运作链条复审收口** —— 6 项硬判据实测；修正 **12 处文档引用漂移**；目录/索引**附表升为 `##` 级**；**新增护栏 `check_index_locator.py`**（索引行号定位抽查，阳性对照已验）
+- **2026-09-19 · v1.13.0**：**案号体系规范化（用户裁定「用 AN 号」）**——新建/重写《state/单案索引对照表》（75 案权威反查：有单案文件 53 ＋ 无单案文件但有产出 22）；分配 **24 个案号**（AN0052–AN0075，下批自 AN0076）；42 个单案文件补 `case_no:`；**占位编号废除**（cases/ 层 5,742 处 `S-TBD`／`PL-TBD` → `S-AN{案号}`／`PL-AN{案号}`）；新增 `apply_case_no.py`（表驱动·幂等）；新增库 `state/README.md`（目录定位）；library-rules 易误解点 12→14 条
+- **2026-09-19 · v1.12.0**：**P 系列 442 条 ＋ 体例域批次卷 276 条纳入索引与检查面**（分卷「静默缺席」修复）——`parse_titles`／`gen_entry` 纳入 `分卷/` 并支持 `PL-`·`S-`；目录与索引各增「附：P 系列」（含卷文件＋行号）；契约 v1.2（分卷定位更正、简称表补「回复」）；A2 补两条 PAGE 形态规则；分卷存量回改 33 处
+- **2026-09-19 · v1.11.0**：**案名规范**（用户裁定「案名一定要用规范的案名，用证券简称」）——新建《方法论_案名规范表.md》（表一 单案 53／表二 主库直入 7／表三 待确认 13）作白名单单一事实源；存量回改 **40 文件**（截断案名标签 174／案名引用位 362／案名+案 22／写死案数 18）；门禁新增 **A4 案名白名单**（截断·未登记·写死案数 → ERROR）；回改工具随包化 `scripts/normalize_case_names.py`
+- **2026-09-19 · v1.10.0**：**单案层字段标签归并**（用户裁定 D6-1 · 规范优先）——单案层字段名统一到 `distill-methods.md` §S4 五要素／§S5 三要素 ＋ 2 个契约登记扩展（句式模板／边界条件），**146 种 → 9 种**（别名映射 5,113 处）；契约新增「强制面收缩原则」（白名单外不检查）与 §6.1 层间口径说明；门禁 A3 判据反转为「须为规范字段名、禁已废止别名」
+- **2026-09-19 · v1.9.0**：**条目书写契约**落地（`references/entry-contract.md`）——实证项四字段模型（案名/案号/内容/来源）＋ 三种排布（列表式默认／独立段式大增量／表格式多案）＋ 来源标注单一格式（`招 P152`，来源在前·同括号同源）＋ 标签禁用四条；新增自检门禁 `check_entry_contract.py`（随包 16→17）；**全库存量回改 3,895 处次 / 75 文件**（标签五态归一、来源标注归一、单案层字段名归一），终态契约自检 **0 ERROR**；纪律②纠正（停用「（YYYY-MM-DD 回写）」后缀写法）＋ 新增⑧契约自检前置
+- **2026-09-19 · v1.8.0**：`check_expert_output.py` 与 `check_methods_health.py` 支持 **`--json`** 结构化输出（工程范式 A5 对齐）；门禁结论从此可被上层程序消费
+- **2026-09-19 · v1.7.0**：新增随包脚本 `gen_replay_worksheet.py`（回写工作表：清单候选 × 单案新条目 × 主库旧条目 三方汇编，起草时上下文一次到位）＋「S7 回写执行纪律」七条；修 `--methods-root` 参数语义（实测校正为「库所在工作区根」）
 - **2026-09-18 · v1.6.1**：接入点声明补第三问**缺失降级**（无库→空库起步档 / 维护域无对象如实报告 / 无 KB 仅失去镜像 / 无团队工具走单用户）——本包正式入 `ATTACHMENT-POINTS` 总表（公开包口径 5→7）后，满足 P2+ 三问齐备要求
 - **2026-09-15 · v1.6.0**：**S7 回写池三过滤**（复现 2 次即并入 / 冲突改旧 / 用户裁定冲突提请再裁定，ADR-0007）+ **库主从关系**（本地 `{METHODS_ROOT}` 单一事实源，云知识库 = 只读发布镜像，ADR-0009）
 - **2026-09-10 · v1.5.1**：冷启动修复（库前置检查 / 输出目录自建 / 编排器错误展示 / 单装断链）

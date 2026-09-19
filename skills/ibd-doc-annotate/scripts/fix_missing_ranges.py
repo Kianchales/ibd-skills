@@ -1,13 +1,25 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """后处理：为丢失 commentRangeStart/End 的批注补插范围标记（同段落多批注冲突修复）"""
-import io, sys, json, zipfile, re, copy
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+import argparse
+import copy
+import io
+import json
+import re
+import sys
+import zipfile
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 from docx import Document
 from docx.oxml.ns import qn
 
 # 用法: python fix_missing_ranges.py <批注版docx> <issues.json>
-DOCX = sys.argv[1] if len(sys.argv) > 1 else 'review/1-1 招股说明书_20260906_v1_批注版.docx'
-ISSUES = sys.argv[2] if len(sys.argv) > 2 else 'review/issues.json'
+_ap = argparse.ArgumentParser(description="为丢失 commentRangeStart/End 的批注补插范围标记")
+_ap.add_argument("docx", help="批注版 docx 路径")
+_ap.add_argument("issues", help="issues.json 路径")
+_a = _ap.parse_args()
+DOCX, ISSUES = _a.docx, _a.issues
 
 issues = json.load(open(ISSUES, encoding='utf-8'))
 
@@ -157,7 +169,7 @@ for cid in missing:
                 done = True
                 break
     if not done:
-        print(f'!! cid {cid} anchor not found: {anchor[:30]}')
+        print(f'!! cid {cid} anchor not found: {anchor[:30]}', file=sys.stderr)
 
 doc.save(DOCX)
 print(f'saved, fixed {fixed}/{len(missing)}')

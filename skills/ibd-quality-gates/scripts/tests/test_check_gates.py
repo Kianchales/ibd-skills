@@ -5,6 +5,9 @@ import subprocess
 import sys
 import tempfile
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 SCRIPT = os.path.join(os.path.dirname(__file__), "..", "check_gates.py")
 REFS = os.path.join(os.path.dirname(__file__), "..", "..", "references")
 

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
 A 档：方法论全库 frontmatter 补齐（纯增量，零内容改动）
 2026-08-31 格式统一治理 · A 档
@@ -21,6 +21,9 @@ import sys
 
 import argparse
 from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="方法论全库 frontmatter 补齐（A 档）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),

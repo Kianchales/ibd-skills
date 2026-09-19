@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
 案号 4 位化迁移（C01-C41 -> C0001-C0041），M1-M4 执行脚本。
 
@@ -19,6 +19,9 @@ import sys
 from collections import OrderedDict
 
 import argparse
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="案号位宽迁移（如 2 位 → 4 位）执行器")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),

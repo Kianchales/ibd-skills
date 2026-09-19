@@ -26,6 +26,7 @@ ibd-quality-gates，与 G1 裸数字粗筛同属内容层数字门；docx 的样
 """
 import argparse
 import glob
+import json
 import os
 import re
 import sys
@@ -34,6 +35,9 @@ from collections import Counter
 
 # ---------------------------------------------------------------- Issue 结构
 
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 class Issue:
     def __init__(self, check_id, check_name, location, snippet, problem,
@@ -548,19 +552,21 @@ def main():
                     help="核对报告 md 输出路径（默认 <input>_数据核对报告.md）")
     ap.add_argument("--checks", default="data",
                     help="all/data 或核对项 id 逗号分隔（amounts,consistency,calc,cross_table）")
+    ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     args = ap.parse_args()
 
     files = resolve_files(args.input)
     if not files:
-        print(f"[ERROR] 未找到可核对文件: {args.input}")
+        print(f"[ERROR] 未找到可核对文件: {args.input}", file=sys.stderr)
         sys.exit(2)
 
     check_ids = resolve_checks(args.checks)
     if not check_ids:
-        print("[ERROR] 无可执行的核对项")
+        print("[ERROR] 无可执行的核对项", file=sys.stderr)
         sys.exit(2)
 
     has_high = False
+    json_files = []
     for f in files:
         result = run(f, check_ids)
         if result is None:
@@ -577,6 +583,9 @@ def main():
                 sev_cnt[it.severity] += 1
         if sev_cnt.get("HIGH", 0) > 0:
             has_high = True
+        json_files.append({"file": f, "counts": dict(sev_cnt), "report": out})
+        if args.json:
+            continue
         summary_parts = []
         for sev in SEV_ORDER:
             label = SEV_LABEL[sev]
@@ -587,6 +596,18 @@ def main():
             print(f"  {line_txt}")
         print(f"  → 报告已写入：{out}")
 
+    if args.json:
+        tot = Counter()
+        for jf in json_files:
+            for k, v in jf["counts"].items():
+                tot[k] += v
+        print(json.dumps({
+            "tool": "check_data", "target": args.input,
+            "verdict": "FAIL" if has_high else "PASS",
+            "error": tot.get("HIGH", 0),
+            "warn": tot.get("MEDIUM", 0) + tot.get("LOW", 0),
+            "files": json_files,
+        }, ensure_ascii=False))
     sys.exit(1 if has_high else 0)
 
 

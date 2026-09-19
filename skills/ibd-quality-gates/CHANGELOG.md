@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.12.0] - 2026-09-19
+
+### 新增：`check_gates.py` 与 `check_data.py` 支持 `--json`（工程范式 A5 对齐）
+
+- `check_gates.py`：`{tool, target, verdict, error, warn, info, scanned, issues[{level,gate,where,word,msg}]}`
+- `check_data.py`：含 `files[{file, counts, report}]`（`counts` 为 HIGH／MEDIUM／LOW 计数）；`--output` 仍写报告
+- 退出码不变（命中 HIGH 即 exit 1）；人类可读报告回归通过
+- 依据：`docs/ENGINEERING.md` §4.5 P7
+
 ## [0.11.0] - 2026-09-18
 
 ### 新增：改写既有工作簿四条纪律（rules.md §8）
@@ -21,7 +30,7 @@
 - **配套工具**：`skills-patch/xlsx_gate.py`（交付门禁）与 `skills-patch/xlsx_dyn.py`（档 C 静态值写入器，自带写后回读验证）——均不在本包内（属本地 skills-patch 定制层，本 skill 只挂指针）
 - 性质：校验覆盖面扩大（新领域规则）= Y
 
-## [未发布 · 纯文档] 2026-09-18
+## [未发布 · 纯文档] - 2026-09-18
 
 ### 文案修正（规则/流程/依赖零变化 · 未 bump）
 

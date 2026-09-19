@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0] - 2026-09-19
+
+### 新增：`validate_issues.py` 支持 `--json` 结构化输出（工程范式 A5 对齐）
+
+- 输出契约：`{tool, target, verdict, error, warn, total, issues[]}`；`--json` 与人类输出二选一
+- 退出码不变（入口校验不通过仍为 exit 2）；JSON 模式下一并给出结构化明细
+- 依据：`docs/ENGINEERING.md` §4.5 P7「人读摘要／机读 JSON／退出码三值同时成立」
+
 ## [0.7.0] - 2026-09-18
 
 ### 新增：总览报告双格式交付（MD + Word）

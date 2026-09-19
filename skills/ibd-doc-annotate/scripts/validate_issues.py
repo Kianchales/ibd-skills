@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
 issues.json 入口校验器（G1 · 复核链数据入口早拦）
 
@@ -36,6 +35,9 @@ import argparse
 import json
 import re
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 REQUIRED = ("anchor", "type", "sev", "title", "desc", "advice")
 SEV_ALLOWED = ("高", "中", "低")
@@ -120,19 +122,30 @@ def validate_issues(data):
 def main():
     ap = argparse.ArgumentParser(description="issues.json 入口校验（复核问题清单结构早拦）")
     ap.add_argument("--input", required=True, help="复核问题清单 JSON（数组）")
+    ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     args = ap.parse_args()
 
     try:
         with open(args.input, encoding="utf-8") as fh:
             data = json.load(fh)
     except json.JSONDecodeError as e:
-        print(f"[ERROR] JSON 解析失败：{e}")
+        print(f"[ERROR] JSON 解析失败：{e}", file=sys.stderr)
         sys.exit(2)
     except OSError as e:
-        print(f"[ERROR] 读取失败：{e}")
+        print(f"[ERROR] 读取失败：{e}", file=sys.stderr)
         sys.exit(2)
 
     errors, warnings = validate_issues(data)
+    if args.json:
+        print(json.dumps({
+            "tool": "validate_issues", "target": args.input,
+            "verdict": "FAIL" if errors else "PASS",
+            "error": len(errors), "warn": len(warnings),
+            "total": len(data) if isinstance(data, list) else None,
+            "issues": ([{"level": "ERROR", "msg": str(m)} for m in errors] +
+                       [{"level": "WARN", "msg": str(m)} for m in warnings]),
+        }, ensure_ascii=False))
+        sys.exit(2 if errors else 0)
     for w in warnings:
         print(f"[WARN] {w}")
     if errors:

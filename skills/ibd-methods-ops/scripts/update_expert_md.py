@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """专家 MD 落库器（通用）：把某批次蒸馏条目追加到目标 MD 表格；超警戒线自动归档最早条目。
 
 机制（保留自实战版）：
@@ -24,6 +24,10 @@
 """
 import argparse, io, json, os, re, sys, datetime
 from pathlib import Path
+
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="专家 MD 落库器（追加 + 超线归档）")
 _ap.add_argument("--entries", required=True, help="本批次条目 JSON 路径")

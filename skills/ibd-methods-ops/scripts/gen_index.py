@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """生成 方法论调用索引.md（问询问题类型 → 方法论条目映射；读稳定入口 通用方法论_最终版.md）
 
 用法：
@@ -10,6 +10,10 @@
 import argparse, io, re, os
 from pathlib import Path
 
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 _ap = argparse.ArgumentParser(description="生成方法论调用索引.md")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
@@ -19,7 +23,7 @@ METHODS = str(_ROOT / "methods")
 
 
 def latest_v26():
-    # 稳定入口：通用方法论_最终版.md（历史 vN 版已归档 methods/archive/）
+    # 稳定入口：通用方法论_最终版.md（历史 vN 版已归档 库外 archive/methods/snapshots/）
     return os.path.join(METHODS, "通用方法论_最终版.md")
 
 
@@ -177,8 +181,9 @@ lines_out.append("> 条目编号 | 主题标签 | 可答复问询问题类型（
 lines_out.append("")
 
 def chap_label(dom):
-    """域文件名 → 显示标签"""
-    return dom.replace("通用方法论_", "").replace(".md", "").replace("投行语言专项_", "投行语言专项·")
+    """域文件名 → 显示标签（分卷收敛为「域·卷N」，如 体例域·卷1／投行语言专项·P系列·卷1）"""
+    d = dom.replace("通用方法论_", "").replace(".md", "").replace("投行语言专项_", "投行语言专项·")
+    return re.sub(r"[_·]?卷(\d+).*$", "·卷\\1", d) if "卷" in d else d
 
 # 先 HEAD 后 WD/WD_LIST，按域文件
 seen = set()
@@ -197,12 +202,14 @@ def add_row(e):
 
 # HEAD 按域文件顺序，W 条目单独一节
 head_entries = [e for e in entries if e["kind"] == "HEAD"]
-wd_entries = [e for e in entries if e["kind"] in ("WD", "WD_LIST")]
+# 2026-09-19：WD 类按编号前缀分流——W 系列（WL-/W-）与 P 系列（PL-）分列两附表
+wd_entries = [e for e in entries if e["kind"] in ("WD", "WD_LIST") and not e["eid"].startswith("PL-")]
+pl_entries = [e for e in entries if e["kind"] in ("WD", "WD_LIST") and e["eid"].startswith("PL-")]
 
 for e in head_entries:
     add_row(e)
 
-lines_out.append("### 附：W 系列（投行语言句式）")
+lines_out.append("## 附：W 系列（投行语言句式 · 正文在 methods/投行语言专项_W系列.md）")
 lines_out.append("")
 lines_out.append("| 条目编号 | 核心句式要点（简） | 可答复问询问题类型（Q） | 域文件位置 |")
 lines_out.append("|---|---|---|---|")
@@ -210,6 +217,19 @@ for e in wd_entries:
     qs = classify(e["title"])
     qs_str = "、".join(sorted(qs)) if qs else "待归类"
     lines_out.append("| %s | %s | %s | 投行语言专项·W系列 |" % (e["eid"], e["title"][:60], qs_str))
+
+# ---- 附：P 系列（招股书语言范式 · 2026-09-19 纳入；正文在外置卷）----
+lines_out.append("")
+lines_out.append("## 附：P 系列（招股书语言范式 · %d 条 · 正文在 methods/分卷/投行语言专项_P系列_卷N.md）" % len(pl_entries))
+lines_out.append("")
+lines_out.append("> **语用＝招股书**（陈述／披露），与 W 系列（回复语用）分列；写招股书时取本表，写回复时取 W 表。条目正文在外置卷 `分卷/投行语言专项_P系列_卷*.md`，行号为该卷内行号。")
+lines_out.append("")
+lines_out.append("| 条目编号 | 招股书语言要点（简） | 可答复问询问题类型（Q） | 卷文件位置 |")
+lines_out.append("|---|---|---|---|")
+for e in pl_entries:
+    qs = classify(e["title"])
+    qs_str = "、".join(sorted(qs)) if qs else "待归类"
+    lines_out.append("| %s | %s | %s | %s |" % (e["eid"], e["title"][:60], qs_str, chap_label(e["dom"])))
 
 # ============ 三、跨域桥接速查表（A-Mem 语义链接，2026-09-01 接入） ============
 lines_out.append("")
@@ -227,7 +247,12 @@ for qid, name, kws in DOMAINS:
         if key in groups:
             groups[key].append(prefixed(e))
     cells = ["、".join(groups[k][:3]) if groups[k] else "—" for k in ["财务域", "法律域", "行业域", "写作域"]]
-    cells.append("、".join([e["eid"] for e in wd[:3]]) if wd else "—")
+    w_ids = [e["eid"] for e in wd if not e["eid"].startswith("PL-")][:3]
+    p_ids = [e["eid"] for e in wd if e["eid"].startswith("PL-")][:2]
+    wtxt = "、".join(w_ids) if w_ids else "—"
+    if p_ids:
+        wtxt += "；P：" + "、".join(p_ids)
+    cells.append(wtxt)
     lines_out.append("| %s | %s | %s |" % (qid, name, " | ".join(cells)))
 
 d = os.path.dirname(OUT)
@@ -237,5 +262,5 @@ with io.open(OUT, "w", encoding="utf-8") as f:
     f.write("\n".join(lines_out) + "\n")
 
 print("OUTPUT:", OUT)
-print("HEAD rows:", len(head_entries), "WD rows:", len(wd_entries))
+print("HEAD rows:", len(head_entries), "W rows:", len(wd_entries), "P rows:", len(pl_entries))
 print("DONE")

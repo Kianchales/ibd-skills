@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """生成 方法论_条目标题目录.md：
 读 parsed_titles.txt（含「域文件」列）→ 按域文件分组生成目录（编号 → 域文件 + 行号，供 Read offset/limit 精准读）。
 扩展性：新增域文件经 parse 后自动出现为目录分组，零改码。
@@ -12,6 +12,10 @@
 import argparse, io, os
 from collections import OrderedDict
 from pathlib import Path
+
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="生成条目标题目录.md")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
@@ -46,6 +50,9 @@ with io.open(PARSED, "r", encoding="utf-8") as f:
 
 head = [e for e in entries if e["kind"] == "HEAD"]
 wd = [e for e in entries if e["kind"] in ("WD", "WD_LIST")]
+# 2026-09-19：WD 类按前缀分流（W 系列 WL-/W- ｜ P 系列 PL-），分列两个附表
+wd_w = [e for e in wd if not e["eid"].startswith("PL-")]
+wd_p = [e for e in wd if e["eid"].startswith("PL-")]
 
 # ---- 2. 按域文件分组（保持域文件顺序）----
 dom_order = []
@@ -69,7 +76,7 @@ total_head = 0
 for d in dom_order:
     out.append("| %s | %d |" % (d, dom_counts.get(d, 0)))
     total_head += dom_counts.get(d, 0)
-out.append("| **合计** | **%d**（正文条目） + W 条目 %d |" % (total_head, len(wd)))
+out.append("| **合计** | **%d**（正文条目） + W 条目 %d + P 条目 %d |" % (total_head, len(wd_w), len(wd_p)))
 out.append("")
 
 # ---- 3. 按域文件分组输出 HEAD 条目 ----
@@ -84,18 +91,28 @@ for e in head:
     out.append("| %s | %s | %d |" % (e["eid"], e["title"], e["ln"]))
 
 # ---- 4. W 系列条目（粗体条目 + W-D 列表）----
-if wd:
-    out.append("### 附：W 系列（投行语言句式 · %d 条）" % len(wd))
+if wd_w:
+    out.append("## 附：W 系列（投行语言句式 · %d 条 · 正文在 methods/投行语言专项_W系列.md）" % len(wd_w))
     out.append("")
     out.append("| 编号 | 核心句式要点 | 行号 |")
     out.append("|------|-------------|------|")
-    for e in wd:
+    for e in wd_w:
         out.append("| %s | %s | %d |" % (e["eid"], e["title"], e["ln"]))
+    out.append("")
+
+# ---- 4b. P 系列条目（招股书语言范式 · 正文在外置卷）----
+if wd_p:
+    out.append("## 附：P 系列（招股书语言范式 · %d 条 · 正文在 methods/分卷/投行语言专项_P系列_卷N.md）" % len(wd_p))
+    out.append("")
+    out.append("| 编号 | 招股书语言要点 | 卷文件 | 行号 |")
+    out.append("|------|---------------|--------|------|")
+    for e in wd_p:
+        out.append("| %s | %s | %s | %d |" % (e["eid"], e["title"], e["dom"], e["ln"]))
 
 d = os.path.dirname(TOC)
 if d:
     os.makedirs(d, exist_ok=True)
 with io.open(TOC, "w", encoding="utf-8") as f:
     f.write("\n".join(out) + "\n")
-print("TOC:", TOC, "rows:", total_head, "+", len(wd))
+print("TOC:", TOC, "rows:", total_head, "+W", len(wd_w), "+P", len(wd_p))
 print("DONE")

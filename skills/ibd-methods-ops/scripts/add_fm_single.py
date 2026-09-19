@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """D 档补充：行业方法论_单份细分版/ 15 个活跃文件补 frontmatter（A 档只覆盖根目录 10 个合并版，单份版遗漏）
 纯头部插入，正文零改动；幂等（已有 frontmatter 跳过）。用法：python add_fm_single.py [--dry-run]
 """
@@ -6,6 +6,10 @@ import io, os, re, sys
 
 import argparse
 from pathlib import Path
+
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 _ap = argparse.ArgumentParser(description="行业方法论单份细分版 frontmatter 补齐（D 档）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),

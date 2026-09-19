@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 ibd-doc-annotate · revise_docx.py — 复核结论修订稿执行器（Word 修订模式 / 直接改好 / 双版）
 
@@ -51,6 +50,9 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 import annotate_docx as A
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 W = A.W
 XML_SPACE = A.XML_SPACE
@@ -368,11 +370,11 @@ def main():
     from validate_issues import validate_issues
     _errs, _warns = validate_issues(raw)
     for _w in _warns:
-        print(f"[WARN] {_w}")
+        print(f"[WARN] {_w}", file=sys.stderr)
     if _errs:
-        print(f"[ERROR] issues 清单未通过入口校验（{len(_errs)} 项）——不注入，请修正后重试：")
+        print(f"[ERROR] issues 清单未通过入口校验（{len(_errs)} 项）——不注入，请修正后重试：", file=sys.stderr)
         for _e in _errs:
-            print(f"  - {_e}")
+            print(f"  - {_e}", file=sys.stderr)
         sys.exit(2)
     issues = A.assign_numbers([dict(x) for x in raw])
     out_docx = args.out or os.path.splitext(args.docx)[0] + "_修订稿.docx"
