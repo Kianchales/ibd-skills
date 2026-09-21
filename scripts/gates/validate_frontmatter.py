@@ -12,7 +12,8 @@
   5. version SemVer（X.Y.Z）
   6. agent_created: true
   7. body 有「何时使用（触发）/使用/示例」等价章节；<500 行
-  8. references/scripts 下每个文件在 body 中被提及（防孤儿资源）
+  8. references/ 下每个文件须在**需要它的那一步**被提及（防孤儿资源）；**只出现在「资源索引」节不算**
+     （T13 收紧 · 2026-09-21 契约 Q1②）；scripts/ 与 examples/ 维持「body 任意处提及」
   9. LICENSE 或 LICENSE.txt 存在（缺失 = ERROR）
   10. CHANGELOG.md 存在且有当前版本记录（缺失 = ERROR，自动生成模板条目提示）
   11. Agent Skills 开放标准兼容（agentskills.io / Anthropic）：description ≤1024 字符
@@ -31,6 +32,25 @@ if hasattr(sys.stdout, "reconfigure"):
 
 REQUIRED_SECTIONS = ("何时使用", "使用", "示例", "When to trigger", "Usage", "Examples")
 SECTION_ANY = ("触发", "使用", "示例", "trigger", "usage", "example")
+
+# T13（2026-09-21 · 契约 Q9②）：**外部市场包豁免** check #8（one-level-deep / 步骤级内联）。
+# 理由：这两个包由 marketplace 安装，**上游更新会整包覆盖 ⇒ 改不得**（改了必被覆盖，等于白改）；
+#      且其 references 存在「连资源索引都没提」的上游组织形态 ⇒ 不豁免则门禁**永久红 ＝ 没有门禁**。
+MARKET_EXEMPT = ("minimax-docx", "minimax-xlsx")
+
+
+def _strip_index_section(body):
+    """剔除「## 资源索引…」整节（到下一个 `## ` 或 EOF）。
+
+    T13 收紧的判据载体：**索引表答「本包有哪些册」（全景），步骤处答「这一步读哪册的哪节」（当下）**
+    ⇒ 只在索引里出现 ≠ 在需要它的那一步可达。
+    """
+    m = re.search(r"(?m)^##\s*资源索引.*$", body)
+    if not m:
+        return body
+    nxt = re.search(r"(?m)^##\s", body[m.end():])
+    end = m.end() + (nxt.start() if nxt else len(body) - m.end())
+    return body[:m.start()] + body[end:]
 
 
 def check_frontmatter(text):
@@ -126,19 +146,40 @@ def validate(skill_dir):
 
     # 8. resources one-level-deep（吸收 validate-skills）：每个 references/scripts/examples 文件
     #    必须从 SKILL.md 直接可达（body 被提及），禁止「只能通过另一 references 发现」的加载链
-    for sub in ("references", "scripts", "examples"):
-        d = os.path.join(skill_dir, sub)
-        if not os.path.isdir(d):
-            continue
-        for fn in sorted(os.listdir(d)):
-            if fn.startswith(".") or fn.endswith(".pyc") or fn == "__pycache__":
+    #    ⚠️ T13 收紧（2026-09-21 · 契约 Q1②）：`references/` 下文件须在**需要它的那一步**被提及——
+    #      **只出现在「资源索引」节不算**（E0/E1 按「何时需要」分：模型是走到那一步才需要详规，
+    #      索引只答「本包有哪些册」）。`scripts/` 与 `examples/` 维持原规则。
+    pkg_name = os.path.basename(os.path.abspath(skill_dir))
+    if pkg_name in MARKET_EXEMPT:
+        warns.append("check #8 免检：外部市场包 `%s`（上游整包覆盖、改不得；不豁免则门禁永久红）"
+                     % pkg_name)
+    else:
+        body_no_index = _strip_index_section(body)
+        for sub in ("references", "scripts", "examples"):
+            d = os.path.join(skill_dir, sub)
+            if not os.path.isdir(d):
                 continue
-            fp = os.path.join(d, fn)
-            if os.path.isdir(fp):
-                continue  # 子目录（如 tests/）不要求被 SKILL.md 提及，只检文件
-            stem = fn
-            if stem not in body and os.path.splitext(fn)[0] not in body:
-                issues.append("one-level-deep 违规: %s/%s 未从 SKILL.md 直接可达（须在 body 提及）" % (sub, fn))
+            for fn in sorted(os.listdir(d)):
+                if fn.startswith(".") or fn.endswith(".pyc") or fn == "__pycache__":
+                    continue
+                fp = os.path.join(d, fn)
+                if os.path.isdir(fp):
+                    continue  # 子目录（如 tests/）不要求被 SKILL.md 提及，只检文件
+                stem = fn
+                stem_noext = os.path.splitext(fn)[0]
+                if sub == "references":
+                    reached = stem in body_no_index or stem_noext in body_no_index
+                    if reached:
+                        continue
+                    if stem in body or stem_noext in body:
+                        issues.append(
+                            "只有「资源索引」提及: references/%s 未在**需要它的那一步**内联"
+                            "（T13 收紧 · 契约 Q1②；索引表保留即可，另须在步骤处补指针）" % fn)
+                    else:
+                        issues.append("one-level-deep 违规: references/%s 未从 SKILL.md 直接可达（须在 body 提及）" % fn)
+                else:
+                    if stem not in body and stem_noext not in body:
+                        issues.append("one-level-deep 违规: %s/%s 未从 SKILL.md 直接可达（须在 body 提及）" % (sub, fn))
 
     # 8b. 链接格式（吸收 validate-skills）：路径引用用 markdown 链接 [text](path)，非裸文件名（跳过代码块）
     #     负向断言含 /：跨包路径（如 ibd-doc-write/references/...）中间的 references/ 不算裸引用（2026-09-10 修）
