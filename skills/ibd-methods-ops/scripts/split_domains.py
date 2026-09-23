@@ -43,10 +43,11 @@ _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
 _ap.add_argument("--dry-run", action="store_true", help="只输出计划不写盘")
 _args, _ = _ap.parse_known_args()
 
-_HERE = Path(__file__).resolve().parent
-_ROOT = Path(_args.methods_root) if _args.methods_root else _HERE.parent
-METHODS = str(_ROOT / "methods")
-ARCHIVE = os.path.join(METHODS, "archive")
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import resolve as _layout_resolve, ARCHIVE_NAME
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
+ARCHIVE = os.path.join(METHODS, ARCHIVE_NAME)
 
 cfg_path = _args.config or os.path.join(str(_ROOT), "tasks", "split_domains_config.json")
 if not os.path.exists(cfg_path):

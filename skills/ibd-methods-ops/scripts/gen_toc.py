@@ -21,10 +21,12 @@ _ap = argparse.ArgumentParser(description="生成条目标题目录.md")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _args = _ap.parse_args()
-_ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
-METHODS = str(_ROOT / "methods")
-PARSED = os.path.join(str(_ROOT / "scripts"), "parsed_titles.txt")
-TOC = os.path.join(METHODS, "方法论_条目标题目录.md")
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import resolve as _layout_resolve, PARSED_FILE, TOC_FILE
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
+PARSED = os.path.join(SCRIPTS, PARSED_FILE)
+TOC = os.path.join(METHODS, TOC_FILE)
 
 
 
@@ -64,7 +66,7 @@ out = []
 out.append("# 方法论条目标题目录（按域文件 · 脚本化生成）")
 out.append("")
 out.append("> 生成：脚本化（parse_v26_titles → gen_toc，P0 拆分版）｜ 解析全部域文件条目 ｜ **定位用：按编号 → 域文件 + 行号，用 Read offset/limit 精准读正文。**")
-out.append("> 路由入口见 `methods/通用方法论_最终版.md`（域路由表）；调用索引见 `methods/方法论调用索引.md`（28Q 域速查 + 全量映射）。")
+out.append("> 路由入口见 `methods/_generated/通用方法论_最终版.md`（域路由表）；调用索引见 `methods/_generated/方法论调用索引.md`（28Q 域速查 + 全量映射）。")
 out.append("")
 out.append("## 总览")
 out.append("")
@@ -92,7 +94,7 @@ for e in head:
 
 # ---- 4. W 系列条目（粗体条目 + W-D 列表）----
 if wd_w:
-    out.append("## 附：W 系列（投行语言句式 · %d 条 · 正文在 methods/投行语言专项_W系列.md）" % len(wd_w))
+    out.append("## 附：WL 系列（回复语言句式 · %d 条 · 正文在 methods/20_语言专项/投行语言专项_回复WL系列.md）" % len(wd_w))
     out.append("")
     out.append("| 编号 | 核心句式要点 | 行号 |")
     out.append("|------|-------------|------|")
@@ -102,7 +104,7 @@ if wd_w:
 
 # ---- 4b. P 系列条目（招股书语言范式 · 正文在外置卷）----
 if wd_p:
-    out.append("## 附：P 系列（招股书语言范式 · %d 条 · 正文在 methods/分卷/投行语言专项_P系列_卷N.md）" % len(wd_p))
+    out.append("## 附：PL 系列（招股书语言范式 · %d 条 · 正文在 methods/50_分卷/投行语言专项_招股书PL系列_卷N.md）" % len(wd_p))
     out.append("")
     out.append("| 编号 | 招股书语言要点 | 卷文件 | 行号 |")
     out.append("|------|---------------|--------|------|")

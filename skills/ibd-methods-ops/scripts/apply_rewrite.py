@@ -29,6 +29,11 @@ import json
 import os
 import re
 import sys
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import (METHODS_NAME, VOLUME_NAME, DIR_DOMAIN, DIR_LANG,
+                         FINANCE_DOMAIN_FILE, LAW_DOMAIN_FILE, INDUSTRY_DOMAIN_FILE,
+                         STYLE_DOMAIN_FILE, LANG_W_FILE, LANG_P_FILE)
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -50,12 +55,13 @@ def write_text(p, t):
 
 
 def target_files(root):
-    m = os.path.join(root, 'methods')
-    out = [os.path.join(m, x) for x in ('通用方法论_财务域.md', '通用方法论_法律域.md',
-                                        '通用方法论_行业域.md', '通用方法论_体例域.md',
-                                        '投行语言专项_W系列.md', '投行语言专项_P系列.md')
-           if os.path.isfile(os.path.join(m, x))]
-    out += sorted(glob.glob(os.path.join(m, '分卷', '*.md')))
+    m = os.path.join(root, METHODS_NAME)
+    out = [os.path.join(m, DIR_DOMAIN, x) for x in (FINANCE_DOMAIN_FILE, LAW_DOMAIN_FILE,
+                                                    INDUSTRY_DOMAIN_FILE, STYLE_DOMAIN_FILE)
+           if os.path.isfile(os.path.join(m, DIR_DOMAIN, x))]
+    out += [os.path.join(m, DIR_LANG, x) for x in (LANG_W_FILE, LANG_P_FILE)
+            if os.path.isfile(os.path.join(m, DIR_LANG, x))]
+    out += sorted(glob.glob(os.path.join(m, VOLUME_NAME, '*.md')))
     return out
 
 
@@ -249,8 +255,8 @@ def main():
     ap.add_argument('--apply', action='store_true', help='实际写盘（缺省 dry-run）')
     a = ap.parse_args()
     root = a.methods_root
-    if not os.path.isdir(os.path.join(root, 'methods')):
-        print('[ENV-ERROR] 未找到方法论库: %s' % os.path.join(root, 'methods'), file=sys.stderr)
+    if not os.path.isdir(os.path.join(root, METHODS_NAME)):
+        print('[ENV-ERROR] 未找到方法论库: %s' % os.path.join(root, METHODS_NAME), file=sys.stderr)
         return 2
     if a.repair:
         do_repair(root, a.apply)

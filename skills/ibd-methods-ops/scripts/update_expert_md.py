@@ -41,10 +41,12 @@ _ap.add_argument("--keep", default="", help="警戒线 JSON（默认 财务40/�
 _ap.add_argument("--dry-run", action="store_true", help="只输出计划不写盘")
 _args, _ = _ap.parse_known_args()
 
-_HERE = Path(__file__).resolve().parent
-_ROOT = Path(_args.methods_root) if _args.methods_root else _HERE.parent
-_METHODS = _ROOT / "methods"
-_ARCHIVE = _METHODS / "archive"
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import resolve as _layout_resolve, METHODS_NAME, ARCHIVE_NAME
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
+_METHODS = _ROOT / METHODS_NAME
+_ARCHIVE = _METHODS / ARCHIVE_NAME
 _DATE = _args.date or datetime.date.today().strftime("%Y%m%d")
 
 DEFAULT_KEEP = {"财务": 40, "法律": 30, "行业": 30, "写作": 40}

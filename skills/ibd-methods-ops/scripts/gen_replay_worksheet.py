@@ -18,6 +18,10 @@ import argparse, glob, io, os, re, sys, datetime
 from pathlib import Path
 
 import sys
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import (METHODS_NAME, SINGLE_NAME, TOC_FILE, DIR_DOMAIN,
+                         FINANCE_DOMAIN_FILE, LAW_DOMAIN_FILE, INDUSTRY_DOMAIN_FILE)
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -30,14 +34,14 @@ _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
 _a = _ap.parse_args()
 
 ROOT = Path(_a.methods_root) if _a.methods_root else Path(__file__).resolve().parents[1]
-LIB = ROOT / "methods"
+LIB = ROOT / METHODS_NAME
 LIST = Path(_a.list) if _a.list else ROOT / "tasks" / "建议回写清单.md"
 if not LIB.is_dir():
     sys.exit("✗ 未找到方法论库：%s\n  用法：--methods-root <库所在的工作区根>（其下应有 methods/ 子目录）" % LIB)
 if not LIST.exists():
     sys.exit("✗ 未找到回写清单：%s\n  可用 --list 指定" % LIST)
 
-toc = io.open(LIB / "方法论_条目标题目录.md", encoding='utf-8').read()
+toc = io.open(str(LIB / TOC_FILE), encoding='utf-8').read()
 
 # ---------- 1. 解析清单指定案节 ----------
 txt = io.open(LIST, encoding='utf-8').read().split('\n')
@@ -66,7 +70,7 @@ if _a.filter and _a.filter != '全部':
 print("案：%s ｜ 候选 %d 条%s" % (case_name, len(rows), ("（筛 %s）" % _a.filter) if _a.filter else ""))
 
 # ---------- 2. 定位单案文件 ----------
-cand = [p for p in glob.glob(str(LIB / "单案" / "*.md")) if case_name in os.path.basename(p)]
+cand = [p for p in glob.glob(str(LIB / SINGLE_NAME / "*.md")) if case_name in os.path.basename(p)]
 CASE = cand[0] if cand else ""
 CL = io.open(CASE, encoding='utf-8').read().split('\n') if CASE else []
 print("单案文件：%s" % (os.path.basename(CASE) or "（未找到）"))
@@ -97,8 +101,8 @@ def old_entry(code):
     tm = re.search(r"\|\s*" + cid + r"\s*\|(.*?)\|\s*(\d+)\s*\|", toc)
     if not tm:
         return "(目录中无此编号)"
-    fmap = {"F": "通用方法论_财务域.md", "L": "通用方法论_法律域.md", "I": "通用方法论_行业域.md"}
-    f = LIB / fmap[cid[0]]
+    fmap = {"F": FINANCE_DOMAIN_FILE, "L": LAW_DOMAIN_FILE, "I": INDUSTRY_DOMAIN_FILE}
+    f = LIB / DIR_DOMAIN / fmap[cid[0]]
     if not f.exists():
         return "(域文件缺失)"
     lines = io.open(f, encoding='utf-8').read().split('\n')

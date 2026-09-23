@@ -21,9 +21,11 @@ _ap = argparse.ArgumentParser(description="解析方法论条目 → parsed_titl
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _args = _ap.parse_args()
-_ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
-METHODS = str(_ROOT / "methods")
-OUT = os.path.join(str(_ROOT / "scripts"), "parsed_titles.txt")
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import resolve as _layout_resolve, PARSED_FILE, domain_files as _layout_domain_files
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
+OUT = os.path.join(SCRIPTS, PARSED_FILE)
 
 
 
@@ -40,12 +42,9 @@ def _require_library():
 _require_library()
 
 # 域文件命名规范：通用方法论_<域>域.md + 投行语言专项_*.md（避开单案文件与入口）
-# 2026-09-19 补：纳入 `分卷/*.md`——P 系列（PL-）与体例域批次卷（S-）的**条目正文唯一存放地**
+# 2026-09-19 补：纳入 `50_分卷/*.md`——P 系列（PL-）与体例域批次卷（S-）的**条目正文唯一存放地**
 # （2026-09-16 拆分后正文外置；此前 741 条 PL-/S- 条目缺席目录与索引 ⇒ 检索链路读不到）
-DOMAIN_FILES = sorted(
-    glob.glob(os.path.join(METHODS, "通用方法论_*域.md"))
-) + sorted(glob.glob(os.path.join(METHODS, "投行语言专项_*.md"))) \
-  + sorted(glob.glob(os.path.join(METHODS, "分卷", "*.md")))
+DOMAIN_FILES = _layout_domain_files(METHODS)
 
 # 2026-08-31 D 档修复：①按文件类型分流——域文件只认条目 h3；W 系列（投行语言专项_*）
 # 的 （N）h3 是归组章节头（维度/族/批次），不解析为条目 ②pat_wd_list 扩展为通用 W- 前缀

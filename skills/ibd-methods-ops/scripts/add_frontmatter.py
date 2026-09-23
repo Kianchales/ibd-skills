@@ -30,27 +30,29 @@ _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--updated", default=None, help="写入 frontmatter 的 updated 日期（默认执行日）")
 _args, _ = _ap.parse_known_args()
-_ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import (resolve as _layout_resolve, GENERATED_BASENAMES, ENTRY_BASENAME,
+                         MERGED_MAP, FINANCE_DOMAIN_FILE, LAW_DOMAIN_FILE,
+                         INDUSTRY_DOMAIN_FILE, WRITING_DOMAIN_FILE, LANG_W_FILE)
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
 _UPDATED_DEFAULT = _args.updated or __import__("datetime").date.today().strftime("%%Y-%%m-%%d")
 UPDATED = _UPDATED_DEFAULT
-METHODS = str(_ROOT / "methods")
 
 SKIP = {
     "README.md",
-    "方法论_条目标题目录.md",
-    "方法论调用索引.md",
     "方法论调用索引_备份_20260831.md",
     "编号登记表.md",
-    "行业方法论_合并映射.md",
-}
+    MERGED_MAP,
+} | set(GENERATED_BASENAMES)
 
 V36_FILES = {
-    "通用方法论_写作域.md": "写作域",
-    "通用方法论_财务域.md": "财务域",
-    "通用方法论_法律域.md": "法律域",
-    "通用方法论_行业域.md": "行业域",
-    "投行语言专项_W系列.md": "投行语言-W系列",
-    "通用方法论_最终版.md": "通用方法论（路由入口）",
+    WRITING_DOMAIN_FILE: "写作域",
+    FINANCE_DOMAIN_FILE: "财务域",
+    LAW_DOMAIN_FILE: "法律域",
+    INDUSTRY_DOMAIN_FILE: "行业域",
+    LANG_W_FILE: "投行语言-W系列",
+    ENTRY_BASENAME: "通用方法论（路由入口）",
 }
 
 def build_fm(fn):
@@ -67,8 +69,6 @@ def build_fm(fn):
     m = re.match(r"^通用方法论_投行知识与写作范式_(.+)\.md$", fn)
     if m:
         return ["type: 单案写作范式", "case: " + m.group(1), "updated: " + UPDATED]
-    if fn == "通用方法论_投行知识与写作范式.md":
-        return ["type: 写作范式", "scope: 基础范式（历史稳定入口）", "updated: " + UPDATED]
     m = re.match(r"^行业方法论_(.+)\.md$", fn)
     if m:
         return ["type: 行业方法论", "industry_class: " + m.group(1), "updated: " + UPDATED]

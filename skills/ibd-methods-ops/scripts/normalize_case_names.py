@@ -2,7 +2,7 @@
 """案名规范化回改（幂等 · 干跑优先）
 
 作用：把库内「案名引用位」的**截断简称**改为《方法论_案名规范表.md》登记的**规范案名（证券简称）**。
-事实源：`<lib>/单案/*.md` 的 `case:` 字段 ＋ `<lib>/方法论_案名规范表.md` 表格首列（与 A4 门禁同源）。
+事实源：**A4 门禁 `check_entry_contract.load_whitelist`（直接复用 · 单一实现）** ＋ `<lib>/方法论_案名规范表.md`「三、别名映射」节。
 
 改写规则（只动案名引用位，公司实体全称一律跳过）
   R1  **<词干>实证** → **<规范名>实证**
@@ -12,7 +12,8 @@
   R4  括号内／斜杠·顿号·加号分隔的并列引用位 → <规范名>
 
 安全（工程范式 §4.7 六步）
-  ① 必须先 `--report` 干跑并人工过目命中明细；② `--apply` 前逐文件写改前备份到 `<lib>/archive/_backup-casename-<date>/`
+  ① 必须先 `--report` 干跑并人工过目命中明细；② `--apply` 前逐文件写改前备份到**顶层归档区**
+     `<工作区根>/archive/methods/backups/pre-casename-<date>/`（归档唯一化：归档物不入库层级内）
   ③ 落盘前三道自校验：双 CR 不得新增／行尾计数守恒／（.py）语法编译；④ 幂等（重跑 0 命中）
 
 用法：python normalize_case_names.py --methods-root <工作区根> [--apply] [--report <md>] [--json]
@@ -35,48 +36,38 @@ SUFFIX = ("科技", "股份", "电子", "智能", "光电", "半导体", "技术
 COMP_SUFFIX = ("电子", "光电", "科技", "股份", "智能", "材料", "半导体", "技术", "仪器", "精密",
                "真空", "重工", "电气", "数字", "雷达", "新材", "光子", "设备", "影音", "实业",
                "集团", "有限", "制造", "器件", "线缆", "通信", "能源", "机械", "自动化", "医疗")
-SKIP_DIRS = {"archive", "notes", "分卷", "__pycache__", "_backup"}
-SKIP_TOP = {"方法论_条目标题目录.md", "方法论调用索引.md", "行业方法论_合并映射.md",
-            "投行语言_旧编号映射表.md", "编号体系说明.md", "README.md",
-            "通用方法论_最终版.md", "方法论_案名规范表.md"}
-CANON_TABLE = "方法论_案名规范表.md"
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import (SKIP_DIRS_DEEP as SKIP_DIRS, TOP_LEVEL_NON_ENTRY as SKIP_TOP,
+                         CANON_TABLE, SINGLE_NAME, ARCHIVE_NAME, METHODS_NAME)
 
 
 def load_mapping(lib):
     """返回 (规范案名清单, 别名映射)。
-    规范案名 = 单案 case 字段 ＋ 规范表「表一／表二」；
-    别名映射 = 规范表「三、别名映射」节（旧写法 → 规范案名），仅供回改、不入 A4 白名单。"""
-    canon, alias = [], {}
-    for p in sorted(glob.glob(os.path.join(lib, "单案", "*.md"))):
-        try:
-            t = open(p, "rb").read().decode("utf-8")
-        except OSError:
-            continue
-        m = re.search(r"(?m)^case:\s*(.+?)\s*$", t)
-        if m:
-            canon.append(m.group(1).strip())
+
+    规范案名清单 = **复用 A4 门禁 `check_entry_contract.load_whitelist`**（单一实现）；
+    别名映射 = 规范表「三、别名映射」节（旧写法 → 规范案名），仅供回改、不入 A4 白名单。
+
+    ⚠️ 2026-09-23 修正：本函数原为**平行实现**（文件头却写「与 A4 门禁同源」）—— 当日实测已与门禁
+    **分叉**（门禁 83 ／ 本脚本 84，因门禁先修了「分隔行 `---` 混入白名单」）。平行实现必然分叉，
+    故改为 import 复用：**白名单只有一份实现**。
+    """
+    from check_entry_contract import load_whitelist          # 同目录，防两套分叉
+    alias = {}
     tp = os.path.join(lib, CANON_TABLE)
     if os.path.exists(tp):
         t = open(tp, "rb").read().decode("utf-8")
         cut = t.find("## 三")
-        body, sec3 = (t[:cut], t[cut:]) if cut > 0 else (t, "")
-        for m in re.finditer(r"(?m)^\|\s*([^|\s][^|]{0,24}?)\s*\|", body):
-            name = m.group(1).strip()
-            if name in ("规范案名", "现用写法") or "案名" in name or "写法" in name:
-                continue
-            canon.append(name)
+        sec3 = t[cut:] if cut > 0 else ""
         for m in re.finditer(r"(?m)^\|\s*([^|\s][^|]{0,24}?)\s*\|\s*([^|\s][^|]{0,24}?)\s*\|", sec3):
             old, new = m.group(1).strip(), m.group(2).strip()
             if old in ("库内旧写法", "现用写法", "写法") or "写法" in old:
                 continue
+            if not re.search(r"[0-9A-Za-z\u4e00-\u9fff]", old):
+                continue          # 2026-09-23：跳过分隔行（`---`）—— 与门禁同款判据（原会混入别名并污染 canon）
             alias[old] = new
-            canon.append(new)
-    seen, out = set(), []
-    for c in canon:
-        if c not in seen:
-            seen.add(c)
-            out.append(c)
-    return out, alias
+    canon = set(load_whitelist(lib)) | set(alias.values())
+    return sorted(canon), alias
 
 
 def walk(lib):
@@ -97,7 +88,7 @@ def main():
     a = ap.parse_args()
 
     root = a.methods_root
-    lib = os.path.join(root, "methods") if os.path.isdir(os.path.join(root, "methods")) else root
+    lib = os.path.join(root, METHODS_NAME) if os.path.isdir(os.path.join(root, METHODS_NAME)) else root
     if not os.path.isdir(lib):
         sys.stderr.write("[ERROR] 找不到库根：%s\n" % lib)
         return 2
@@ -215,7 +206,11 @@ def main():
     if not a.apply:
         return 0
 
-    bkp = os.path.join(lib, "archive", "_backup-casename-%s" % datetime.date.today().strftime("%Y%m%d"))
+    # 备份落点＝**顶层归档区**（归档唯一化 · WO-02 2026-09-23）：
+    #   原实现写 `<lib>/archive/…` ⇒ 在**库层级内**混放归档，违反「归档物一律入顶层归档区」
+    #   （2026-09-23 实测：一次回改即在 methods/ 下新建 archive/ 目录，须手工迁出才合规）。
+    bkp = os.path.join(root, ARCHIVE_NAME, METHODS_NAME, "backups",
+                       "pre-casename-%s" % datetime.date.today().strftime("%Y%m%d"))
     n = 0
     for p, new, raw in report:
         if new == raw:

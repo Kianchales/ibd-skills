@@ -27,6 +27,9 @@ import re
 import subprocess
 import sys
 
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import METHODS_NAME, NOTES_NAME
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -90,7 +93,7 @@ def check_baseline(ws):
         m = re.search(r"(\d{4})-(\d{2})-(\d{2})", b) or re.search(r"(\d{4})(\d{2})(\d{2})", b)
         d = "".join(m.groups()) if m else "00000000"
         return (d, os.path.getmtime(fp))
-    notes = sorted(glob.glob(os.path.join(ws, "methods", "notes", "*蒸馏笔记*.md")),
+    notes = sorted(glob.glob(os.path.join(ws, METHODS_NAME, NOTES_NAME, "*蒸馏笔记*.md")),
                    key=_key, reverse=True)
     if not notes:
         return None, "无蒸馏笔记"

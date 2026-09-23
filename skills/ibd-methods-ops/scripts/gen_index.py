@@ -18,18 +18,22 @@ _ap = argparse.ArgumentParser(description="生成方法论调用索引.md")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _args = _ap.parse_args()
-_ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
-METHODS = str(_ROOT / "methods")
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import (resolve as _layout_resolve, PARSED_FILE, INDEX_FILE, ENTRY_FILE,
+                         FINANCE_DOMAIN_FILE, LAW_DOMAIN_FILE, INDUSTRY_DOMAIN_FILE,
+                         WRITING_DOMAIN_FILE)
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
 
 
 def latest_v26():
     # 稳定入口：通用方法论_最终版.md（历史 vN 版已归档 库外 archive/methods/snapshots/）
-    return os.path.join(METHODS, "通用方法论_最终版.md")
+    return os.path.join(METHODS, ENTRY_FILE)
 
 
 V26 = latest_v26()
-PARSED = os.path.join(str(_ROOT / "scripts"), "parsed_titles.txt")
-OUT = os.path.join(METHODS, "方法论调用索引.md")
+PARSED = os.path.join(SCRIPTS, PARSED_FILE)
+OUT = os.path.join(METHODS, INDEX_FILE)
 
 
 
@@ -131,7 +135,7 @@ def theme(title):
 lines_out = []
 lines_out.append("# 方法论调用索引（问询问题类型 → 方法论条目）")
 lines_out.append("")
-lines_out.append("> 生成：脚本化（P0 拆分版）｜ 解析全部域文件条目（财务/法律/行业/写作/W 系列）｜ 供写反馈回复「问题拆解→查条目」与 G4 门禁引用清单使用；条目行号见 `methods/方法论_条目标题目录.md`（含域文件+行号）。")
+lines_out.append("> 生成：脚本化（P0 拆分版）｜ 解析全部域文件条目（财务/法律/行业/写作/W 系列）｜ 供写反馈回复「问题拆解→查条目」与 G4 门禁引用清单使用；条目行号见 `methods/_generated/方法论_条目标题目录.md`（含域文件+行号）。")
 lines_out.append("> **使用法**：拿到问询函问题 → 按「问题域速查表」找到 Q 编号 → 去「全量映射表」查该 Q 下所有条目 → 按条目标题目录（域文件+行号）用 Read offset/limit 定向读对应条目/行业合并版/单案文件。")
 lines_out.append("")
 
@@ -145,7 +149,7 @@ lines_out.append("|---|-------------|-----------------------------------|")
 def pick(entries, qid, maxn=12):
     matched = [e for e in entries if qid in classify(e["title"])]
     # 排序：财务/法律/行业/写作 优先于 W；同域保持原顺序
-    order = {"通用方法论_财务域.md": 0, "通用方法论_法律域.md": 1, "通用方法论_行业域.md": 2, "通用方法论_写作域.md": 3}
+    order = {FINANCE_DOMAIN_FILE: 0, LAW_DOMAIN_FILE: 1, INDUSTRY_DOMAIN_FILE: 2, WRITING_DOMAIN_FILE: 3}
     def key(e):
         base = order.get(e["dom"], 4)
         return (base,)
@@ -181,9 +185,9 @@ lines_out.append("> 条目编号 | 主题标签 | 可答复问询问题类型（
 lines_out.append("")
 
 def chap_label(dom):
-    """域文件名 → 显示标签（分卷收敛为「域·卷N」，如 体例域·卷1／投行语言专项·P系列·卷1）"""
+    """域文件名 → 显示标签（分卷收敛为「域·卷N」；2026-09-23 支持**族内分卷**两级段号「卷NN-S」）"""
     d = dom.replace("通用方法论_", "").replace(".md", "").replace("投行语言专项_", "投行语言专项·")
-    return re.sub(r"[_·]?卷(\d+).*$", "·卷\\1", d) if "卷" in d else d
+    return re.sub(r"[_·]?卷(\d+(?:-\d+)?).*$", "·卷\\1", d) if "卷" in d else d
 
 # 先 HEAD 后 WD/WD_LIST，按域文件
 seen = set()
@@ -209,20 +213,20 @@ pl_entries = [e for e in entries if e["kind"] in ("WD", "WD_LIST") and e["eid"].
 for e in head_entries:
     add_row(e)
 
-lines_out.append("## 附：W 系列（投行语言句式 · 正文在 methods/投行语言专项_W系列.md）")
+lines_out.append("## 附：WL 系列（回复语言句式 · 正文在 methods/20_语言专项/投行语言专项_回复WL系列.md）")
 lines_out.append("")
 lines_out.append("| 条目编号 | 核心句式要点（简） | 可答复问询问题类型（Q） | 域文件位置 |")
 lines_out.append("|---|---|---|---|")
 for e in wd_entries:
     qs = classify(e["title"])
     qs_str = "、".join(sorted(qs)) if qs else "待归类"
-    lines_out.append("| %s | %s | %s | 投行语言专项·W系列 |" % (e["eid"], e["title"][:60], qs_str))
+    lines_out.append("| %s | %s | %s | 投行语言专项·回复WL系列 |" % (e["eid"], e["title"][:60], qs_str))
 
 # ---- 附：P 系列（招股书语言范式 · 2026-09-19 纳入；正文在外置卷）----
 lines_out.append("")
-lines_out.append("## 附：P 系列（招股书语言范式 · %d 条 · 正文在 methods/分卷/投行语言专项_P系列_卷N.md）" % len(pl_entries))
+lines_out.append("## 附：PL 系列（招股书语言范式 · %d 条 · 正文在 methods/50_分卷/投行语言专项_招股书PL系列_卷N.md）" % len(pl_entries))
 lines_out.append("")
-lines_out.append("> **语用＝招股书**（陈述／披露），与 W 系列（回复语用）分列；写招股书时取本表，写回复时取 W 表。条目正文在外置卷 `分卷/投行语言专项_P系列_卷*.md`，行号为该卷内行号。")
+lines_out.append("> **语用＝招股书**（陈述／披露），与 WL 系列（回复语用）分列；写招股书时取本表，写回复时取 WL 表。条目正文在外置卷 `50_分卷/投行语言专项_招股书PL系列_卷*.md`，行号为该卷内行号。")
 lines_out.append("")
 lines_out.append("| 条目编号 | 招股书语言要点（简） | 可答复问询问题类型（Q） | 卷文件位置 |")
 lines_out.append("|---|---|---|---|")

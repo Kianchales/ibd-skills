@@ -10,7 +10,7 @@
     对目录（`方法论_条目标题目录.md`）中的可解析行：
       · 域文件条目：3 列 `| 编号 | 标题 | 行号 |`，文件由所在 `## <文件名>` 分组给出
       · 分卷条目：4 列 `| 编号 | 标题 | 卷文件 | 行号 |`
-      · 附表（`## 附：W 系列` / `## 附：P 系列`）：按编号前缀映射到 W 系列主文件 / P 系列卷
+      · 附表（`## 附：WL 系列` / `## 附：PL 系列`）：按编号前缀映射到 W 系列主文件 / P 系列卷
     抽查命中率须 = 100%（抽样未命中即视为漂移）。
 
 用法
@@ -27,12 +27,15 @@ import random
 import re
 import sys
 
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import METHODS_NAME, TOC_FILE, VOLUME_NAME, SINGLE_NAME, LANG_W_FILE, library_files
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 ROW = re.compile(r"^\| ([A-Z]{1,3}-\d{6}) \| (.+?) \| (.+?) \|$")
 H2 = re.compile(r"^## (.+?)\s*$")
-H_APPENDIX = re.compile(r"^## 附：([WP]) 系列")
+H_APPENDIX = re.compile(r"^## 附：((?:W|P)L?) 系列")   # 2026-09-23 WO-06：兼容改名后的「WL 系列」/「PL 系列」
 
 
 def parse_toc(path):
@@ -59,23 +62,27 @@ def parse_toc(path):
         elif len(cells) == 3 and cells[2].isdigit():
             if group:
                 rows.append((eid, group, int(cells[2])))
-            elif appendix == "W":
-                rows.append((eid, "投行语言专项_W系列.md", int(cells[2])))
-            elif appendix == "P":
+            elif appendix in ("W", "WL"):
+                rows.append((eid, LANG_W_FILE, int(cells[2])))
+            elif appendix in ("P", "PL"):
                 rows.append((eid, None, int(cells[2])))   # P 附表为 4 列，不该落到这里
     return rows
 
 
 def main():
     ap = argparse.ArgumentParser(description="索引行号定位抽查（护栏）")
-    ap.add_argument("--methods-root", required=True)
+    ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
+                    help="库所在的工作区根（缺省取 $METHODS_ROOT；非库本身）")
     ap.add_argument("--sample", type=int, default=12)
     ap.add_argument("--seed", type=int, default=20260919)
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
+    if not a.methods_root:
+        sys.stderr.write("[MISS] 需 --methods-root <工作区根> 或环境变量 METHODS_ROOT\n")
+        return 2
 
-    md = os.path.join(os.path.abspath(a.methods_root), "methods")
-    toc = os.path.join(md, "方法论_条目标题目录.md")
+    md = os.path.join(os.path.abspath(a.methods_root), METHODS_NAME)
+    toc = os.path.join(md, TOC_FILE)
     if not os.path.exists(toc):
         sys.stderr.write("[MISS] 找不到目录文件: %s\n" % toc)
         return 3
@@ -85,12 +92,17 @@ def main():
         sys.stderr.write("[SKIP] 目录无可解析行\n")
         return 3
 
+    # C3b：正文已分居 10_跨案域/、20_语言专项/、50_分卷/、40_单案/ ⇒ basename 反查实存路径
+    _by_base = {os.path.basename(x): x for x in library_files(md)}
+
     random.seed(a.seed)
     picked = random.sample(rows, min(a.sample, len(rows)))
     miss = []
     for eid, fn, ln in picked:
-        p = next((x for x in (os.path.join(md, fn), os.path.join(md, "分卷", fn),
-                              os.path.join(md, "单案", fn)) if os.path.exists(x)), None)
+        p = _by_base.get(fn) or next((x for x in (os.path.join(md, fn),
+                                                  os.path.join(md, VOLUME_NAME, fn),
+                                                  os.path.join(md, SINGLE_NAME, fn))
+                                      if os.path.exists(x)), None)
         if p is None:
             miss.append({"eid": eid, "file": fn, "line": ln, "why": "文件不存在"})
             continue

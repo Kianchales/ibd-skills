@@ -29,6 +29,9 @@ import os
 import re
 import sys
 
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import METHODS_NAME, VOLUME_NAME, STATE_NAME, CASE_INDEX_TABLE
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -48,7 +51,7 @@ def grams(t, n=5):
 
 def load_case_no(root):
     """读《单案索引对照表》两节：案名 → AN 号"""
-    idx = os.path.join(os.path.dirname(root), "state", "单案索引对照表.md")
+    idx = os.path.join(os.path.dirname(root), STATE_NAME, CASE_INDEX_TABLE)
     if not os.path.exists(idx):
         return {}
     t = io.open(idx, encoding="utf-8", errors="replace").read()
@@ -107,9 +110,9 @@ def main():
     a = ap.parse_args()
 
     md = os.path.abspath(a.methods_root)
-    if os.path.isdir(os.path.join(md, "methods")):      # 传库根 → 进 methods/
-        md = os.path.join(md, "methods")
-    vol_dir = os.path.join(md, "分卷")
+    if os.path.isdir(os.path.join(md, METHODS_NAME)):      # 传库根 → 进 methods/
+        md = os.path.join(md, METHODS_NAME)
+    vol_dir = os.path.join(md, VOLUME_NAME)
     if not os.path.isdir(vol_dir):
         sys.stderr.write("[MISS] 无分卷目录: %s\n" % vol_dir)
         return 3

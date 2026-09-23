@@ -23,9 +23,11 @@ _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--version", default=None, help="入口版本号（默认读取现有入口 version，保持不变）")
 _args = _ap.parse_args()
-_ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
-METHODS = str(_ROOT / "methods")
-ENTRY = os.path.join(METHODS, "通用方法论_最终版.md")
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import resolve as _layout_resolve, ENTRY_FILE, domain_files as _layout_domain_files
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
+ENTRY = os.path.join(METHODS, ENTRY_FILE)
 
 
 
@@ -58,11 +60,8 @@ def _current_entry_version():
 ENTRY_VERSION = _args.version or _current_entry_version()
 
 # 域文件命名规范：通用方法论_<域>域.md（以「域」字结尾，避开单案文件）+ 投行语言专项_*.md
-# 2026-09-19 补：纳入 `分卷/*.md`（P 系列 PL- 与体例域批次卷 S- 的正文唯一存放地）
-DOMAIN_FILES = sorted(
-    glob.glob(os.path.join(METHODS, "通用方法论_*域.md"))
-) + sorted(glob.glob(os.path.join(METHODS, "投行语言专项_*.md"))) \
-  + sorted(glob.glob(os.path.join(METHODS, "分卷", "*.md")))
+# 2026-09-19 补：纳入 `50_分卷/*.md`（P 系列 PL- 与体例域批次卷 S- 的正文唯一存放地）
+DOMAIN_FILES = _layout_domain_files(METHODS)
 
 
 def count_entries(fname, content):
@@ -133,8 +132,8 @@ updated: __UPD__
 
 __SUMMARIES__
 
-> **条目标题目录见 `methods/方法论_条目标题目录.md`（脚本化生成，含「域文件 + 行号」定位）**
-> **调用索引见 `methods/方法论调用索引.md`（28Q 域速查 + 全量映射）**
+> **条目标题目录见 `methods/_generated/方法论_条目标题目录.md`（脚本化生成，含「域文件 + 行号」定位）**
+> **调用索引见 `methods/_generated/方法论调用索引.md`（28Q 域速查 + 全量映射）**
 
 ## 域路由表（自动生成 · 新增域文件自动纳入）
 

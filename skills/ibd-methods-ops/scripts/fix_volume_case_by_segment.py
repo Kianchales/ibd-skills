@@ -23,6 +23,9 @@ import os
 import re
 import sys
 
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import METHODS_NAME, VOLUME_NAME, STATE_NAME, CASE_INDEX_TABLE
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -48,13 +51,13 @@ def main():
     a = ap.parse_args()
 
     root = os.path.abspath(a.methods_root)
-    md = os.path.join(root, "methods") if os.path.isdir(os.path.join(root, "methods")) else root
-    vol = os.path.join(md, "分卷")
+    md = os.path.join(root, METHODS_NAME) if os.path.isdir(os.path.join(root, METHODS_NAME)) else root
+    vol = os.path.join(md, VOLUME_NAME)
     if not os.path.isdir(vol):
         sys.stderr.write("[MISS] %s\n" % vol)
         return 3
 
-    idx = os.path.join(os.path.dirname(md), "state", "单案索引对照表.md")
+    idx = os.path.join(os.path.dirname(md), STATE_NAME, CASE_INDEX_TABLE)
     an = {}
     t = io.open(idx, encoding="utf-8", errors="replace").read()
     for m in re.finditer(r"(?m)^\| ([^|]{2,10}?) \| (AN\d{4}) \|", t):

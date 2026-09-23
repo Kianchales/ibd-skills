@@ -27,6 +27,11 @@ import glob
 import os
 import re
 import sys
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import (METHODS_NAME, VOLUME_NAME, STATE_NAME, CASE_INDEX_TABLE,
+                         DIR_DOMAIN, DIR_LANG, LANG_P_FILE, STYLE_DOMAIN_FILE,
+                         library_files as _layout_library_files)
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -93,9 +98,10 @@ def s_counts(lines):
 def library_max(root):
     """库内实测各族 max（PL 15-19 / S 01-04）"""
     mx = {'PL': {}, 'S': {}}
-    m = os.path.join(root, 'methods')
-    paths = [os.path.join(m, '投行语言专项_P系列.md'), os.path.join(m, '通用方法论_体例域.md')]
-    vol = os.path.join(m, '分卷')
+    m = os.path.join(root, METHODS_NAME)
+    paths = [os.path.join(m, DIR_LANG, LANG_P_FILE),
+             os.path.join(m, DIR_DOMAIN, STYLE_DOMAIN_FILE)]
+    vol = os.path.join(m, VOLUME_NAME)
     if os.path.isdir(vol):
         paths += [os.path.join(vol, x) for x in sorted(os.listdir(vol)) if x.endswith('.md')]
     for p in paths:
@@ -111,9 +117,9 @@ def library_max(root):
 
 def library_text(root):
     """库内全文（主库文件 ＋ 分卷）——用于「该案简称是否已在库中出现」的兜底入库判定"""
-    m = os.path.join(root, 'methods')
+    m = os.path.join(root, METHODS_NAME)
     buf = []
-    for p in glob.glob(os.path.join(m, '*.md')) + glob.glob(os.path.join(m, '分卷', '*.md')):
+    for p in glob.glob(os.path.join(m, '*.md')) + glob.glob(os.path.join(m, VOLUME_NAME, '*.md')):
         try:
             buf.append(read_text(p))
         except Exception:
@@ -128,11 +134,10 @@ def ingested_names(root):
     出现，说明其 PL/S 条目**已随批次入库**，此时再「归一」会把它改成新号 ⇒ 与库内旧号脱钩。
     """
     names = set()
-    m = os.path.join(root, 'methods')
-    paths = []
-    for pat in ('*.md',):
-        paths += glob.glob(os.path.join(m, pat))
-    paths += glob.glob(os.path.join(m, '分卷', '*.md'))
+    m = os.path.join(root, METHODS_NAME)
+    # C3b：旧写法扫 `methods/*.md`（搬迁后根级只剩元文件 ⇒ 会静默漏掉全部正文），
+    #      改为按目录枚举正文（域文件 ＋ 语言专项 ＋ 行业合并版 ＋ 分卷）。
+    paths = _layout_library_files(m)
     for p in paths:
         try:
             for ln in read_text(p).split('\n'):
@@ -212,7 +217,7 @@ def collect_case(case_dir, kind):
 def discover_cases(root, explicit):
     if explicit:
         return [x.strip() for x in explicit.split(',') if x.strip()]
-    tbl = os.path.join(root, 'state', '单案索引对照表.md')
+    tbl = os.path.join(root, STATE_NAME, CASE_INDEX_TABLE)
     names = []
     if os.path.isfile(tbl):
         for ln in read_text(tbl).split('\n'):
@@ -233,8 +238,8 @@ def main():
     ap.add_argument('--force', action='store_true', help='即使该案已入库也强制归一（默认跳过）')
     a = ap.parse_args()
     root = a.methods_root
-    if not os.path.isdir(os.path.join(root, 'methods')):
-        print('[ENV-ERROR] 未找到方法论库: %s' % os.path.join(root, 'methods'), file=sys.stderr)
+    if not os.path.isdir(os.path.join(root, METHODS_NAME)):
+        print('[ENV-ERROR] 未找到方法论库: %s' % os.path.join(root, METHODS_NAME), file=sys.stderr)
         return 2
 
     cases = discover_cases(root, a.cases)

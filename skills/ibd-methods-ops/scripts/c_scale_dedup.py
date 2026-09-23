@@ -22,9 +22,11 @@ _ap.add_argument("--plan", default="", help="条目修复计划 JSON（[[file,ti
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _args = _ap.parse_args()
-_ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
-METHODS = str(_ROOT / "methods")
-WRITE_DOMAIN = os.path.join(METHODS, '通用方法论_写作域.md')
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import resolve as _layout_resolve, DIR_DOMAIN, WRITING_DOMAIN_FILE
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
+WRITE_DOMAIN = os.path.join(METHODS, DIR_DOMAIN, WRITING_DOMAIN_FILE)
 
 NOTE = '> 量表定义见 ibd-quality-gates skill §2.4（6 维 30 分，<25 分不交付）；下表为本案自评执行记录。'
 

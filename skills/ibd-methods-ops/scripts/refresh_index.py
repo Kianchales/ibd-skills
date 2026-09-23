@@ -26,8 +26,10 @@ _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
 _ap.add_argument("--version", default=None, help="入口版本号（透传 gen_entry）")
 _args, _ = _ap.parse_known_args()
 
-_HERE = Path(__file__).resolve().parent
-_ROOT = Path(_args.methods_root) if _args.methods_root else _HERE.parent
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import resolve as _layout_resolve, SCRIPTS_DIR as _HERE
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
 
 STEPS = [
     ("parse_titles.py", "解析条目 → parsed_titles.txt"),

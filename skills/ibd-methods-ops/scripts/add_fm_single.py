@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""D 档补充：行业方法论_单份细分版/ 15 个活跃文件补 frontmatter（A 档只覆盖根目录 10 个合并版，单份版遗漏）
+"""D 档补充：30_行业版/单份细分版/ 15 个活跃文件补 frontmatter（A 档只覆盖根目录 10 个合并版，单份版遗漏）
 纯头部插入，正文零改动；幂等（已有 frontmatter 跳过）。用法：python add_fm_single.py [--dry-run]
 """
 import io, os, re, sys
@@ -16,11 +16,13 @@ _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--updated", default=None, help="写入 frontmatter 的 updated 日期（默认执行日）")
 _args, _ = _ap.parse_known_args()
-_ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import resolve as _layout_resolve, METHODS_NAME, SUB_INDUSTRY_NAME
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
 _UPDATED_DEFAULT = _args.updated or __import__("datetime").date.today().strftime("%%Y-%%m-%%d")
 UPDATED = _UPDATED_DEFAULT
-METHODS = str(_ROOT / "methods")
-SUB = str(_ROOT / "methods" / "行业方法论_单份细分版")
+SUB = str(_ROOT / METHODS_NAME / SUB_INDUSTRY_NAME)
 UPDATED = _UPDATED_DEFAULT
 
 

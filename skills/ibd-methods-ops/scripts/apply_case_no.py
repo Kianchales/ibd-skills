@@ -16,7 +16,10 @@ import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-SKIP_DIRS = {"archive", "notes", "分卷", "_backup", "__pycache__", "单案/archive"}
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import (SKIP_DIRS_CASE_NO as SKIP_DIRS, SINGLE_NAME,
+                         STATE_NAME, CASE_INDEX_TABLE)
 
 
 def load_index(path):
@@ -73,13 +76,13 @@ def main():
     a = ap.parse_args()
 
     root = os.path.abspath(a.methods_root)
-    idx_path = a.case_index or os.path.join(os.path.dirname(root), "state", "单案索引对照表.md")
+    idx_path = a.case_index or os.path.join(os.path.dirname(root), STATE_NAME, CASE_INDEX_TABLE)
     idx = load_index(idx_path)
     if not idx:
         sys.stderr.write("[SKIP] 索引表无有效案号行\n")
         return 3
 
-    single_dir = os.path.join(root, "单案")
+    single_dir = os.path.join(root, SINGLE_NAME)
     if not os.path.isdir(single_dir):
         sys.stderr.write("[SKIP] 无单案目录: %s\n" % single_dir)
         return 3

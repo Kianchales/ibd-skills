@@ -26,10 +26,13 @@ _ap = argparse.ArgumentParser(description="域文件结构归一（B 档）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _args, _ = _ap.parse_known_args()
-_ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
-METHODS = str(_ROOT / "methods")
-BACKUP = os.path.join(METHODS, "archive", "b_fmt_unify_backup")
-FILES = ["通用方法论_财务域.md", "通用方法论_法律域.md", "通用方法论_行业域.md"]
+import os as _lo, sys as _ls
+_ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
+from _lib.layout import (resolve as _layout_resolve, ARCHIVE_NAME, DIR_DOMAIN,
+                         FINANCE_DOMAIN_FILE, LAW_DOMAIN_FILE, INDUSTRY_DOMAIN_FILE)
+_ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
+BACKUP = os.path.join(METHODS, ARCHIVE_NAME, "b_fmt_unify_backup")
+FILES = [FINANCE_DOMAIN_FILE, LAW_DOMAIN_FILE, INDUSTRY_DOMAIN_FILE]
 
 RE_PREFIX = re.compile(r"^### (财务|法律)（(\d+)）(.*)$")
 RE_VER = re.compile(r"^### 2026-08-23 批量 10 案.+（S6b · v34→v35，\d+ 条）$")
@@ -38,7 +41,7 @@ RE_GROUP = re.compile(r"^### (A 组：|B 组：|族 [A-F] )")
 RE_BQ = re.compile(r"^> \*\*批次注记\*\*：")
 
 def process(fn, dry=True):
-    path = os.path.join(METHODS, fn)
+    path = os.path.join(METHODS, DIR_DOMAIN, fn)
     with io.open(path, encoding="utf-8") as f:
         lines = f.read().splitlines()
     plan = []
@@ -94,10 +97,10 @@ def main():
     # 正式执行：先备份
     os.makedirs(BACKUP, exist_ok=True)
     for fn in FILES:
-        shutil.copy2(os.path.join(METHODS, fn), os.path.join(BACKUP, fn))
+        shutil.copy2(os.path.join(METHODS, DIR_DOMAIN, fn), os.path.join(BACKUP, fn))
     print("备份完成 →", BACKUP)
     for fn in FILES:
-        with io.open(os.path.join(METHODS, fn), "w", encoding="utf-8", newline="\n") as f:
+        with io.open(os.path.join(METHODS, DIR_DOMAIN, fn), "w", encoding="utf-8", newline="\n") as f:
             f.write("\n".join(all_new[fn]) + "\n")
         print("已写入", fn, "（%d 处改动）" % sum(1 for p in all_plan if p[0] == fn))
     print("B 档执行完成，共 %d 处改动。" % len(all_plan))
