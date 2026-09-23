@@ -4,10 +4,10 @@
 扩展性：新增域文件经 parse 后自动出现为目录分组，零改码。
 
 用法：
-    python gen_toc.py [--methods-root <库根目录>]
+    python gen_toc.py [--methods-root <工作区根>]
 
 参数：
-    --methods-root  方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）
+    --methods-root  工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）
 """
 import argparse, io, os
 from collections import OrderedDict
@@ -19,7 +19,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 _ap = argparse.ArgumentParser(description="生成条目标题目录.md")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _args = _ap.parse_args()
 _ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
 METHODS = str(_ROOT / "methods")
@@ -33,7 +33,7 @@ def _require_library():
     import sys as _s
     if not os.path.isdir(METHODS):
         _s.stderr.write("✗ 未找到方法论库：%s\n" % METHODS)
-        _s.stderr.write("  用法：--methods-root <库根目录>（或设环境变量 METHODS_ROOT）\n")
+        _s.stderr.write("  用法：--methods-root <工作区根>（或设环境变量 METHODS_ROOT）\n")
         _s.stderr.write("  首次使用：按 SKILL.md「库配置」四问引导接入你的库；库结构规范见 references/methods-guide.md\n")
         _s.exit(2)
 
@@ -112,7 +112,10 @@ if wd_p:
 d = os.path.dirname(TOC)
 if d:
     os.makedirs(d, exist_ok=True)
-with io.open(TOC, "w", encoding="utf-8") as f:
+with io.open(TOC, "w", encoding="utf-8", newline="\n") as f:
     f.write("\n".join(out) + "\n")
 print("TOC:", TOC, "rows:", total_head, "+W", len(wd_w), "+P", len(wd_p))
 print("DONE")
+
+
+sys.exit(0)

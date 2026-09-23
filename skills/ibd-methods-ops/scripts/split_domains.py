@@ -3,11 +3,11 @@
 铁律：只搬位置、不改内容（纯行号切割）；内置自校验：G1 条目守恒 + G2 内容零改动。
 
 用法：
-    python split_domains.py --config <拆分配置.json> [--methods-root <库根目录>] [--dry-run]
+    python split_domains.py --config <拆分配置.json> [--methods-root <工作区根>] [--dry-run]
 
 参数：
     --config        拆分配置（JSON，格式见下）；默认尝试 {库根}/tasks/split_domains_config.json
-    --methods-root  方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）
+    --methods-root  工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）
     --dry-run       只输出计划不写盘
 
 配置格式（split_domains_config.json）：
@@ -39,7 +39,7 @@ if hasattr(sys.stdout, "reconfigure"):
 _ap = argparse.ArgumentParser(description="库拆分执行器（配置驱动）")
 _ap.add_argument("--config", default="", help="拆分配置 JSON（默认 {库根}/tasks/split_domains_config.json）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--dry-run", action="store_true", help="只输出计划不写盘")
 _args, _ = _ap.parse_known_args()
 
@@ -66,7 +66,7 @@ def w(path, content):
         print("  [dry-run] 将写入 %s（%d 字符）" % (os.path.basename(path), len(content)))
         return
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    io.open(path, "w", encoding="utf-8").write(content)
+    io.open(path, "w", encoding="utf-8", newline="\n").write(content)
 
 
 def seg(a, b):  # 1-based 闭区间

@@ -24,7 +24,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 _ap = argparse.ArgumentParser(description="域文件结构归一（B 档）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _args, _ = _ap.parse_known_args()
 _ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
 METHODS = str(_ROOT / "methods")
@@ -103,4 +103,4 @@ def main():
     print("B 档执行完成，共 %d 处改动。" % len(all_plan))
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

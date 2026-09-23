@@ -131,6 +131,6 @@ for i, r in enumerate(rows, 1):
 
 _sfx = ("_" + _a.filter) if (_a.filter and _a.filter != '全部') else ""
 OUT = ROOT / "tasks" / ("_replay_ws_case%d%s_%s.md" % (_a.case, _sfx, datetime.date.today().strftime("%Y%m%d")))
-io.open(OUT, 'w', encoding='utf-8').write("\n".join(out))
+io.open(OUT, 'w', encoding='utf-8', newline="\n").write("\n".join(out))
 hit = sum(1 for r in rows if new_entry(r['new']))
 print("✅ 工作表已生成：%s（候选 %d 条，新案条目命中 %d 条）" % (OUT, len(rows), hit))

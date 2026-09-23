@@ -93,7 +93,7 @@
 
 ## 8. 校验门禁（scripts/check_annotations.py）
 
-docx 侧：comments 条数 == commentRangeStart/End/Reference 对数；每条 4 段且无空段落；标签行/标题行整行加粗；「问题描述：」「建议：」引导词 run 加粗而正文常规；编号前缀 ∈ {J,L,I,Z} 且不重复；CommentText/CommentReference 样式存在；Content_Types/rels 注册齐全。
+docx 侧：comments 条数 == commentRangeStart/End/Reference 对数；每条 4 段且无空段落；标签行/标题行整行加粗；「问题描述：」「建议：」引导词 run 加粗而正文常规；编号前缀为 **1-2 个大写字母**且不重复（`J`／`L`／`I`／`Z` 仅为**常见示例，非白名单**——前缀由复核流程自定义、与清单 `code` 字段一致，脚本不内置映射，见本册 §4 与 `check_annotations.py` 首注）；CommentText/CommentReference 样式存在；Content_Types/rels 注册齐全。
 PDF 侧（有 pymupdf 时）：高亮注释数与问题清单条数一致；每条弹注 content 首行以 `【编号｜` 开头；编号唯一。
 
 > 输出：`<文件>_批注校验报告.md`；任一不符 → 退回 ibd-doc-annotate 重新注入，不交付。

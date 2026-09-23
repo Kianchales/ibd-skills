@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E8%B4%A8%E9%87%8F%E6%A0%A1%E9%AA%8C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.12.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.13.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -72,7 +72,7 @@ ibd-quality-gates/
 │   ├── wordlist-absolute.txt      # 绝对化用词表（G2）
 │   ├── wordlist-ai-flavor.txt     # AI 痕迹词表
 │   ├── antipatterns.md            # 反模式清单（四类 23 条）
-│   ├── rules.md                   # 完整规则（含 G1-G5 定义 + §7 Excel 公式三档）
+│   ├── rules.md                   # 完整规则（含 G1-G5 定义 + §7 Excel 交付门禁）
 │   ├── task-core.md               # 动笔前准备骨架
 │   └── examples.md                # 最小复现示例
 └── scripts/                  # check_gates / check_data（含自测）
@@ -81,7 +81,7 @@ ibd-quality-gates/
 ## 📌 近期更新
 
 - **2026-09-18 · v0.11.0**：新增 rules.md **§8 改写既有工作簿四条纪律**——改前体检结构（表头/列序/公式引用）、写后读回验证（工具「返回成功」≠ 已落盘）、汇总默认全公式（静态快照须标注取值时点）、构造参照值前先分离「明细」与「合计」行；源自 I-0008~I-0011 四连事故
-- **2026-09-18 · v0.10.0**：Excel 交付物专项——公式写入三档（A 经典 / B 单值型带 `_xlfn.` / C 溢出型禁 openpyxl）+ 交付前重算原则；反模式新增 D-8（公式假值/静默截断），清单扩为 23 条
+- **2026-09-18 · v0.10.0**：Excel 交付物专项——公式写入形态（A 裸写 / B 前缀写 / C 静态写）+ 交付前重算原则；反模式新增 D-8（公式假值/静默截断），清单扩为 23 条
 - **2026-09-15 · v0.8.4**：检查6 门禁追溯——`references/antipatterns.md` 随包资产补记留痕（内容零变更）；
 - **2026-09-10 · v0.8.3**：命名定稿「质量校验」（三轮迭代：门禁→把关→校验）；五项判据 G1-G5；SKILL 骨架标准化
 - **2026-09-10 · v0.8.1**：SKILL 语言全量顺一遍（规则零改动）

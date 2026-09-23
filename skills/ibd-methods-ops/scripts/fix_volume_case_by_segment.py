@@ -13,7 +13,7 @@
       · 案节以外的文件头（卷首说明/登记表）不擅自改，单独报告
 
 用法
-    python fix_volume_case_by_segment.py --methods-root <库根> [--apply] [--json]
+    python fix_volume_case_by_segment.py --methods-root <工作区根> [--apply] [--json]
 """
 import argparse
 import collections

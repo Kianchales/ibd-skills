@@ -3,10 +3,10 @@
 任一环节失败即停止（保证索引/目录/入口三者一致，不会半新半旧）。
 
 用法：
-    python refresh_index.py [--methods-root <库根目录>] [--version <入口版本号>]
+    python refresh_index.py [--methods-root <工作区根>] [--version <入口版本号>]
 
 参数：
-    --methods-root  方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）
+    --methods-root  工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）
     --version       入口版本号（透传给 gen_entry；默认读取现有入口 version 保持不变）
 
 说明：
@@ -22,7 +22,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 _ap = argparse.ArgumentParser(description="索引体系一键刷新（四件套编排）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--version", default=None, help="入口版本号（透传 gen_entry）")
 _args, _ = _ap.parse_known_args()
 

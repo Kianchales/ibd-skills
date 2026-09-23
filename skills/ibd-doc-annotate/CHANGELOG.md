@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.10.0] - 2026-09-23
+
+### 新增
+
+- **`annotate_docx.py` 增 `--dry-run`**（议题⑩）：只报「命中／未锚定」统计与目标路径，**不写任何文件**——锚点质量预检用。本脚本是产线里**唯一直写交付件**的环节，此前无任何预演手段。
+- **`annotate_docx.py` 增覆盖保护**：目标文件已存在时**默认拒绝**（rc 2），要覆盖须显式 `--force`。动机：误盖既有批注版 ＝ **静默丢失上一轮复核结果**（同族：静默失败／假绿灯）。
+
+### 修订
+
+- `SKILL.md`：使用流程命令行补 `[--dry-run] [--force]`，判据行补两者语义。
+- 依赖下限 `ibd-doc-review ≥ 0.19.0` 两处（`SKILL.md`／`references/ops-notes.md`）**加回指** → `ibd-doc-review/references/interface.md` §6（该表自陈「供下游回填」，此前下游未回填）。
+
+### 冒烟记录
+
+- 桩 `docx`／`lxml`／`validate_issues` 后实跑四条路径：`--out` 已存在 → **rc 2 拒绝**；默认目标已存在 → **rc 2 拒绝**；`--force --dry-run` → **rc 0 且零写盘**；全新路径 `--dry-run` → **rc 0 且零写盘**。
+
+## [0.9.0] - 2026-09-21
+
+- SKILL.md 瘦身（承接度 0.09 ⇒ **先建册再搬**）：正文由「步骤名 ＋ 一句话判据 ＋ 册指针」构成，详规按主题下沉到 5 册（新建 `issues-schema.md`／`annotate-runbook.md`／`revise-runbook.md`／`delivery-and-gates.md`／`ops-notes.md`，共 +17,717 B，均经全库 grep 确认无同名冲突）；SKILL.md **20,456 → 12,279 B（−40.0%）**，达 M 档 ≤12,288 线
+- 只搬家不删内容、不动触发面：`description`／`summary`／「## 何时使用」与 8 个节标题逐字未改；4 个步骤名与全部判据名留在正文（改后逐条 grep 命中 ≥1）；每册均在「需要它的那一步」内联出指针，资源索引表同步补册行
+- 依据：瘦身计划 §二（M 档 ≤12 KB）· §三（S3 搬家 ＋ 指针化，四条硬纪律）· §五（验收九条）；工单 `.scratch/skilldev-slim/issues/T10-batchB-build-or-trim.md`（批 B 第 1 包）
+- **承接方式 = 先建册**（本包承接度 0.09，无册可接）：新建 5 册（`issues-schema.md`／`annotate-runbook.md`／`revise-runbook.md`／`delivery-and-gates.md`／`ops-notes.md`，合计 +17,717 B），既有 `examples.md` 原位未动；**真删减 = 无**。
+- **版本语义声明改为指针**（承 T12 · 裁定 Q11′②）：`CHANGELOG` 首行原 `X/Y/Z` 自定义记号 → 指向建仓 `docs/ENGINEERING.md` §3.5 的一行指针。
+
 ## [0.8.0] - 2026-09-19
 
 ### 新增：`validate_issues.py` 支持 `--json` 结构化输出（工程范式 A5 对齐）

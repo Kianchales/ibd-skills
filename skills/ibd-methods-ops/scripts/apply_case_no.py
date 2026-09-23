@@ -66,7 +66,7 @@ def plan_file(path, an):
 
 def main():
     ap = argparse.ArgumentParser(description="把案号写回单案文件 frontmatter（表驱动）")
-    ap.add_argument("--methods-root", required=True, help="方法论库根目录")
+    ap.add_argument("--methods-root", required=True, help="工作区根（= 库根，其下含 methods/）")
     ap.add_argument("--case-index", default="", help="《单案索引对照表》路径（默认 <库>/../state/）")
     ap.add_argument("--apply", action="store_true", help="实际落盘（默认 dry-run）")
     ap.add_argument("--json", action="store_true", help="输出 JSON")

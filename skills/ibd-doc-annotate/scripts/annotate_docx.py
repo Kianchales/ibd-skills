@@ -358,6 +358,10 @@ def main():
     ap.add_argument("--issues", required=True, help="复核问题清单 JSON（数组）")
     ap.add_argument("--out", help="输出 docx 路径（默认 <原文名>_批注版.docx）")
     ap.add_argument("--date", default="", help="ISO8601 批注日期（默认当前 UTC）")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="只报「命中／未锚定」统计与目标路径，**不写任何文件**（锚点质量预检）")
+    ap.add_argument("--force", action="store_true",
+                    help="目标文件已存在时覆盖（默认拒绝，防误盖既有交付物）")
     args = ap.parse_args()
 
     with open(args.issues, encoding="utf-8") as fh:
@@ -377,6 +381,12 @@ def main():
         it["cid"] = i
     out_docx = args.out or os.path.splitext(args.docx)[0] + "_批注版.docx"
     date_iso = args.date or _now_iso()
+    # 覆盖保护（2026-09-23 补）：目标已存在时默认拒绝——本脚本是投行产线里唯一直写交付件的环节，
+    # 误盖既有批注版＝静默丢失上一轮复核结果。要覆盖须显式 --force。
+    if (not args.dry_run) and os.path.exists(out_docx) and not args.force:
+        print(f"[ERROR] 目标已存在，拒绝覆盖：{out_docx}")
+        print("        如需覆盖请显式加 --force；或先用 --dry-run 预检、或改 --out 换路径。")
+        return 2
 
     doc = Document(args.docx)
     misses = []
@@ -387,6 +397,13 @@ def main():
         else:
             misses.append({**it, "reason": reason})  # 补 reason：write_overview 渲染未锚定清单需要
             print(f"[MISS] {it['full']} {it['author']}：{reason}")
+
+    if args.dry_run:
+        print("[DRY-RUN] 未写任何文件。目标路径：%s" % out_docx)
+        print("[DRY-RUN] 命中 %d 条 ／ 未锚定 %d 条（未锚定明细见上方逐条 [MISS]）"
+              % (len(issues) - len(misses), len(misses)))
+        print("[DRY-RUN] 正式运行将另产：<输出>_批注总览.md ＋ <输出>_批注总览.docx")
+        return 0
 
     tmp = out_docx + ".tmp"
     doc.save(tmp)

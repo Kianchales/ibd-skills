@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.21.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.23.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -72,15 +72,15 @@ finance-review 复核清单 → doc-annotate 注入批注 → doc-review 校验�
 
 ```
 ibd-doc-review/
-├── SKILL.md              # 主文件：决策树 / 样式应用铁律 / 资源索引
+├── SKILL.md              # 主文件：场景导航表 / S1-S7 步骤判据 / 样式应用铁律 / 资源索引
 ├── README.md             # 本文件
 ├── CHANGELOG.md          # 版本记录（0.15.0+；更早见 references/changelog-archive.md）
 ├── assets/templates/     # 样式源模板（报告/反馈回复/表格）
-├── references/           # 规范与规则（workflow/annotations/revisions/style-map/delivery 等）
+├── references/           # 规范与规则（workflow/annotations/revisions/style-map/delivery/toolchain 等）
 └── scripts/              # 校验门禁脚本（含自测）
 ```
 
-> SKILL.md 只留**常读**部分（决策树 + 铁律）；**执行细则**（S1-S7 / 格式核对矩阵 / 复核交付模式 / 命令全表）在 [references/workflow.md](references/workflow.md)。
+> SKILL.md 只留**常读**部分（场景导航表 + S1-S7 步骤判据 + 铁律）；**执行细则**（进门决策树 / S1-S7 / 格式核对矩阵 / 复核交付模式 / 命令全表）在 [references/workflow.md](references/workflow.md)；**工具层级说明与踩坑全文**在 [references/toolchain.md](references/toolchain.md)。
 >
 > 版本记录见 [CHANGELOG.md](CHANGELOG.md)（0.15.0 起）；**0.15.0 之前的历史版本**已归档至 [references/changelog-archive.md](references/changelog-archive.md)。
 

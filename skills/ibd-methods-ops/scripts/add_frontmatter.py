@@ -27,7 +27,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 _ap = argparse.ArgumentParser(description="方法论全库 frontmatter 补齐（A 档）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--updated", default=None, help="写入 frontmatter 的 updated 日期（默认执行日）")
 _args, _ = _ap.parse_known_args()
 _ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
@@ -115,4 +115,4 @@ def main():
     print(f"\n完成：注入 {len(plan)} 个文件")
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

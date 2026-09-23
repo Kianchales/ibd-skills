@@ -2,10 +2,10 @@
 """方法论全库健康护栏（10 项检查 · 防结构漂移）
 
 用法：
-    python check_methods_health.py [--methods-root <库根目录>] [--quiet]
+    python check_methods_health.py [--methods-root <工作区根>] [--quiet]
 
 参数：
-    --methods-root  方法论库根目录（其下应有 methods/ 子目录）；默认取环境变量 METHODS_ROOT，
+    --methods-root  工作区根（= 库根；其下应有 methods/ 子目录）；默认取环境变量 METHODS_ROOT，
                     未设置时按脚本所在目录的上级推断（脚本随库存放于 <库根>/scripts/ 时零参数可用）
     --quiet         只输出异常项
 
@@ -30,7 +30,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 _ap = argparse.ArgumentParser(description="方法论全库健康护栏（10 项检查）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--quiet", action="store_true", help="只输出异常项")
 _ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
 _args = _ap.parse_args()
@@ -48,7 +48,7 @@ def _require_library():
     import sys as _s
     if not os.path.isdir(METHODS):
         _s.stderr.write("✗ 未找到方法论库：%s\n" % METHODS)
-        _s.stderr.write("  用法：--methods-root <库根目录>（或设环境变量 METHODS_ROOT）\n")
+        _s.stderr.write("  用法：--methods-root <工作区根>（或设环境变量 METHODS_ROOT）\n")
         _s.stderr.write("  首次使用：按 SKILL.md「库配置」四问引导接入你的库；库结构规范见 references/methods-guide.md\n")
         _s.exit(2)
 

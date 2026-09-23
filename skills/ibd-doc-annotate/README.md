@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%89%B9%E6%B3%A8%E4%B8%8E%E4%BF%AE%E8%AE%A2%E4%BA%A4%E4%BB%98-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.8.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.10.0-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -59,6 +59,13 @@ finance-review 16 维复核产出问题清单（J-01 起编号）→ 本 skill �
 ibd-doc-annotate/
 ├── SKILL.md                  # 主文件（触发词/流程/边界）
 ├── README.md                 # 本文件
+├── references/               # 细则分册（按需加载）
+│   ├── annotate-runbook.md       # 批注注入操作规程
+│   ├── revise-runbook.md         # 修订稿执行规程（revise/clean/both）
+│   ├── delivery-and-gates.md     # 交付形态与门禁口径
+│   ├── issues-schema.md          # 复核问题清单 schema
+│   ├── examples.md               # 用法示例
+│   └── ops-notes.md              # 运维与踩坑
 └── scripts/
     ├── annotate_docx.py              # Word 批注注入（跨 run 拆分、保留原格式）
     ├── annotate_pdf.py               # PDF 高亮+弹注（字符级定位）

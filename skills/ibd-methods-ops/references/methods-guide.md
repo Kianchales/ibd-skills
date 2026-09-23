@@ -80,38 +80,46 @@
 
 ### 没有库？——起步路径
 
-- **A 档**：建目录 + 4 个基础文件（见「目录结构」+「空库起步模板」）；Obsidian 则在 Vault 内建库目录，可加标签/双链增强
+- **A 档**：建目录 + 3 个基础文件（见「目录结构」+「空库起步模板」）；Obsidian 则在 Vault 内建库目录，可加标签/双链增强
 - **B 档**：在目标服务内建空间/知识库 → 直接开始沉淀（索引机制不可用，检索走其搜索）
 
 ## 三、目录结构
 
-### 起步结构（4 文件 · 小库可用）
+### 起步结构（3 文件 · 小库可用）
 
 ```
 {METHODS_ROOT}/                      ← 库根目录（路径可配置）
 ├── 通用方法论_最终版.md             ← 稳定入口：全部条目
-├── 方法论调用索引.md                ← 核心入口：问题域速查表（Q1-QN）→ 条目编号映射
-├── 方法论_条目标题目录.md           ← 标题 + 行号目录（行号定位精读，不全文翻找）
-└── 编号登记表.md                    ← 编号 → 条目映射（防重防丢）
+├── 方法论调用索引.md                ← 核心入口：问题域速查表（Q1-QN）→ 条目编号映射（兼编号唯一性凭证）
+└── 方法论_条目标题目录.md           ← 标题 + 行号目录（行号定位精读，不全文翻找）
 ```
+
+- **编号登记表已退役**（2026-09-01 迁 `archive/`，见 `govern/health-check.md`）：编号唯一性与防重改由**调用索引全量映射 ＋ 条目标题目录**保障；v36 遗留登记表仅作历史留痕，不再属活跃资产
 
 ### 规模化结构（域拆分 · 库大到单文件读取成本高时）
 
+> **两个「根」先分清**：`{METHODS_ROOT}` = **库根/methods**（方法论正文区，下表缩进项均在其内）；**库根 = 工作区根** = `{METHODS_ROOT}` 的**上一级**——`app/ scripts/ state/ tasks/ docs/ logs/ archive/ cases/` 都在这一层。**脚本 `--methods-root` 传的是库根（工作区根），不是正文根**（2026-09-19 实测校正）。
+
 ```
-{METHODS_ROOT}/
-├── 通用方法论_最终版.md             ← 入口薄壳：域路由表 + 使用法（由 gen_entry.py 生成/维护）
-├── 通用方法论_<域>域.md             ← 各域正文（财务/法律/行业/写作…按域拆，条目 h3 层）
-├── 投行语言专项_<域>.md             ← 专项域（可选，如 W 系列语言范式）
-├── 方法论调用索引.md                ← 生成物（gen_index.py）
-├── 方法论_条目标题目录.md           ← 生成物（gen_toc.py）
-├── 编号登记表.md
-├── 行业方法论_{类名}.md             ← 行业合并版（可选，按行业分类归组）
-├── 行业方法论_单份细分版/           ← 单案行业研究（可选）
-├── 单案/                            ← 单案范式文件（53；一案一文件，frontmatter 带 case_no 案号）
-├── notes/                           ← 蒸馏笔记落库（KB 后端默认本地位置）
-├── state/                           ← 流程状态台账（单案索引对照表/待补学清单/体检计数/回写清单指针；**目录说明见该目录 README.md**）
-├── scripts/                         ← 库脚本（可从本 skill scripts/ 拷入，或直接用包内脚本 + --methods-root）
-└── archive/                         ← 历史归档（久远条目/结构治理备份，保留索引行）
+库根（工作区根 · 脚本 --methods-root 传这一层）
+├── app/                             ← 入口资产（daily_distill.py / config.json / wind_client.py / 注册计划任务.ps1）
+├── methods/                         ← ＝ {METHODS_ROOT}，方法论正文区
+│   ├── 通用方法论_最终版.md         ← 入口薄壳：域路由表 + 使用法（由 gen_entry.py 生成/维护）
+│   ├── 通用方法论_<域>域.md         ← 各域正文（财务/法律/行业/体例…按域拆，条目 h3 层）
+│   ├── 投行语言专项_W系列.md        ← 语言专项（回复句式）
+│   ├── 分卷/                        ← 正文外置卷（P 系列 / 体例域批次；满卷新建卷 N+1，禁往主文件追加）
+│   ├── 行业方法论_{类名}.md         ← 行业方法论（**扁平文件**，按类名，非子目录）
+│   ├── 行业方法论_单份细分版/       ← 单一公司行业研究（可选）
+│   ├── 单案/                        ← 单案范式文件（53；一案一文件，frontmatter 带 case_no 案号）
+│   ├── notes/                       ← 蒸馏笔记落库（KB 后端默认本地位置）
+│   ├── 方法论调用索引.md            ← 生成物（gen_index.py）
+│   ├── 方法论_条目标题目录.md       ← 生成物（gen_toc.py）
+│   └── archive/                     ← 操作前备份区（历史归档已迁库根 `archive/methods/`）
+├── scripts/                         ← 库脚本（可从本 skill scripts/ 拷入，或直接用包内脚本）
+├── state/                           ← 流程状态台账（单案索引对照表/待补学清单/体检计数/回写清单指针；**说明见该目录 README.md**）
+├── tasks/ · docs/ · logs/           ← 任务与脚本 / 方案与审计 / 运行日志
+├── archive/                         ← 归档（按 methods·scripts·state·tasks·docs·logs 镜像分层）
+└── cases/                           ← 蒸馏原料（招股书/问询回复与产出；仅运行真身，不入云同步）
 ```
 
 - **渐进披露**：入口薄壳（~10KB）→ 索引定位 → 按「域文件 + 行号」定向读单条（~20KB）——不全文读库
@@ -133,9 +141,9 @@
 
 ### 方式 A：边用边长（推荐起步）
 
-1. **建库**：创建 `{METHODS_ROOT}` + 按起步结构建 4 个基础文件（空索引模板见文末）
+1. **建库**：创建 `{METHODS_ROOT}` + 按起步结构建 3 个基础文件（空索引模板见文末）
 2. **直接开始写作/复核**：无库阶段跳过查库环节，凭通用句式与规范完成
-3. **每次使用后沉淀（关键回环）**：复盘「哪条可复用结论/句式值得记录」→ 分配编号 → 按四段结构追加条目 → 同步登记（调用索引 + 条目标题目录 + 编号登记表，或直接跑 `refresh_index.py`）→ 高频条目（≥5 案）回流入写作高频句法库
+3. **每次使用后沉淀（关键回环）**：复盘「哪条可复用结论/句式值得记录」→ 分配编号 → 按四段结构追加条目 → 跑 `refresh_index.py` 刷新（调用索引 + 条目标题目录 + 路由入口一次同步）→ 高频条目（≥5 案）回流入写作高频句法库
 4. **积累 10-20 条后**：体验质变——查得到自己的经验，引用有据可依
 5. **长期维护**：固定节奏（如每月）复核索引与条目完整度，补齐「待沉淀」问题
 
@@ -147,7 +155,7 @@
 
 ## 六、索引生成机制（改内容后必刷新）
 
-> **为什么必刷**：索引给出的「文件 + 行号」是定向读取的**唯一键**——改内容不刷 ⇒ 行号漂移 ⇒ 定向读会读到**别的条目且不报错**（静默缺陷）。刷完用 `check_index_locator.py --methods-root {METHODS_ROOT}` 抽查 12 条即可确认无漂移。
+> **为什么必刷**：索引给出的「文件 + 行号」是定向读取的**唯一键**——改内容不刷 ⇒ 行号漂移 ⇒ 定向读会读到**别的条目且不报错**（静默缺陷）。刷完用 `check_index_locator.py --methods-root <工作区根>` 抽查 12 条即可确认无漂移。
 
 | 生成物 | 生成脚本 | 作用 |
 |---|---|---|
@@ -155,7 +163,7 @@
 | `方法论_条目标题目录.md` | gen_toc.py | 编号 → 域文件 + 行号（定向读取定位） |
 | `通用方法论_最终版.md`（入口薄壳） | gen_entry.py | 域路由表（条目数/行数/体积）+ 使用法；摘要区保留不覆盖 |
 
-- **一键刷新**：`python scripts/refresh_index.py --methods-root {METHODS_ROOT}`（parse → gen_index → gen_toc → gen_entry，任一失败即停）
+- **一键刷新**：`python scripts/refresh_index.py --methods-root <工作区根>`（parse → gen_index → gen_toc → gen_entry，任一失败即停）——**参数传库根（工作区根），不是 `{METHODS_ROOT}`**；直传正文根会得到 `<正文根>/methods` 并报「未找到方法论库」
 - **铁律**：条目标题/编号/行号变动后**必须刷新索引**——行号漂移会污染定向读取（检索链路按行号定位）
 
 ## 七、库维护工具链（随本 skill scripts/ 发布）
@@ -199,3 +207,63 @@
 ## 全量映射表
 > 新增条目后在此登记：Q 域 → 条目编号 → 标题
 ```
+
+
+---
+
+## 附：随包脚本全量清单（26 个 · 自 `SKILL.md`「随包脚本」节原样迁入 · 2026-09-21 瘦身）
+
+> 本附是**脚本用途与命令形态**的事实源；`SKILL.md` 只留四类分组摘要 ＋ 指向本节。脚本本体单一事实源仍是 `scripts/`。
+
+**适用范围**：脚本面向 **A 档（文件型）库**（索引体系与体检均基于文件，Obsidian 等 Markdown 载体同构适用）；**B 档（检索型）**下索引类脚本不适用（检索与结构由连接器管理，见 methods-guide §二分派表）。
+
+```
+# —— 索引体系（S7 刷新链路，refresh_index.py 一键编排四件套）——
+python scripts/refresh_index.py --methods-root <工作区根>   # 一键：parse → gen_index → gen_toc → gen_entry
+python scripts/parse_titles.py ...        # ① 解析条目 → parsed_titles.txt
+python scripts/gen_index.py ...           # ② 生成 方法论调用索引.md（28Q 速查 + 全量映射 + 跨域桥接）
+python scripts/gen_toc.py ...             # ③ 生成 方法论_条目标题目录.md（编号 → 域文件+行号）
+python scripts/gen_entry.py ...           # ④ 重写入口（路由表 + 摘要保留，幂等）
+
+# —— 落库与门禁 ——
+python scripts/update_expert_md.py --entries <条目.json> ...   # S7 落库：追加条目（h3/表格双形态）+ 超线归档
+python scripts/check_expert_output.py --dir <案目录>           # S4.5 产出自检门禁（0 FAIL 才进 S5）
+python scripts/gen_replay_worksheet.py --case <N> [--filter 高] # S7 回写工作表：清单候选 × 单案新条目 × 主库旧条目 三方汇编
+python scripts/normalize_pl_s.py --methods-root <工作区根> [--cases ...] [--apply]  # S5 后 · PL/S 编号归一（族内连续·零撞号·**幂等**；已入库案自动跳过）
+python scripts/apply_rewrite.py --methods-root <工作区根> [--repair] [--apply]     # S7-b · 回写执行（高→实证区／中高→独立段；--repair 修截断行）
+python scripts/check_entry_contract.py [--json]                # 书写契约自检（回写落盘前置：0 ERROR 才允许 --apply）
+python scripts/replay_gate_report.py ...                       # S7 收尾：回写硬门禁四项指标 dry-run 报告（软执行·不阻断）
+
+# —— 维护域 ——
+python scripts/check_methods_health.py ...                    # 10 项护栏体检（0 ERROR 交付）
+python scripts/add_frontmatter.py ...      [--dry-run]         # 修复：补 frontmatter
+python scripts/add_fm_single.py ...        [--dry-run]         # 修复：单份细分版补 frontmatter
+python scripts/b_fmt_unify.py ...          [--dry-run|--verify] # 修复：域文件结构归一
+python scripts/c_scale_dedup.py ...                            # 修复：量表/重复内容收敛
+python scripts/normalize_case_names.py ...    [--apply]       # 案名回改（规范案名＝证券简称；幂等·干跑优先）
+python scripts/apply_case_no.py ...           [--apply]       # 案号写回（表驱动·幂等·冲突不自动改）
+python scripts/backfill_volume_refs.py ...    [--report <f>]  # 分卷来源案/TBD 回填（相似度推断版）
+python scripts/fix_volume_case_by_segment.py ... [--apply]    # 分卷按「### 案批次」案节校正归属（推荐口径）
+python scripts/sync_cases_md.py ...           [--apply]       # cases/**/*.md 镜像入 git 仓（增量·幂等）
+
+# —— 库演进（规模化与编号迁移）——
+python scripts/split_domains.py --config <拆分配置.json> [--dry-run]   # 单体库 → 域文件拆分（G1 条目守恒自校验）
+python scripts/dryrun_case_migrate.py ...                      # 编号迁移 dry-run 预检（只统计不改文件）
+python scripts/migrate_case_no.py ...      [--apply]           # 编号位宽迁移执行（默认预览）
+```
+
+**书写契约（实证段同规）**：条目实证项的字段模型／三种排布／来源标注格式／标签禁用四条 → `references/entry-contract.md`（v1.0 · 用户裁定 D1–D5）；自检门禁 `scripts/check_entry_contract.py`。
+
+
+---
+
+## 附：首次接入引导流程（四问 · 自 `SKILL.md`「库配置」节原样迁入 · 2026-09-21 瘦身）
+
+1. 检查本 skill 安装目录下 `library.config.json`——存在且字段完整 → 直接进入流程；缺失 → 执行第 2 步
+2. **向用户提四问**（对话式引导，不预设产品）：
+   - 库存在哪里？（文件系统路径 / 云服务或连接器 / CLI 工具）
+   - 怎么读写它？（直接读写文件 / MCP 工具 / 命令行）
+   - 它自带搜索或索引能力吗？（自带 → B 档走其检索；无 → A 档由本 skill 建索引）
+   - 已有库还是从零建？（有 → 接管 + 连通性验证；无 → 按 methods-guide「建立与演进」起步）
+3. 按四问定位**能力档位**（A 文件型 / B 检索型）→ 生成 `library.config.json`（模板见 [library.config.template.json](library.config.template.json)）→ **连通性验证**（读写成功 / 可检索）
+4. 记录配置结果，此后全流程按档位分派读写（分派表见 methods-guide §二）

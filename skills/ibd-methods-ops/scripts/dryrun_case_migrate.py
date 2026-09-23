@@ -27,7 +27,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 _ap = argparse.ArgumentParser(description="案号迁移 · dry-run 预检（只统计不改文件）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--registry", default="",
                  help="案号登记/对照表路径（逗号分隔；默认自动扫描 tasks/ 下含「登记」「对照表」的 md）")
 _args, _ = _ap.parse_known_args()
@@ -170,7 +170,7 @@ def main():
     out.append("")
     report_abs = os.path.join(ROOT, report_path)
     os.makedirs(os.path.dirname(report_abs) or ".", exist_ok=True)
-    with open(report_abs, "w", encoding="utf-8") as f:
+    with open(report_abs, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(out))
     print("dry-run v2 done:", report_path)
     print("totals:", g_tot)
@@ -178,4 +178,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

@@ -20,7 +20,7 @@ if hasattr(sys.stdout, "reconfigure"):
 _ap = argparse.ArgumentParser(description="质量自评量表收敛（C 档）")
 _ap.add_argument("--plan", default="", help="条目修复计划 JSON（[[file,title_old,header_old,total_old],...]）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _args = _ap.parse_args()
 _ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
 METHODS = str(_ROOT / "methods")

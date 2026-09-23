@@ -11,6 +11,90 @@
 
 ---
 
+## 零·一 进门：场景识别与工具路由（决策树 / 工具调用顺序 / 失败降级协议）
+
+> 承接 SKILL.md「使用流程」第 1 节的详规——SKILL.md 只留「场景 → 工具」导航表，**判定细节与降级协议在本节**。
+
+```
+用户请求（写 word / 改 word + 样式要求）
+│
+├─ 场景A：已有 docx，整套套用样式 ──→ minimax-docx apply-template
+│     （source=用户文件, template=对应模板, output=新文件）
+│
+├─ 场景B：新建 docx（从模板基底填充）──→ tencent-docx 专业创作
+│     （创作时声明按 000-009 样式生成；或 minimax-docx create --template）
+│
+├─ 场景C：局部调整（某段/某表改样式）──→ tencent-local-office-edit 实时编辑
+│     （唯一编辑中枢，按 style-map.md 手动应用 pStyle / 直接改格式）
+│
+├─ 场景D：生成后校验样式 ──→ scripts/check_styles.py
+│     （统计 pStyle 分布 + 检查必备样式是否应用）
+│
+└─ 场景E：格式核对（只读，不改文件）──→ scripts/check_content.py
+      （docx 样式化后核对：文字规范 text 组（序号/日期/标点/简称/地理）
+        + 表格样式结构 table 组；输出核对报告 md。
+        数值自洽 data 组已迁 ibd-quality-gates 的 check_data.py）
+
+场景F：批注复核产物校验（只读）──→ scripts/check_annotations.py
+      （docx：comments 四件套 / 4 段无空行 / 加粗分布 / 编号唯一；
+        pdf：高亮条数与编号；规范见 references/annotations.md）
+      注：批注的「注入生成」由 ibd-doc-annotate skill 执行，本 skill 只管规范与校验
+      注：交付前跑一条命令即可涵盖本场景 → deliver_gate.py --annotated
+
+场景G：修订稿产物校验（只读）──→ scripts/check_revisions.py
+      （revise 版：ins==del 对、author/id 成对、delText/ins 非空、trackRevisions、
+        clean 化落定证明；clean 版：无修订标记残留；规范见 references/revisions.md）
+      注：修订稿的「生成」由 ibd-doc-annotate skill revise_docx.py 执行（--mode 按提示词区分）
+      注：交付前跑一条命令即可涵盖本场景 → deliver_gate.py --revised
+
+场景H：**交付前综合核验（一次跑完 · 极简输出）** ──→ scripts/deliver_gate.py
+      （基础九项 标点/样式/vMerge/锚点/禁用词/占位符/结构/同源/指纹 合并为**一次调用**；
+        按产物形态挂载复核三项——`--annotated` 加 批注部件/批注结构/批注编号，
+        `--revised` 加 修订成对/修订落定/修订计数，均为十一项；
+        另挂「物理扫描」一项（officecli 驱动，`--officecli` 启用；未装则 SKIP 不阻断），
+        输出「一行一指标」：PASS 不展开、FAIL 才给明细。**设计目的就是压缩核验输出**——
+        实测教训：分散核验时同一指标被反复统计（引号 8 次、结构核验 6 次、锚点 5 次），
+        每次脚本输出都进上下文，成为 token 消耗大头。退出码 0/1 可直接作交付判据）
+      **三态**：[PASS] 通过 / [FAIL] 计入退出码 / [SKIP] 未执行——SKIP **不阻断交付**
+        （不计入 PASS 率），存在的意义是让「未跑物理扫描」在输出里**显式可见**，不靠人记
+      用法：九项 `--docx X --md Y`；批注版 `--docx X --annotated [--expect-annotated N]`；
+        修订版 `--docx X --revised [--expect-revised N]`（两开关互斥）；
+        物理扫描 `--officecli [--officecli-path P] [--expect-issues N]`
+```
+
+**工具调用顺序**（与文档生成工具链一致）：
+1. 新建创作 → `tencent-docx`（首选）；失败降级 `minimax-docx create`
+2. 已有文件整套套样式 → `minimax-docx apply-template`（实测通过，XSD 校验门禁防损坏）
+3. 局部微调/改段落样式 → `tencent-local-office-edit`（唯一编辑中枢）
+4. 样式校验 → 本 skill 自带脚本 [check_styles.py](../scripts/check_styles.py)
+5. **交付前综合核验 → [deliver_gate.py](../scripts/deliver_gate.py)（基础九项一次跑完、只输出结论行；批注版加 `--annotated`、修订版加 `--revised`）**
+
+**失败降级协议（脚本兜底 + 标注局限）**：
+
+| 失败场景 | 默认降级 | 交付说明 |
+|---------|---------|---------|
+| tencent-docx 不可用 | `minimax-docx create` | 注明降级方案 |
+| minimax-docx 不可用 | **脚本兜底**：以 `assets/templates/` 对应模板为基底（复制 styles.xml 等部件），仅替换 document.xml（段落 pStyle + 三线表） | 注明「脚本兜底生成」；覆盖不了的元素（封面/TOC/页眉页脚/页码/图片/修订）列出清单标注「待人工处理」 |
+| 局部编辑工具不可用 | 脚本直接修改 document.xml 的样式字段 | 注明降级；编辑器同步风险提示 |
+| 文档含脚本兜底覆盖不了的元素（封面/TOC/图片等） | 不硬撑——输出 Markdown + 样式应用说明 | 注明非最终形态，建议走专业工具 |
+| 校验门禁未过 | 返回 S4/S5 修正后重跑 | 门禁结果摘要（必备样式/裸段落/空段落/跳级） |
+
+---
+
+## 零·二 样式应用铁律（红线全文）
+
+> 承接 SKILL.md「使用流程」第 3 节。SKILL.md 只留铁律 0 全文 + 其余六条一句话；**本处是全文**。
+
+0. **只改格式、严禁修改原文内容（最高优先级）**：本 skill 只做样式应用（pStyle/字体/字号/对齐/缩进/间距/边框），**不得增、删、改、移任何文字内容**（含表格内文字、标点、空格、数字、单位）。套用样式后必须用 `check_styles.py --verify-content <原文件>` 校验内容完整性——文本与原文逐字不一致即 FAIL，打回重做，不交付。内容修改（如补数据、改措辞）属内容层任务，本 skill 一律不做。
+1. **模板先行**：任何文档动笔前先确认模板 docx 存在（`assets/templates/`），优先以模板为基底（保留 styles.xml 样式表）；**模板即样式源，使用者替换模板即定制输出样式**
+2. **pStyle 优先于手写格式**：能应用命名样式（000-009/0011/001）就不用直接格式（字体/字号硬编码），保证全文一致性与后续批量修改能力
+3. **序号段落判定：标题 vs 正文（双维度算法）**："1、""（1）""1）""①"开头的段落可能是标题也可能是正文——按 `rules.md` 双维度判定：**段落长短**（≤40 字短语式→标题倾向；>40 字完整句→正文倾向）+ **上下文分段**（主判据：后段独立正文展开→情况1 标题；后段连续序号/无后段→情况2 列举正文）。可 `check_styles.py --check-numbering` 输出序号段落清单辅助核对
+4. **反馈回复合规展示**：监管问题原文必须 001（黑体），回复正文必须 000（宋体）——黑体宋体对照本身就是审核合规展示，不得混用
+5. **不覆盖用户手动格式**：用户已有 docx 中人工调整的格式（非样式体系内容），apply-template 前先与用户确认是否保留
+6. **段落间禁止空行/空段落**：段落间距一律靠样式 spacing（段前/段后）控制，不得插入无文字空段落分隔段落——样式自带 spacing 已提供间距，空段落破坏样式统一性（命中裸段落检查）、造成间距叠加
+
+---
+
 ## 一、执行流程（S1-S7）
 
 **S1 识别样式场景**

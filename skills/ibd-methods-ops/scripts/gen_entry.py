@@ -5,10 +5,10 @@
 入口模板含 frontmatter（type/domain/version/updated，updated 动态取各域文件 frontmatter 最大值）。
 
 用法：
-    python gen_entry.py [--methods-root <库根目录>] [--version <版本号>]
+    python gen_entry.py [--methods-root <工作区根>] [--version <版本号>]
 
 参数：
-    --methods-root  方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）
+    --methods-root  工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）
     --version       写入入口 frontmatter 的版本号；默认读取现有入口 version 保持不变（防重跑版本回退）
 """
 import argparse, io, os, re, glob, datetime
@@ -20,7 +20,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 _ap = argparse.ArgumentParser(description="生成方法论入口（路由薄壳）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--version", default=None, help="入口版本号（默认读取现有入口 version，保持不变）")
 _args = _ap.parse_args()
 _ROOT = Path(_args.methods_root) if _args.methods_root else Path(__file__).resolve().parents[1]
@@ -34,7 +34,7 @@ def _require_library():
     import sys as _s
     if not os.path.isdir(METHODS):
         _s.stderr.write("✗ 未找到方法论库：%s\n" % METHODS)
-        _s.stderr.write("  用法：--methods-root <库根目录>（或设环境变量 METHODS_ROOT）\n")
+        _s.stderr.write("  用法：--methods-root <工作区根>（或设环境变量 METHODS_ROOT）\n")
         _s.stderr.write("  首次使用：按 SKILL.md「库配置」四问引导接入你的库；库结构规范见 references/methods-guide.md\n")
         _s.exit(2)
 
@@ -167,8 +167,11 @@ entry = entry.replace("__VER__", ENTRY_VERSION).replace("__UPD__", upd).replace(
 d = os.path.dirname(ENTRY)
 if d:
     os.makedirs(d, exist_ok=True)
-with io.open(ENTRY, "w", encoding="utf-8") as f:
+with io.open(ENTRY, "w", encoding="utf-8", newline="\n") as f:
     f.write(entry.replace("__ROUTE_ROWS__", route_rows))
 print("入口已重写: %d 个域文件（正文合计 ~%dKB）" % (len(rows), tot_kb))
 for r in rows:
     print("  ", r[0], "| 条目", r[1], "| 行", r[2], "|", r[3], "KB")
+
+
+sys.exit(0)

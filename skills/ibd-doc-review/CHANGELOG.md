@@ -1,10 +1,38 @@
 # Changelog
 
+## [0.23.0] - 2026-09-23
+
+### 修订
+
+- **下游契约登记收口（③① 两处同批 · 全体系改进 ①）**：
+  - **`references/interface.md` §6**：**删「现行」列**——该列写死 0.18.0，而本包已行至 0.22.0（**必然过期且无任何维护动作**）；改为一句话注「当前版本看 frontmatter／CHANGELOG，不在此重复」。**补一行**「**单入口路由语义 ≥ 0.19.0**」——下游 `ibd-doc-annotate` 早已按此声明下限，却**从未登记在本表**。**增「下游消费方」列**并写入「升版动作」一行。
+  - **`SKILL.md` 维护节**：原内联「doc-annotate ≥0.15.1／doc-write ≥0.15.0」→ 改为**指向 §6 的纯指针**。⚠️ 该内联**实测双双过期**（实际为 ≥0.19.0／≥0.15.7）**且漏了 `ibd-finance-review`（≥0.16.2）** ⇒ 同一事实曾在 **§6 表 ＋ 维护节**两处各写一遍，这是它们互相漂移的根因。
+- **`references/annotations.md` §8 校验门禁**：`编号前缀 ∈ {J,L,I,Z}` 改述为「**1-2 个大写字母**，`J`／`L`／`I`／`Z` 仅为**常见示例、非白名单**」。该条与本册 §4（前缀由复核流程自定义、**脚本不内置映射**）及 `check_annotations.py` 首注（「编号前缀无白名单」）**原本自相矛盾**——同一份册内对同一约束两说，验收照 :96 会误判合规批注。
+
+## [0.22.0] - 2026-09-21
+
+### SKILL.md 瘦身（H 档 T11 · 只搬家 + 指针化，步骤名不下沉）
+
+- **依据**：`20260921_skilldev瘦身计划.md` §二（H 档 ≤20,480 B）／§2.3（完成判据：E0/E1 分界 + 关键结构一条不少，档位线不用于判完成）／§三（方法 S2/S3/S4 + 四条硬纪律）／§五（验收九条）／§十（T8 判定：本包**该瘦**、不拆）；工单 `.scratch/skilldev-slim/issues/T11-batchH.md`。
+- **SKILL.md**：31,768 → **20,428 B（−35.7%）**。
+  - 「使用流程 §1 场景识别与工具路由」的**决策树详规**（场景A–H 代码块）+ 工具调用顺序 + 失败降级协议表 → `references/workflow.md` **新增 §零·一**
+  - 「使用流程 §3 样式应用铁律」0–6 条**全文** → `references/workflow.md` **新增 §零·二**（SKILL.md 留铁律 0 全文 + 其余六条一句话 + 册指针）
+  - 「依赖与工具」的**工具层级说明**（每个工具为什么是这个层级/缺了会怎样）→ **新建** `references/toolchain.md` §一
+  - 「踩坑与要点」**全文**（9 条含 minimax 环境/apply-template 三坑/标点全角化/--revise 三坑/officecli 实测）→ **新建** `references/toolchain.md` §二；SKILL.md 留高频三条一句话 + 指针
+  - 「边界与协作」「资源索引」「维护」压缩为要点 + 指针（删去与 `workflow.md` 附录「两条时序铁律」重复的「文字规范须在套样式之前查」长段副本，内容在册内逐字保留）
+- **步骤名不下沉**（H 档关键约束）：S1–S7 **步骤名 + 每步一句话判据**全部留在 SKILL.md「执行流程」表；场景A–H 名称以导航表形式保留；改后逐条 grep 命中 ≥1（实测 41 项结构词 + 21 个触发词全部命中，触发词命中数与改前**逐条相等**）。
+- **可达性**（硬纪律①）：12 册全部在**需要它的那一步**内联出「册#节」指针——workflow.md（§1/§2/§3/§4/§5/§6/§7）、style-map.md（S4）、rules.md（S5）、toolchain.md（S3 + 依赖与工具节）、annotations.md／revisions.md／delivery.md／problems.schema.json（§5 复核交付）、interface.md（S7 交付）、sensitive-terms.json（§4 格式核对）、examples.md（何时使用）、changelog-archive.md（维护节）。**补内联 3 册**：`interface.md`／`problems.schema.json`／`changelog-archive.md`（此前仅出现在「资源索引」）；资源索引表**保留**作全景。
+- **触发面不变**：`description:`／`summary:`／`## 何时使用` 内容**零改动**（21 个触发词 grep 命中数改前/改后逐条相等）。
+- **新增/扩写册**：`references/toolchain.md` **新增 8,153 B**；`references/workflow.md` **扩写 +7,462 B**（18,510 → 25,972）。既有册内原文**未删改**（仅插入新节）。
+- **拆分议题不因本次瘦身而消解**：T8 判定为「该瘦」（非「该拆」），本次仅做搬家与指针化，不拆包；瘦到 20.4 KB 仍属大包，若日后重启拆分议题，须过 `skilldev-intake` 两道门 + 用户显式授权。
+- **台账**：README「目录结构」补 `toolchain.md` 并更新 SKILL.md 与各册描述；包内「资源索引」同步；`routing-view.md` §4（skilldev 产线）只点包名不点册名，**不受影响**；`skill_table.json`／`skill_tree.json` 全盘检索未找到该文件，**不受影响**。
+- **门禁**（改后实测）：`validate_frontmatter.py` ERROR 0 WARN 0；`check_conformance.py` ERROR 0 WARN 0；`check_refs.py --sources`（公开包额外）「依赖表行 2 条已核对；问题数 = 0」。
+
 ## [0.21.1] - 2026-09-19 · references 命名统一（kebab-case）
 
 - `references/sensitive_terms.json` → **`references/sensitive-terms.json`**（下划线 → kebab-case，对齐 `docs/ENGINEERING.md` §3 命名规范）
 - 同步引用：`SKILL.md`、`references/workflow.md`、`scripts/content_text.py`（常量路径 ＋ 文档字符串）；
-  跨包活跃引用 `ibd-doc-write/references/writing-style.md`、`skill-publish-pipeline/references/source-sync.md`
+  跨包活跃引用 `ibd-doc-write/references/writing-style.md`、`skilldev-source-sync/references/source-sync.md`
 - **历史条目不改写**（`v0.21.0` 及更早提及旧名处以历史为准）；实证：`content_text.SENSITIVE_TERMS_FILE` 指向新名且文件可达
 
 ## [0.21.0] - 2026-09-19

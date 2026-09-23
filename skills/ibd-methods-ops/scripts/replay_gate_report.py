@@ -83,8 +83,15 @@ def check_health(ws):
 
 def check_baseline(ws):
     """④ 最新蒸馏笔记是否含「回写基线」行。"""
+    # 2026-09-22 修：原按 mtime 取「最新笔记」——编辑历史笔记（如沿革订正）会把旧笔记顶到最前，
+    # 导致误报「未找到回写基线」。改为**按文件名日期为主键**（YYYY-MM-DD / YYYYMMDD），mtime 仅作并列时的次序。
+    def _key(fp):
+        b = os.path.basename(fp)
+        m = re.search(r"(\d{4})-(\d{2})-(\d{2})", b) or re.search(r"(\d{4})(\d{2})(\d{2})", b)
+        d = "".join(m.groups()) if m else "00000000"
+        return (d, os.path.getmtime(fp))
     notes = sorted(glob.glob(os.path.join(ws, "methods", "notes", "*蒸馏笔记*.md")),
-                   key=os.path.getmtime, reverse=True)
+                   key=_key, reverse=True)
     if not notes:
         return None, "无蒸馏笔记"
     latest = notes[0]

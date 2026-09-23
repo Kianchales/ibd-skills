@@ -9,7 +9,7 @@
 
 用法：
     python update_expert_md.py --entries <条目.json> [--targets <映射.json>]
-        [--methods-root <库根目录>] [--date YYYYMMDD] [--keep <警戒线.json>] [--dry-run]
+        [--methods-root <工作区根>] [--date YYYYMMDD] [--keep <警戒线.json>] [--dry-run]
 
 参数：
     --entries  本批次条目数据（JSON：{"财务": [{"id": "F-AN0042-01", "title": "...", "core": "...", "scope": "..."}], ...}）
@@ -35,7 +35,7 @@ _ap.add_argument("--targets", default="", help="维度→目标 MD 映射 JSON�
 _ap.add_argument("--form", default="auto", choices=["auto", "h3", "table"],
                  help="目标形态：auto=自动识别（默认）/ h3=域文件条目形态 / table=MD 表格形态（专家 MD）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--date", default="", help="归档日期标签（默认执行日）")
 _ap.add_argument("--keep", default="", help="警戒线 JSON（默认 财务40/法律30/行业30/写作40）")
 _ap.add_argument("--dry-run", action="store_true", help="只输出计划不写盘")
@@ -94,7 +94,7 @@ def update_one_h3(dim, rows, path):
         print("  [dry-run] %s：将追加 %d 条（h3 形态），当前 %d 条 / 警戒线 %s" % (dim, len(new), n_before, _keep.get(dim, "—")))
         return
     blocks = "\n".join(h3_block(e) for e in new)
-    io.open(path, "w", encoding="utf-8").write("\n".join(lines) + "\n\n" + blocks)
+    io.open(path, "w", encoding="utf-8", newline="\n").write("\n".join(lines) + "\n\n" + blocks)
     total = n_before + len(new)
     # h3（域文件）形态默认不判警戒线——域文件体积由 check_methods_health.py 管；仅显式 --keep 时提示
     keep_n = _keep.get(dim) if _args.keep else None
@@ -140,14 +140,14 @@ def update_one(dim, rows):
         _ARCHIVE.mkdir(parents=True, exist_ok=True)
         arch_file = _ARCHIVE / ("蒸馏方法论_%s_%s.md" % (dim, _DATE))
         head = "# 蒸馏方法论归档 · %s（%s）\n\n> 由 update_expert_md.py 超线归档（保留最近 %d 条）\n\n" % (dim, _DATE, keep_n)
-        io.open(arch_file, "w", encoding="utf-8").write(head + "\n".join(arch_rows) + "\n")
+        io.open(arch_file, "w", encoding="utf-8", newline="\n").write(head + "\n".join(arch_rows) + "\n")
         del lines[tbl2[0]:tbl2[0] + cut]
         idx_line = "> 归档索引：早期 %d 条见 `archive/%s`（%s）" % (cut, arch_file.name, _DATE)
         lines.insert(0, idx_line)
         print("  ✓ %s：追加 %d 条 + 归档 %d 条 → %s" % (dim, len(new_rows), cut, arch_file.name))
     else:
         print("  ✓ %s：追加 %d 条（当前共 %d 条）" % (dim, len(new_rows), total))
-    io.open(path, "w", encoding="utf-8").write("\n".join(lines))
+    io.open(path, "w", encoding="utf-8", newline="\n").write("\n".join(lines))
 
 
 def main():

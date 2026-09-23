@@ -25,7 +25,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 _ap = argparse.ArgumentParser(description="案号位宽迁移（如 2 位 → 4 位）执行器")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
-                 help="方法论库根目录（默认 $METHODS_ROOT，或脚本上级目录）")
+                 help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--apply", action="store_true", help="正式写盘（默认只预览统计）")
 _args, _ = _ap.parse_known_args()
 ROOT = _args.methods_root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -95,3 +95,6 @@ if __name__ == "__main__":
                 tot["t1"] += a; tot["t2"] += b; tot["t3"] += c; tot["files"] += 1
     mode = "APPLY(已写入)" if APPLY else "DRY PREVIEW(未写文件)"
     print(f"\n=== {mode} | 改动文件 {tot['files']} 个 | Tier1 token {tot['t1']} | Tier2 表行 {tot['t2']} | Tier3 区间 {tot['t3']} ===")
+
+
+sys.exit(0)

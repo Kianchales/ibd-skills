@@ -1,5 +1,57 @@
 # Changelog
 
+## [0.13.0] - 2026-09-21
+
+> 版本语义：见建仓 `docs/ENGINEERING.md` §3.5（跨包判据归体系层 · 本包只留指针）。本条为**结构变更**，按 P5 归 **minor**（建议 0.12.3 → 0.13.0，由主对话 bump）。
+
+### 结构
+
+- `SKILL.md` 瘦身搬家：**12,857 → 12,137 B（−5.6%）**，内容**零删减**
+  - 「### 工具说明（每个工具为什么是现在这个层级）」5 项逐条说明**原文下沉** → `references/rules.md` §附一；正文留一行指针
+  - 第 6 步「G4 引用要能对得上依据」的**三问细则 ＋ `~/.config/gates-index.json` 索引配置**原文下沉 → `references/rules.md` §附二；步骤处只留「步骤名 ＋ 一句话判据 ＋ 册指针」
+  - **补齐内联指针**（硬纪律①·可达性）：第 1 步内联 [examples.md](references/examples.md)（原只在使用流程前言出现）；第 2 步内联两张词表 [wordlist-absolute.txt](references/wordlist-absolute.txt)／[wordlist-ai-flavor.txt](references/wordlist-ai-flavor.txt)（原只列在资源索引）
+  - 资源索引 `rules.md` 行补注 §附一／§附二落点
+
+### 验收（瘦身计划 §五 九条）
+
+- 双门禁 `validate_frontmatter` ／ `check_conformance` ＝ **ERROR 0 / WARN 0**
+- 不可丢清单 39 项（六步名 ＋ 判据名 G1-G5／六维 ＋ 触发词 ＋ 全部册名）改前改后逐条 grep，**全部命中 ≥1**
+- 可达性：6 册 ＋ 2 词表 ＋ 2 脚本**均在需要它的那一步正文内联**出指针（rules→2/3/6 步、task-core→1 步、antipatterns→2 步、词表→2/4 步、examples→1 步、脚本→4 步）
+- 反向引用扫描（第 4 模式 `--anchors`）：**悬空 ERROR 0**；包外引用（`docs/CONVENTIONS.md:56` 行号式引用 SKILL.md:98、`docs/ATTACHMENT-POINTS.md:13`、`docs/pending-rules.md:146`、`docs/adr/0019`、`docs/CONTEXT.md:54`、`docs/incident-log.md:545`）**全部仍有效**——L98 内容未动，rules.md §7/§8 未动
+- P3 `--sources`：**问题数 0**（可发布层无 ⬛私有／🔵连接器；注：本包依赖表用 🔴/🟡/🟢 三色，不在 P3 来源标记集 🟦🟨🟩🔵⬛ 内 ⇒ 扫描 0 行）
+
+### 依据
+
+- 瘦身计划 §三（S3 搬家 ＋ 指针化）＋ §五 验收九条；工单 `.scratch/skilldev-slim/issues/T9-batchA-pure-move.md` 第 5 项
+- 档位：M 档（流程块 6,443 B）参考目标 ≤12,288 B ⇒ **实测 12,137 B，达标**
+- **版本语义声明改为指针**（承 T12 · 裁定 Q11′②）：`CHANGELOG` 首行原 `X/Y/Z` 自定义记号（缺 patch 档）→ 指向建仓 `docs/ENGINEERING.md` §3.5 的一行指针（跨包判据归体系层，包内只留指针以保共置）
+
+## [0.12.3] - 2026-09-21
+
+- **改动**：「检查二·附：Excel 交付物专项」的交付门禁引用由「`ibd-excel-ops` 的 `scripts/xlsx_gate.py`」改为跨包全路径 `ibd-excel-ops/scripts/xlsx_gate.py`。
+- **依据**：T5 全库普查（2026-09-21）——P4 门禁 8b 裸路径正则（`(?<![\(\)/])(references|scripts|examples)/...`，`validate_frontmatter.py:143-147`）负向断言不含跨包前缀，本文件 L68「`ibd-excel-ops` 的 `scripts/xlsx_gate.py`」被判裸路径，为**公开层唯一 WARN**。
+- **效果**：`validate_frontmatter.py ibd-quality-gates` 复跑 WARN 1 → **0**；公开层 WARN 清零。
+
+## [0.12.2] - 2026-09-20
+
+### 补 0.12.1 的半成品改名：`rules.md` / `antipatterns.md` 里 3 处 `skills-patch` 指针未跟改（描述修正 → Z）
+
+- **动因**：0.12.1 把 Excel 门禁脚本的落点由 `skills-patch/xlsx_gate.py` 改为 **`ibd-excel-ops/scripts/xlsx_gate.py`**，但**只改了 `SKILL.md`**——`references/rules.md`（交稿前检查动作 第 1、2 条）与 `references/antipatterns.md`（D-8「怎么改」）里的指针**仍是旧路径**，而 `skills-patch/` 目录**已不存在** ⇒ 三处**指向不存在的文件**（读者按指针去跑会 404）。
+- **性质**：**描述修正（Z）**，非功能变化——判据与脚本内容一字未动。
+- **改法**：三处一律改为 `<skills>/ibd-excel-ops/scripts/xlsx_{gate,dyn}.py`（含 D-8 的两处），并全库复扫确认这两个包内**已无 `skills-patch` 活引用**。
+- **教训（同 `docs/ENGINEERING.md` §4.9「改名与引用完整性」）**：改名/搬迁**先 Grep 全库**，且**引用面须覆盖「非包根文件」**——本轮漏的正是 `references/` 下的两册；`CHANGELOG` 里的历史条目按「只增不删」保留旧路径不动。
+
+## [0.12.1] - 2026-09-20
+
+### 按层拆：Excel 操作层迁出至 `ibd-excel-ops`（描述修正 → Z）
+
+- **动因**：Excel 处理体系搭建（ADR-0019 新建包／ADR-0020 两层路由模型）。§7／§8 原为**两层混装**——其中「公式怎么写／既有簿怎么改」属**操作层**、「能不能交」属**交付门禁层**；按 R-0012（落点由能力域决定）拆开。
+- **本包保留（交付门禁层）**：§7 改为「Excel 交付物：**交付前重算 ＋ 交稿前检查**」（重算原则、交稿前三动作、门禁输出怎么读）；反模式 **D-8** 保留编号，正文指向新包。
+- **迁出（操作层）**：写入形态 A／B／C 的写法细则、改写既有工作簿四条纪律 → `ibd-excel-ops` 的 `references/ops-write.md`。
+- **同步**：`SKILL.md`（description／触发行／「Excel 交付物专项」段／资源索引行）；`README.md`（徽章、目录结构注、近期更新措辞）；门禁脚本落点由 `skills-patch/xlsx_gate.py` 改为 **`ibd-excel-ops/scripts/xlsx_gate.py`**。
+- **术语**：原「写入三档」→「**写入形态 A／B／C**」（「档」一字三义已废弃，见 `CONTEXT.md`）。
+- **性质**：内容搬移 ＋ 描述修正（零行为变更）→ bump Z（0.12.0 → 0.12.1）
+
 ## [0.12.0] - 2026-09-19
 
 ### 新增：`check_gates.py` 与 `check_data.py` 支持 `--json`（工程范式 A5 对齐）

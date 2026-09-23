@@ -14,7 +14,7 @@
     抽查命中率须 = 100%（抽样未命中即视为漂移）。
 
 用法
-    python check_index_locator.py --methods-root <库根> [--sample 12] [--seed 20260919] [--json]
+    python check_index_locator.py --methods-root <工作区根> [--sample 12] [--seed 20260919] [--json]
 
 退出码
     0 全部命中 ／ 1 存在未命中 ／ 2 用法错 ／ 3 目录文件缺失

@@ -17,7 +17,7 @@
     其余（歧义／无匹配）→ **不动**，输出清单待人工。
 
 用法
-    python backfill_volume_refs.py --methods-root <库根> [--apply] [--report <md>] [--json]
+    python backfill_volume_refs.py --methods-root <工作区根> [--apply] [--report <md>] [--json]
 
 退出码 0 成功／1 自校验失败／2 用法错／3 目录缺失
 """
