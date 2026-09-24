@@ -287,6 +287,25 @@ def check_consistency(items):
 
 # ---- calc 表格合计行求和 / 占比列合计≈100%
 
+# 勾稽容差（体系级约定，CONVENTIONS 判据集「勾稽容差 ＝ 0.01」/ R-0038，2026-09-24 用户裁定）：
+# 按该表列示精度取最小位，**不设相对容差**（勾稽比的是同一个数，相对带会吞实质差异）。
+# 百分点列同口径 —— 放行 0.01（即 0.01 个百分点）。
+TOL = 0.01
+# 浮点保护：二进制浮点下 0.01 级差会算成 0.010000000000005（如 33.33+33.33+33.35），
+# 直接与 TOL 比较会把「恰好 0.01」误判为超差 ⇒ 比较统一加此保护（2026-09-24 实测）。
+EPS = 1e-6
+
+
+def sum_tol(n):
+    """「n 项求和 vs 合计」的容差。
+
+    单值比对用 TOL；**求和**比对还须吸收各行按列示位四舍五入的**累积漂移**——
+    每项最大偏离半个列示位（TOL/2），n 项上限 ＝ n × TOL/2（2026-09-24 用户裁定
+    「可以加 n 倍允差」；实测 30 行 ×3.33% ＝ 99.90% 对合计 100.00% 属合法四舍五入）。
+    有界：漂移超过该上限仍报 HIGH —— 本式不是「一律放宽」。
+    """
+    return max(TOL, n * (TOL / 2.0))
+
 def _to_num(s):
     s = s.replace(",", "").replace("%", "").strip().rstrip("。")
     try:
@@ -333,33 +352,33 @@ def check_calc(tables):
                 if not ok_all or not parts:
                     continue  # 该列存在非数值单元格，跳过（无法可靠求和）
                 s = round(sum(parts), 4)
-                tol = max(0.02, abs(col_total) * 0.001)
-                if abs(s - col_total) > tol:
-                    bad_cols.append((ci, s, col_total))
+                tol = sum_tol(len(parts))
+                if abs(s - col_total) > tol + EPS:
+                    bad_cols.append((ci, s, col_total, len(parts)))
             if not bad_cols:
                 continue
             # 单位口径差异识别：仅分项之和恰为合计值的 100 倍（小数 vs 百分数）时降级
             unit_issue = []
             real_bad = []
             for bc in bad_cols:
-                ci, s, tot = bc
-                if s and abs(s - tot * 100) <= max(0.02, abs(tot * 100) * 0.001):
+                ci, s, tot, n = bc
+                if s and abs(s - tot * 100) <= sum_tol(n) + EPS:
                     unit_issue.append(bc)   # 小数 vs 百分数 口径
                 else:
                     real_bad.append(bc)
             if unit_issue:
-                ci, s, tot = unit_issue[0]
+                ci, s, tot, n = unit_issue[0]
                 issues.append(Issue(
                     "calc", "表格合计与占比计算校验",
                     f"{tbl_loc} 合计行第{ci + 1}列",
                     f"分项之和 {s:g} 为合计值 {tot:g} 的 100 倍",
                     "疑似单位/口径不一致（分项与合计数量级差异过大），请人工核实",
                     "MEDIUM"))
-            for ci, s, tot in real_bad[:3]:
+            for ci, s, tot, n in real_bad[:3]:
                 issues.append(Issue(
                     "calc", "表格合计与占比计算校验",
                     f"{tbl_loc} 合计行（第{ri + 1}行）第{ci + 1}列",
-                    f"分项之和 {s:g} ≠ 合计值 {tot:g}",
+                    f"分项之和 {s:g} ≠ 合计值 {tot:g}（允差 ±{sum_tol(n):g}，按 {n} 项累计舍入）",
                     "疑似计算错误或分项有遗漏（容差已计入四舍五入），请人工复核",
                     "重新计算合计或补充分项", "HIGH"))
 
@@ -369,7 +388,9 @@ def check_calc(tables):
             pct_vals = []
             has_header = False
             for ri, trow in enumerate(texts):
-                if any(("小计" in c) or ("其中" in c) for c in trow if isinstance(c, str)):
+                # 合计/总计行不计入占比求和：其占比列本身即 100%，计入会使总和恒≈200%（2026-09-24 修，I-0107）
+                if any(("合计" in c) or ("总计" in c) or ("小计" in c) or ("其中" in c)
+                       for c in trow if isinstance(c, str)):
                     pct_vals.append(None)
                     continue
                 if ci >= len(trow):
@@ -390,12 +411,13 @@ def check_calc(tables):
             nums = [v for v in pct_vals if v is not None]
             if has_header and len(nums) >= 3:
                 ssum = round(sum(nums), 2)
-                if abs(ssum - 100.0) > 1.0:
+                if abs(ssum - 100.0) > sum_tol(len(nums)) + EPS:
                     issues.append(Issue(
                         "calc", "表格合计与占比计算校验",
                         f"{tbl_loc} 第{ci + 1}列（占比列）",
-                        f"占比合计 {ssum:g}% ≠ 100%（±1%）",
-                        "疑似占比计算错误或有遗漏项，请人工复核", "HIGH"))
+                        f"占比合计 {ssum:g}% ≠ 100%（允差 ±{sum_tol(len(nums)):g}%，按 {len(nums)} 项累计舍入）",
+                        "疑似占比计算错误或有遗漏项，请人工复核",
+                        "重算占比列或补回遗漏项", "HIGH"))
     return issues
 
 

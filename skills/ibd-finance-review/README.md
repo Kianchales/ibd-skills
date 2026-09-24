@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E8%B4%A2%E5%8A%A1%E7%AB%A0%E8%8A%82%E6%B7%B1%E5%BA%A6%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.9.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.10.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E8%BD%AF%E4%BB%B6%E4%BE%9D%E8%B5%96-3776AB" alt="no-deps">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -31,6 +31,7 @@
 - **术语与口径辨析**（term-caliber.md）：研发投入≠研发费用、归母≠净利润、合并≠母公司口径……高频混用术语对的差距与判定流程
 - **监管案例信号库**（case-signals.md）：按 16 维组织的实务争议场景与监管既定口径（《案例解析 2024》《典型案例集 2022》、年报会计监管报告等）
 - **执行纪律**（execution-discipline.md）：**全量核对铁律**——范围内每个财务数字必核必重算、零遗漏；分母三态还原（余额/账面价值/均值）、算式留痕、逐数台账
+- **勾稽机械核对式**（articulation-checks.md）：四类可机械复算的算式——总账平衡 / 往来逐户净额重分类 / 损益倒轧 / 未分配利润勾稽；含方向符号约定、容差判据（只定性、不过滤批注）、差异表与算式留痕模板、表式变体识别清单
 - **五步复核流程**：锁定范围与数据基准 → 全量核对登记 → 维度复核 → 依据检索 → 汇总问题清单
 
 ## 🚀 典型场景
@@ -45,6 +46,7 @@
 - **格式/结构层** → `ibd-doc-review`（格式复核）
 - **通用内容质量层** → `ibd-quality-gates`（质量校验）
 - **复核结论落地** → `ibd-doc-annotate`（批注/修订交付）；问题清单字段（code/type/anchor）即对接协议
+- **表格机械勾稽** → 面向一手表格的审核引擎类工具（如有）；本包**只吸收其算式判据**（沉淀于 articulation-checks.md），口径不一致时以本包为准
 
 ## 📦 安装与依赖
 
@@ -61,6 +63,7 @@ ibd-finance-review/
 └── references/
     ├── check-dimensions.md          # 16 维复核清单（四组）
     ├── execution-discipline.md      # 全量核对铁律/台账模板
+    ├── articulation-checks.md       # 勾稽机械核对式（四类算式/容差/表式变体）
     ├── term-caliber.md              # 术语与口径辨析
     ├── case-signals.md              # 监管案例信号库
     ├── interpretation-notes.md      # 准则解释判断要点（1-20 号）
@@ -70,6 +73,7 @@ ibd-finance-review/
 
 ## 📌 近期更新
 
+- **2026-09-24 · v0.10.0**：吸收市场包「财务报表审核助手」（`financial-statement-auditor` v1.6.0，MIT-0）的**勾稽算式层**——新增 `articulation-checks.md`（四类机械勾稽算式/方向约定/容差判据/表式变体识别），接线至 SKILL 步骤②、执行纪律与维 7；**只吸收算式、不引入引擎**，零硬依赖定位不变
 - **2026-09-18 · v0.8.6**：接入点声明入 `ATTACHMENT-POINTS` 总表 + 机检脚本指向明确化（`check_data.py` 归 `ibd-quality-gates`）；描述补全，规则/流程零变化
 - **2026-09-12 · v0.8.5**：补交付落地链依赖下限（`ibd-doc-review ≥ 0.16.2` = `delivery.md` 引入版）
 - **2026-09-11 · v0.8.4**：交付口径回指 `delivery.md`（单一事实源）
