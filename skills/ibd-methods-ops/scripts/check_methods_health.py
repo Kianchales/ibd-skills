@@ -41,7 +41,7 @@ import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-_ap = argparse.ArgumentParser(description="方法论全库健康护栏（18 项检查）")
+_ap = argparse.ArgumentParser(description="方法论全库健康护栏（19 项检查）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--quiet", action="store_true", help="只输出异常项")
@@ -679,6 +679,35 @@ for _fam, _seg, _bn in _vols.get("投行语言专项_招股书PL系列", []):
     if _fam not in ("01", "02", "03", "04", "05"):
         ERRORS.append("PL 族号越界（第 18 项）：%s 的族号为 %s，应为 01–05（2026-09-23 族号重排后契约）"
                       % (_bn, _fam))
+
+
+# ---------- 19. 条目契约全库校验（2026-09-24 新增 · 补「无出口」根因） ----------
+# 背景：`check_entry_contract.py` 是**条目书写契约**的校验器（来源标注／单案字段名／案名／实证标签），
+#   但此前**只读自检、未接任何门禁** ⇒ 2026-09-22 侦察报告实测全库 **703 ERROR** 却长期无人发现，
+#   报告原话：**「该检查器是只读自检、未进门禁 ⇒ 没有出口，就不会有人修」**。
+#   存量已在 2026-09-23 库重构中归零（2026-09-24 复核：scanned=185／error=0），但**根因未除**
+#   —— 本项即为**补出口**：把契约校验纳入维护域体检（S7 沉淀后自动跑 ＋ 维护域手动跑）。
+# 判据：调用 `check_entry_contract.py --json` 取 `error`；> 0 即 ERROR（附前 3 条明细）。
+# 单一事实源：**调用不复制**其判据（同 `health_all.py` 的「只调用不复制」口径）。
+# 修法：按其 `issues[].where` 逐条改（来源标注走口径迁移脚本；字段名／案名／标签逐条），改完重跑至 0。
+import subprocess as _sp
+_cec_p = _find_script("check_entry_contract.py")
+if not _cec_p:
+    WARNS.append("条目契约校验器未找到（第 19 项）：check_entry_contract.py")
+else:
+    try:
+        _r = _sp.run([sys.executable, _cec_p, "--methods-root", _ROOT, "--json"],
+                     capture_output=True, text=True, encoding="utf-8", errors="replace")
+        _j = json.loads(_r.stdout.strip() or "{}")
+        _n = int(_j.get("error") or 0)
+        if _n:
+            _det = "；".join(
+                "%s %s" % (i.get("where", i.get("file", "?")), str(i.get("msg", ""))[:60])
+                for i in (_j.get("issues") or [])[:3])
+            ERRORS.append("条目契约违规 %d 处（第 19 项）：%s —— 跑 check_entry_contract.py 看全量"
+                          % (_n, _det[:220]))
+    except Exception as _e:
+        WARNS.append("条目契约校验未能执行（第 19 项）：%s" % _e)
 
 
 if _args.json:
