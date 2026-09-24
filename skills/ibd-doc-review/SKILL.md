@@ -26,7 +26,7 @@ description: >
   「批注格式」「校验批注」「批注规范」「修订稿校验」「校验修订」「检查修订稿」
   「修订结构对不对」「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」
   「研究下XX节」「帮我看看这段」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
-version: 0.23.0
+version: 0.23.1
 agent_created: true
 ---
 
@@ -152,7 +152,7 @@ agent_created: true
 - **顺序规则：内容质量门禁在前、格式落地在后**——write 草稿先过 `ibd-quality-gates`（数字五要素/反模式/G1-G5 + 数值自洽 check_data.py，md 即可跑），内容定稿后再交本 skill 套样式
 - **⚠️ 文字规范必须在「套样式之前」先查（2026-09-10 实测）**：完整顺序 = **内容定稿 → `check_content.py --checks text`（标点全角化）→ 套样式 → `deliver_gate.py` 综合核验（复核产物加 `--annotated`/`--revised`）→ 交付**；理由与实测数据（384 处半角引号漏到套样式之后） → [workflow.md](references/workflow.md) 附录「两条时序铁律」
 - **交付前一律先跑 `deliver_gate.py`**：基础九项一次跑完、只输出结论行，复核产物再加 `--annotated` / `--revised`；不要用分散的多条核验命令替代（实测同一指标被反复统计 5-8 次，输出本身成为 token 大头）
-- **SKIP 须向用户点名**（2026-09-16 · ADR-0015）：deliver_gate 输出含 SKIP 项（officecli 未装/未启用、pymupdf 缺失等）时，AI 必须在回复中注明「本次 N 项 SKIP 未执行（原因）」——脚本层保证「可见的未跑」，本条保证「被看到」；静默跳过与静默失败同罪
+- **SKIP 须向用户点名**（2026-09-16）：deliver_gate 输出含 SKIP 项（officecli 未装/未启用、pymupdf 缺失等）时，AI 必须在回复中注明「本次 N 项 SKIP 未执行（原因）」——脚本层保证「可见的未跑」，本条保证「被看到」；静默跳过与静默失败同罪
 - **批注版链路**：复核产出批注版原文 → 执行器 `ibd-doc-annotate` 注入（规范依据 = [annotations.md](references/annotations.md)）→ 本 skill `check_annotations.py` 门禁 → 交付（批注版 + 精简总览双轨）
 - **下游协作**：本 skill 只改格式不改内容（铁律 0）；**内容质量（数字五要素/反模式/来源可溯）归 `ibd-quality-gates`**（内容层公共服务，上游同样开放）
 

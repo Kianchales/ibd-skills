@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.23.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.23.1-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -88,8 +88,8 @@ ibd-doc-review/
 
 - **2026-09-18 · v0.20.1**：**`validate_schema.py` 去第三方依赖**——发布冒烟「零依赖审计」拦下该脚本引用的 `jsonschema` 库（与「校验脚本全部标准库、解压即跑」承诺冲突）；改为内置 JSON Schema 子集校验器（覆盖 schema 实际用到的全部校验关键字），**契约与返回码 0/1/2 不变**，新增自测 **21 项**；schema 出现未支持关键字时**显式报错而非静默放行**。本版另含同批纯文档修正（用词口径 Word 化 / P4 裸路径修复 / badge 同步）
 - **2026-09-16 · v0.20.0**：**「中英文之间不加空格」纳入格式铁律并全链路闭环**——rules.md 三·3 由「数字前后不加空格」扩为「**中文与半角字符（数字＋字母）之间一律不加空格**」（唯一保留收拢为两处，均在两个半角字符之间：标准号内部缩写↔数字、英文词间）；`content_text.py` / `deliver_gate.py` 新增 `RE_SPACE_CJK_ALPHA` 检测并挂入 `spaces` 子项与「标点规范」项；同批 `ibd-doc-write` 写前红线同步该条（双包联动）
-- **2026-09-15 · v0.19.0**：**批注任务单入口路由**（ADR-0006）——`check_annotations.py`（尤其 PDF 侧）不再直接暴露，doc-annotate 为唯一对外入口、内部回调；interface.md §1/§5/§6 同步（bump 次版本，脚本本体零改动）
-- **2026-09-15 · v0.18.0**：**新增问题清单 JSON Schema + 校验入口**——[problems.schema.json](references/problems.schema.json)（必填 6 字段 / sev 三档 / type 10 项词表白名单枚举）+ [validate_schema.py](scripts/validate_schema.py)（返回码 0/1/2），自造标签与词表外取值精准拦截（ADR-0004，C-分步第一步）
+- **2026-09-15 · v0.19.0**：**批注任务单入口路由**——`check_annotations.py`（尤其 PDF 侧）不再直接暴露，doc-annotate 为唯一对外入口、内部回调；interface.md §1/§5/§6 同步（bump 次版本，脚本本体零改动）
+- **2026-09-15 · v0.18.0**：**新增问题清单 JSON Schema + 校验入口**——[problems.schema.json](references/problems.schema.json)（必填 6 字段 / sev 三档 / type 10 项词表白名单枚举）+ [validate_schema.py](scripts/validate_schema.py)（返回码 0/1/2），自造标签与词表外取值精准拦截（C-分步第一步）
 - **2026-09-12 · v0.17.3**：**修复发布隐私门禁 BLOCK**——P1 扫描报 12 项（内部配置目录路径 ×4 ＋ 本机用户名 ×8），均为上次发布后新引入：`deliver_gate.py` 的 officecli 探测列表改为**平台通用位置**并新增 `OFFICECLI_HOME`（`--officecli-path` 仍最优先），测试夹具 `author` 改中性值；CLI 参数 / 退出码 / 三态语义零变更
 - **2026-09-11 · v0.17.2**：修测试 fixture 的 OPC 关系表路径重复——构造器把包根级 rels 模板复用给 `word/_rels/document.xml.rels`，`Target` 被解析成 `word/word/document.xml`，真实解析器（python-docx）打开即 KeyError；新增 `RelsSemanticsTest` 4 项（纯标准库，校验全部 rels 的 Target 解析后必须指向包内部件；装了 python-docx 则真打开一次，未装 SKIP）。端到端：最小 fixture → 注入 → 门禁 9/9 PASS；五脚本 81 → 85 项
 - **2026-09-11 · v0.17.1**：`CHANGELOG.md` 分段归档——以 0.15.0 为代际切点，0.1.0–0.14.1 共 24 个版本段迁入 [references/changelog-archive.md](references/changelog-archive.md)（46.9 KB → 29.2 KB，降 37.7%；切分前后归一化 SHA-256 一致，零丢失零新增）

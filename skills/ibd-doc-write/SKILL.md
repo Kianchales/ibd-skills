@@ -11,13 +11,13 @@ description: >
   ④ 逐段协作模式（人机协作载体核心流程：写作状态双文件 + 口径漂移检测 + 敏感识别即停 + 交付四件套，references/paragraph-collab.md）
   模板触发映射见 references/templates-map.md；上下文管理/降级见 references/context-rules.md。
   触发词：「写XX的反馈回复」「起草问询回复」「写XX问询回复」「XX反馈回复怎么写」「写招股书章节」「写尽调报告」「写备忘录」「逐段写」「逐段协作」「帮我改这段」「这段怎么改」
-version: 0.15.2
+version: 0.15.3
 agent_created: true
 ---
 
 # ibd-doc-write（IBD 投行文档写作）
 
-A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（ADR-0001：逐段协作、非 AI 独立成稿——AI 草拟、用户逐段裁定定稿），且**方法论强制引用、不引用即打回**。
+A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（逐段协作、非 AI 独立成稿——AI 草拟、用户逐段裁定定稿），且**方法论强制引用、不引用即打回**。
 
 > **详规在册**：每一步的详规都在 `references/` 对应册的对应节——本文件只留**步骤名 ＋ 一句话判据 ＋ 册指针**（判据与方法分离，避免同一内容两处维护）。
 ## 何时使用
@@ -30,7 +30,7 @@ A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（ADR-000
 
 > 最小复现示例（对话触发 → 执行链路 → 交付物结构）见 [examples.md](references/examples.md)。
 
-### 0. 协作模式路由（先选模式再写作 · ADR-0001）
+### 0. 协作模式路由（先选模式再写作）
 
 | 模式 | 判据（一句话） | 详规 |
 |---|---|---|
@@ -101,7 +101,7 @@ A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（ADR-000
 | [templates-map.md](references/templates-map.md) | 模板映射 | 三大类模板触发映射（招股书章节/问询回复/备忘录）+ 知识库范例锚点 |
 | [writing-style.md](references/writing-style.md) | 通用 | 写前红线 + 投行语言词汇句法库 + **高频句法库（五大类，自方法论沉淀）** + 引用规范 + 语言风格 |
 | [context-rules.md](references/context-rules.md) | 通用 | 上下文管理（长文档）+ 失败降级协议 + 输出格式 |
-| [paragraph-collab.md](references/paragraph-collab.md) | 通用（长文档逐段） | **逐段协作模式**（ADR-0001 核心流程）：写作状态双文件（口径卡/进度）+ 口径漂移检测协议 + 敏感识别即停 + 段后自检分档 + 交付四件套；**§0.0 协作模式路由** |
+| [paragraph-collab.md](references/paragraph-collab.md) | 通用（长文档逐段） | **逐段协作模式**（核心流程）：写作状态双文件（口径卡/进度）+ 口径漂移检测协议 + 敏感识别即停 + 段后自检分档 + 交付四件套；**§0.0 协作模式路由** |
 | [methods-guide.md](references/methods-guide.md) | 通用（新使用者） | **方法论库消费指引**（消费侧精简版）：最小起步结构 + 条目结构规范 + 边用边长回环 + 无库降级 + 空库模板 + **外部引用路径清单**；**完整规范**见可选依赖 ibd-methods-ops |
 | [delivery-chain.md](references/delivery-chain.md) | 通用（交付阶段） | **交付链路与通道详规**：格式落地串联全文（§1）+ 工具说明与为什么是这个层级（§2）+ 依赖声明·断链自助·版本下限（§3）+ 与 L2 的接口（§4）+ 边界与协作详规（§5） |
 
@@ -133,7 +133,7 @@ A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（ADR-000
 - 详规（上游开放 / 交复核 / 门禁前移）→ [delivery-chain.md](references/delivery-chain.md) §5
 ## 与内置文件操作层（L2）的接口
 
-> 依据 ADR-0020（产物型任务两层路由模型）。本包是**产物型入口**（L1 作业层）——管「文档类产物的活该怎么做」；**落到哪个工具执行归内置 `tencent-docs-routing`（L2）**：通道选择（`tencent-docx`／`local-office-edit`／`minimax-docx`／`officecli` 等）**归 L2**，本包只负责**任务性质判定与表述整形**（「新建文档」vs「编辑既有文档」vs「整篇美化」）；docx 首选与降级序归 ADR-0014（L2.5）。分工表与「为什么写明」→ [delivery-chain.md](references/delivery-chain.md) §4。
+> 依据「产物型任务两层路由模型」。本包是**产物型入口**（L1 作业层）——管「文档类产物的活该怎么做」；**落到哪个工具执行归内置 `tencent-docs-routing`（L2）**：通道选择（`tencent-docx`／`local-office-edit`／`minimax-docx`／`officecli` 等）**归 L2**，本包只负责**任务性质判定与表述整形**（「新建文档」vs「编辑既有文档」vs「整篇美化」）；docx 首选与降级序归 **L2.5 层**。分工表与「为什么写明」→ [delivery-chain.md](references/delivery-chain.md) §4。
 ## 踩坑与要点
 
 - **数据密度**：①每个结论配表格数据 ②引合同条款原文（证明力）③模拟调整后对比（毛利率质疑杀手锏）④主动回应追问点（跨期/废料影响量化）⑤风险揭示收尾

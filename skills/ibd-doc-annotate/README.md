@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%89%B9%E6%B3%A8%E4%B8%8E%E4%BF%AE%E8%AE%A2%E4%BA%A4%E4%BB%98-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.10.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.10.1-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -81,7 +81,7 @@ ibd-doc-annotate/
 
 - **2026-09-18 · v0.7.0**：**总览报告双格式交付（MD + Word）**——新脚本 `overview_to_docx.py`，批注注入后自动同产 `_批注总览.docx`（与 md 同源同内容）；交付口径同步 `ibd-doc-review` delivery.md
 - **2026-09-18 · v0.6.1**：接入点声明入 `ATTACHMENT-POINTS` 总表——补一行**使用者资产**声明（本包**无需自备资产**，模板随包），指向集合仓总表；描述补全，规则/脚本零变化
-- **2026-09-15 · v0.6.0**：**批注任务单入口路由声明**（ADR-0006）——本 skill 为 docx/PDF 批注唯一对外入口，doc-review 校验脚本转为内部回调；依赖下限升至 `ibd-doc-review ≥ 0.19.0`；
+- **2026-09-15 · v0.6.0**：**批注任务单入口路由声明**——本 skill 为 docx/PDF 批注唯一对外入口，doc-review 校验脚本转为内部回调；依赖下限升至 `ibd-doc-review ≥ 0.19.0`；
 - **2026-09-14 · v0.5.6**：`fix_missing_ranges.py` 修复标记顺序颠倒——锚点落在单个 run 内时曾产出 `end→ref→start`（门禁只比对对数，会静默放行）；补 8 项自测（4 项行为 + 1 项未命中 + 1 项幂等 + 2 项顺序确证），修复前版本反跑失败 5 项
 - **2026-09-12 · v0.5.5**：依赖下限同步交付口径——三处 `ibd-doc-review ≥ 0.15.1` → `≥ 0.16.2`（= `delivery.md` 引入版，原下限成死引用）
 - **2026-09-11 · v0.5.4**：交付口径语义窄化修正（双轨并存·批注优先）+ 回指 `delivery.md`

@@ -30,7 +30,7 @@
 | `--revised [--expect-revised N]` | 修订稿（覆盖 check_revisions 全部断言） | doc-annotate |
 | `--anchors "36,507.55;19.96"` | 数字锚点核对（可选） | 通用 |
 
-门禁返回非 PASS = 退回重做，**不得带瑕疵交付**。批注类任务（docx + PDF）**以 doc-annotate 为唯一对外入口**：PDF 侧批注校验（`check_annotations.py --pdf`）由 doc-annotate 内部回调，外部使用者/下游包**不直接调用**（ADR-0006 单入口路由，0.19.0 起）。
+门禁返回非 PASS = 退回重做，**不得带瑕疵交付**。批注类任务（docx + PDF）**以 doc-annotate 为唯一对外入口**：PDF 侧批注校验（`check_annotations.py --pdf`）由 doc-annotate 内部回调，外部使用者/下游包**不直接调用**（单入口路由，0.19.0 起）。
 
 ## 3. 复核问题清单 schema（结构契约）
 
@@ -86,6 +86,6 @@
 ## 沿革
 
 - 2026-09-15 初版：从 delivery.md / annotations.md / 脚本 CLI 提炼对外承诺；细则指针化，下游断链自查方法（grep 四包）固化。
-- 2026-09-15 §3 增补：挂 problems.schema.json 机器可执行 schema 指针与 validate_schema.py 入口（ADR-0004，C-分步第一步）；§6 版本下限表同步。
-- 2026-09-15 §1/§5 修订：批注任务单入口路由（ADR-0006）——check_annotations.py（尤其 PDF 侧）不再直接暴露，doc-annotate 为唯一对外入口、内部回调；§6 表加行并全表现行刷至 0.19.0。
+- 2026-09-15 §3 增补：挂 problems.schema.json 机器可执行 schema 指针与 validate_schema.py 入口（C-分步第一步）；§6 版本下限表同步。
+- 2026-09-15 §1/§5 修订：批注任务单入口路由——check_annotations.py（尤其 PDF 侧）不再直接暴露，doc-annotate 为唯一对外入口、内部回调；§6 表加行并全表现行刷至 0.19.0。
 - **2026-09-23 收口（低成本改进 ①）**：删「现行」列（**必然过期且无维护动作**——写死 0.18.0 而包已至 0.22.0）；补「**单入口路由语义 ≥ 0.19.0**」行（下游 `ibd-doc-annotate` 早已按此声明，却**从未登记在本表**）；增「**下游消费方**」列，并给三个下游包的活指针加回指——§6 自陈「供下游回填」，而此前三个下游**均未回填**。新增「升版动作」一行，把核对义务写进本册而非靠记忆。

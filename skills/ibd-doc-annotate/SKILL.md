@@ -18,7 +18,7 @@ description: >
   输出修订稿 docx + 修改清单（已修订/待人工两区）。
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.10.0
+version: 0.10.1
 agent_created: true
 ---
 
@@ -42,7 +42,7 @@ agent_created: true
 | 修订稿生成（revise 默认） | 「生成修订稿」「出修订稿」「出一版修订稿」 |
 | 修订稿直接改好 / 双版 | 「直接改好」「干净版」「定稿」｜「两个都要」「修订版+干净版」 |
 
-> **单入口路由（ADR-0006，0.6.0 起）**：批注类任务（docx + PDF）以**本 skill 为唯一对外入口**——`ibd-doc-review` 的 `check_annotations.py`（尤其 PDF 侧 `--pdf`）由本 skill 内部回调，下游包/外部使用者不直接调用。
+> **单入口路由（0.6.0 起）**：批注类任务（docx + PDF）以**本 skill 为唯一对外入口**——`ibd-doc-review` 的 `check_annotations.py`（尤其 PDF 侧 `--pdf`）由本 skill 内部回调，下游包/外部使用者不直接调用。
 >
 > 配合链路：**复核问题从哪来** → `ibd-doc-review`（格式核对/审阅）或专家团分析产出问题清单；**交付口径**（默认形态/触发语路由/批注纪律）→ `ibd-doc-review` 的 **delivery.md**；**批注格式规范** → `ibd-doc-review` 的 annotations.md、**修订稿规范** → `ibd-doc-review` 的 revisions.md（单一事实源，本 skill 只执行不另立规则）；**产出校验** → `ibd-doc-review` 的 check_annotations.py（批注）/ check_revisions.py（修订稿），交付前必跑，任一 FAIL 退回重做。
 >

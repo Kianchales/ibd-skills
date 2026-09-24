@@ -90,12 +90,12 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
-| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.15.2 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
+| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.15.3 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
 | [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.13.0 | 零硬依赖（基座之一） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.9.1 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.23.0 | 零外部 skill 依赖（基座） |
-| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.10.0 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由 ADR-0006） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.24.1 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.23.1 | 零外部 skill 依赖（基座） |
+| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.10.1 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由 ADR-0006） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.24.2 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.5.0 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]

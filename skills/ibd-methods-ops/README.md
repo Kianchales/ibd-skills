@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BB%B4%E6%8A%A4-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-1.24.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-1.24.2-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -108,7 +108,7 @@ CHANGELOG.md             版本记录
 - **2026-09-19 · v1.8.0**：`check_expert_output.py` 与 `check_methods_health.py` 支持 **`--json`** 结构化输出（工程范式 A5 对齐）；门禁结论从此可被上层程序消费
 - **2026-09-19 · v1.7.0**：新增随包脚本 `gen_replay_worksheet.py`（回写工作表：清单候选 × 单案新条目 × 主库旧条目 三方汇编，起草时上下文一次到位）＋「S7 回写执行纪律」七条；修 `--methods-root` 参数语义（实测校正为「库所在工作区根」）
 - **2026-09-18 · v1.6.1**：接入点声明补第三问**缺失降级**（无库→空库起步档 / 维护域无对象如实报告 / 无 KB 仅失去镜像 / 无团队工具走单用户）——本包正式入 `ATTACHMENT-POINTS` 总表（公开包口径 5→7）后，满足 P2+ 三问齐备要求
-- **2026-09-15 · v1.6.0**：**S7 回写池三过滤**（复现 2 次即并入 / 冲突改旧 / 用户裁定冲突提请再裁定，ADR-0007）+ **库主从关系**（本地 `{METHODS_ROOT}` 单一事实源，云知识库 = 只读发布镜像，ADR-0009）
+- **2026-09-15 · v1.6.0**：**S7 回写池三过滤**（复现 2 次即并入 / 冲突改旧 / 用户裁定冲突提请再裁定）+ **库主从关系**（本地 `{METHODS_ROOT}` 单一事实源，云知识库 = 只读发布镜像）
 - **2026-09-10 · v1.5.1**：冷启动修复（库前置检查 / 输出目录自建 / 编排器错误展示 / 单装断链）
 - **2026-09-10 · v1.5.0**：公开首版——通用化（路径占位符 / KB 后端开放 / 角色称谓）+ 15 脚本随包 + 库规范并入；双向开放原则（资料来源与沉淀去向由用户确定）
 - 更早版本见 [CHANGELOG.md](CHANGELOG.md)

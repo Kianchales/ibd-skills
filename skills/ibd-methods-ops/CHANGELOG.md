@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [1.24.2] - 2026-09-24
+
+- **references 去 ADR 索引（承 R-0032 · 2026-09-24 用户裁定）**：按「**ADR 是开发过程留痕，不应作为索引被保留**（否则整个系统对 ADR 产生强依赖）」的口径，本包**活文档**（`SKILL.md`／`README.md`／`references/`／`scripts/` 注释）中的 `ADR-xxxx` 引用**全部脱敏**：带语义说明的**去编号、留说明**（如 `依据 ADR-0020（产物型任务两层路由模型）` → `依据「产物型任务两层路由模型」`）；裸编号处按上下文**改写为自述**（如 `### 0. 协作模式路由（先选模式再写作 · ADR-0001）` → `### 0. 协作模式路由（先选模式再写作）`）。改后 `check_refs.py --internal` 的 **ADR 引用 = 0**、`check_conformance` 的 **A12 = 0**。**`CHANGELOG.md` 不改写**（历史留痕惯例）；**`docs/adr/` 本体保留** —— 仅解除活文档对它的引用，避免「过程物」变成「运行时依赖」。
+
 ## [1.24.1] - 2026-09-24
 
 - **references 隐私脱敏（发布前 P1 复扫拦截 · 2026-09-24）**：`scan_privacy.py` 在 **v0.3.7 发布 dry-run 的 zip 复扫**中报 **3 处 BLOCK** —— 本包 references 出现了**用户私有目录名**：`references/distill-methods.md` L322、`references/govern/health-check.md` L16、`references/govern/fix-tools.md` L73（涉**内部方法论库目录**与**内部配置目录**两类私有名）。⇒ 三处统一改为**占位符形态**（`<蒸馏工作区>/cases/`、`<skills 根>/*/`）：**语义不变、私有名不落公开包**。修后 P1 复扫 **BLOCK = 0**。**动因记录**：本批内容把内部路径带进公开包，若无 zip 复扫这一环会**静默外发**——本条即 P1「zip 复扫」环节的价值实证。
