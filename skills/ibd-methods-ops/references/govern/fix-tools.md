@@ -70,7 +70,7 @@
 | # | 面 | 检查方式 |
 |---|---|---|
 | 1 | **库内其它文件** | 全库 grep 旧名／旧路径（排除 `_generated`／`archive`／`60_notes` 沿革） |
-| 2 | **skill 包**（多个包） | `~/.workbuddy/skills/*/` 全 grep（`references/` ＋ `SKILL.md` ＋ `README.md`） |
+| 2 | **skill 包**（多个包） | `<skills 根>/*/` 全 grep（`references/` ＋ `SKILL.md` ＋ `README.md`） |
 | 3 | **automation 提示词** | `automation_update` **逐条 view** 全 6 条 → grep 旧名／旧路径／护栏目数（**不能只查相关那一条**：本次全扫发现只有 1/6 条需改，但不扫不知道） |
 | 4 | **库内元文件与 state** | `state/*.md`（如 `维护体检计数.md` 写死的护栏目数）、`methods/README.md`、各 `README` |
 | 5 | **门禁常量** | `_lib/layout.py` 路径常量 ＋ 各 `check_*.py` 的判据常量（如 `RETIRED_DIRS`） |
