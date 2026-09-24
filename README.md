@@ -90,12 +90,12 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
-| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.15.3 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
+| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.15.4 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
 | [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.13.0 | 零硬依赖（基座之一） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.9.1 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.23.1 | 零外部 skill 依赖（基座） |
-| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.10.1 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由 ADR-0006） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.24.3 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.25.0 | 零外部 skill 依赖（基座） |
+| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.10.2 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由 ADR-0006） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.24.4 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.5.0 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]
@@ -196,11 +196,11 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
 | ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.13.0 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.23.1 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.23.1 | ✅ |
-| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.23.1 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.24.3 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.24.3 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.25.0 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.25.0 | ✅ |
+| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.25.0 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.24.4 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.24.4 | ✅ |
 
 > 下限口径：`ibd-doc-write` 的 ≥0.15.7 = `deliver_gate.py` 引入版；`ibd-doc-annotate` 的 ≥0.19.0 = 批注任务单入口路由版（ADR-0006，check_annotations.py 转内部回调，低于此版单入口声明成死引用）；`ibd-finance-review` 的 ≥0.16.2 = 交付口径单一事实源 `references/delivery.md` 引入版（低于此版该指向成死引用）。
 
@@ -213,6 +213,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 - 集合 Release：`ibd-skills-vX.Y.Z`，zip 含 `README.md` + `skills/` 全部包
 
 ## 📌 近期更新
+
+- **2026-09-24 · v0.3.10**：**读取含修订/批注的 Word ＋ 标点用法门禁 ＋ 条目契约补录**——`ibd-doc-review` 0.23.1 → **0.25.0**（**读取含修订/批注的 Word**：新增 `references/read-docx.md` ＋ `scripts/extract_final_text.py`（按口径提取最终文本，处理修订与批注两态）＋ 12 项阴阳双测；**标点用法门禁**：`check_content.py --checks punct_usage` 与 `deliver_gate.py` 标点用法项，规范源 **GB/T 15834—2011《标点符号用法》**）；`ibd-doc-annotate` 0.10.1 → **0.10.2**（踩坑节四条：**跨载体清单须先按载体拆分再注入**（否则不可锚定条目也生成 comments ⇒ 门禁 FAIL）／**xlsx 侧批注走 openpyxl 单元格 Comment** 三硬约束／**批注编号还原**一次遍历替换）；`ibd-doc-write` 0.15.3 → **0.15.4**（`writing-style.md` 新增「标点用法按国标」：数值范围起止用 `~`、短横线只用于号码与编号、省略号不与「等」并用、表下注末尾不加句号、引号内引用原文照录）；`ibd-methods-ops` 1.24.3 → **1.24.4**（`entry-contract.md` 新增 **§4.1「非案例来源条目的实证位」**（外部规范入编时字段名不变、内容挂规范条款号、必标「非案例」）＋ 来源标注适用范围注）。版本矩阵与依赖兼容矩阵同步。
 
 - **2026-09-24 · v0.3.9**：**方法论库护栏新增第 19 项「条目契约全库校验」**——`check_entry_contract.py`（条目书写契约校验器：来源标注／单案层字段名／案名登记／实证标签）此前**只读自检、未接任何门禁**，导致 2026-09-22 实测全库 **703 处**违规却长期无人发现（报告原话「**没有出口，就不会有人修**」）。本次为它**补出口**：`check_methods_health.py` 新增**第 19 项**，调用契约校验器（取 `error` > 0 即报 ERROR，并附前 3 条明细含文件:行号），随 **S7 沉淀后门禁**自动跑、维护域手动跑；**单一事实源 ＝ 调用不复制**（同 `health_all` 口径）。`ibd-methods-ops` 1.24.2 → **1.24.3**；护栏 **18 → 19 项**。
 
