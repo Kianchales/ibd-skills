@@ -105,7 +105,7 @@ def main():
         if ver and matrix and pkg in matrix and matrix[pkg] != ver:
             fails.append(f'{pkg}: SKILL version {ver} != 集合 README 矩阵 {matrix[pkg]}')
         # 6. 资源文件变更留痕：SKILL.md 引用的 references/scripts 文件必须在 CHANGELOG 出现过
-        #    （ADR-0002：变更时刻拦截；先例 = interface.md 裸奔进包无 CHANGELOG 条目）
+        #    （变更时刻拦截；先例 = interface.md 裸奔进包无 CHANGELOG 条目）
         if os.path.exists(cl):
             cl_text = open(cl, encoding='utf-8').read()
             # 分代归档的 CHANGELOG（references/changelog-archive*.md）同样算留痕
