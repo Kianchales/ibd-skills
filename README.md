@@ -95,7 +95,7 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.9.1 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
 | [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.23.1 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.10.1 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由 ADR-0006） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.24.2 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.24.3 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.5.0 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]
@@ -199,8 +199,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.23.1 | ✅ |
 | ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.23.1 | ✅ |
 | ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.23.1 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.24.2 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.24.2 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.24.3 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.24.3 | ✅ |
 
 > 下限口径：`ibd-doc-write` 的 ≥0.15.7 = `deliver_gate.py` 引入版；`ibd-doc-annotate` 的 ≥0.19.0 = 批注任务单入口路由版（ADR-0006，check_annotations.py 转内部回调，低于此版单入口声明成死引用）；`ibd-finance-review` 的 ≥0.16.2 = 交付口径单一事实源 `references/delivery.md` 引入版（低于此版该指向成死引用）。
 
