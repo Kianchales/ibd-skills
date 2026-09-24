@@ -2,7 +2,7 @@
 
 ## [1.24.1] - 2026-09-24
 
-- **references 隐私脱敏（发布前 P1 复扫拦截 · 2026-09-24）**：`scan_privacy.py` 在 **v0.3.7 发布 dry-run 的 zip 复扫**中报 **3 处 BLOCK** —— 本包 references 出现了**用户私有目录名**：`references/distill-methods.md` L322 与 `references/govern/health-check.md` L16 的 `daily_learning/cases/`（**PRIV-008**）＋ `references/govern/fix-tools.md` L73 的 `~/.workbuddy/skills/*/`（**PRIV-005**）。⇒ 三处统一改为**占位符形态**（`<蒸馏工作区>/cases/`、`<skills 根>/*/`）：**语义不变、私有名不落公开包**。修后 P1 复扫 **BLOCK = 0**。**动因记录**：本批内容把内部路径带进公开包，若无 zip 复扫这一环会**静默外发**——本条即 P1「zip 复扫」环节的价值实证。
+- **references 隐私脱敏（发布前 P1 复扫拦截 · 2026-09-24）**：`scan_privacy.py` 在 **v0.3.7 发布 dry-run 的 zip 复扫**中报 **3 处 BLOCK** —— 本包 references 出现了**用户私有目录名**：`references/distill-methods.md` L322、`references/govern/health-check.md` L16、`references/govern/fix-tools.md` L73（涉**内部方法论库目录**与**内部配置目录**两类私有名）。⇒ 三处统一改为**占位符形态**（`<蒸馏工作区>/cases/`、`<skills 根>/*/`）：**语义不变、私有名不落公开包**。修后 P1 复扫 **BLOCK = 0**。**动因记录**：本批内容把内部路径带进公开包，若无 zip 复扫这一环会**静默外发**——本条即 P1「zip 复扫」环节的价值实证。
 
 ## [1.24.0] - 2026-09-24
 
