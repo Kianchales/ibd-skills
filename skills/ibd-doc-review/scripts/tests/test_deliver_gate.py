@@ -3,8 +3,8 @@
 test_deliver_gate.py — deliver_gate.py 自测（含批注/修订挂载开关）
 
 覆盖：
-  A. 基础九项
-     1. 合格交付件 + 同源 md → 九项全 PASS，退出码 0
+  A. 基础十项
+     1. 合格交付件 + 同源 md → 十项全 PASS，退出码 0
      2. 半角标点 / 禁用词 / 同源不一致 → 对应项 FAIL，退出码 1
      3. 只给 --md → md 侧预检五项
   B. --annotated 挂载（批注三项）
@@ -237,7 +237,7 @@ class TmpDirMixin:
         return os.path.join(self.d, name)
 
 
-# ================================================================== A. 基础九项
+# ================================================================== A. 基础十项
 
 class TestBaseGate(TmpDirMixin, unittest.TestCase):
 
@@ -248,8 +248,8 @@ class TestBaseGate(TmpDirMixin, unittest.TestCase):
             f.write(MD_SOURCE)
         rc, out = run_gate(["--docx", docx, "--md", md, "--anchors", "36,507.55"])
         self.assertEqual(rc, 0, out)
-        self.assertEqual(out.count("[PASS]"), 9)
-        self.assertIn("9/9 PASS", out)
+        self.assertEqual(out.count("[PASS]"), 10)
+        self.assertIn("10/10 PASS", out)
 
     def test_02_halfwidth_punct_and_ban_fail(self):
         docx, md = self.p("bad.docx"), self.p("bad.md")
@@ -305,7 +305,7 @@ class TestAnnotated(TmpDirMixin, unittest.TestCase):
         rc, out = run_gate(["--docx", docx, "--annotated", "--expect-annotated", "2"])
         self.assertEqual(rc, 0, out)
         self.assertIn("批注版", out)
-        self.assertIn("9/9 PASS", out)
+        self.assertIn("10/10 PASS", out)
         self.assertEqual(line_of(out, "批注部件").group(1), "PASS")
         self.assertEqual(line_of(out, "批注结构").group(1), "PASS")
         self.assertEqual(line_of(out, "批注编号"), None)  # 编号已并入批注结构，不单列
@@ -453,15 +453,15 @@ class TestArgContract(TmpDirMixin, unittest.TestCase):
         self.assertEqual(rc, 2, out)
         self.assertIn("至少提供", out)
 
-    def test_15_base_nine_unchanged_without_flag(self):
-        """回归：不给开关时仍是九项（既有调用方契约不破坏）"""
+    def test_15_base_ten_unchanged_without_flag(self):
+        """回归：不给开关时仍是十项（既有调用方契约不破坏）"""
         docx, md = self.p("reg.docx"), self.p("reg.md")
         make_docx(docx, good_body())
         with open(md, "w", encoding="utf-8") as f:
             f.write(MD_SOURCE)
         rc, out = run_gate(["--docx", docx, "--md", md])
         self.assertEqual(rc, 0, out)
-        self.assertIn("8/8 PASS", out)
+        self.assertIn("9/9 PASS", out)
 
 
 # ================================================================== E. officecli 物理扫描（SKIP 三态）
@@ -516,7 +516,7 @@ class PhysicalScanTest(unittest.TestCase):
             f.write(MD_SOURCE)
         rc, out = run_gate(["--docx", docx, "--md", md])
         self.assertEqual(rc, 0, out)
-        self.assertIn("8/8 PASS", out)
+        self.assertIn("9/9 PASS", out)
         self.assertNotIn("8/9 PASS", out)
 
 

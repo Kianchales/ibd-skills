@@ -130,7 +130,7 @@ class ModuleContractTest(unittest.TestCase):
         expected_table = [c["id"] for c in check_content.CHECK_REGISTRY if c["group"] == "table"]
         self.assertEqual(check_content.GROUPS["text"], expected_text)
         self.assertEqual(check_content.GROUPS["table"], expected_table)
-        self.assertEqual(len(expected_text), 7, "文字类应为 7 项")
+        self.assertEqual(len(expected_text), 8, "文字类应为 8 项")
         self.assertEqual(len(expected_table), 4, "表格类应为 4 项")
 
     def test_04_runners_cover_all_registry_ids(self):
@@ -154,7 +154,7 @@ class ModuleContractTest(unittest.TestCase):
 
     def test_06_resolve_checks_group_and_id(self):
         """resolve_checks 支持 all / 组名 / 单 id / 混合，且保持登记表顺序。"""
-        self.assertEqual(len(check_content.resolve_checks("all")), 11)
+        self.assertEqual(len(check_content.resolve_checks("all")), 12)
         self.assertEqual(check_content.resolve_checks("table"),
                          ["table_font", "table_align", "table_empty", "table_na"])
         self.assertEqual(check_content.resolve_checks("geo,table_na"),

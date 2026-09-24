@@ -9,7 +9,7 @@ description: >
      反馈回复、报告、备忘录、尽调报告等正式文档；样式以模板文件为源
      （assets/templates/），可通过修改模板自定义输出样式。
   2. 格式核对：对文档逐项核对格式问题，覆盖标题序号连续性、日期写法统一、
-     标点全半角、释义简称、表格规范等 10 个核对项，输出按严重程度
+     标点全半角与标点用法、释义简称、表格规范等 11 个核对项，输出按严重程度
      分级的问题清单（含位置、原文、问题与修改建议）。
   3. 渲染层物理缺陷扫描 + 架构校验（可选，officecli 驱动）：文本溢出、首行
      缩进缺失、公式错误等渲染问题，以及 OpenXML 架构合法性校验。
@@ -26,7 +26,7 @@ description: >
   「批注格式」「校验批注」「批注规范」「修订稿校验」「校验修订」「检查修订稿」
   「修订结构对不对」「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」
   「研究下XX节」「帮我看看这段」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
-version: 0.23.1
+version: 0.25.0
 agent_created: true
 ---
 
@@ -55,6 +55,7 @@ agent_created: true
 ## 使用流程
 
 > **本节读法**：只留「**步骤名 ＋ 一句话判据 ＋ 册指针**」；**执行细则 → [workflow.md](references/workflow.md)**（§零·一 进门决策树 · §零·二 样式应用铁律 · §一 S1-S7 · §二 格式核对 · §三 复核交付 · 附录「脚本 × 场景」命令全表）。
+> **读取前置（读源文件前必看）**：读**任何**用户／对方提供的 docx 取文本前，**先探测** `w:ins`／`w:del`／`word/comments.xml`——命中即按「**接受全部修订 ＋ 剔除全部批注**」取终稿，并**标注「该文件原件含修订/批注」**；**禁对源文件做任何写操作**（含「接受修订／删除批注」）。判据 → `docs/CONVENTIONS.md` §一「读取面 · 含修订/批注的 Word」；操作细则（三口径 ＋ 提取脚本模板）→ [read-docx.md](references/read-docx.md)，脚本 [extract_final_text.py](scripts/extract_final_text.py)。
 
 ### 1. 场景识别与工具路由（导航）
 
@@ -126,6 +127,7 @@ agent_created: true
 
 - **完整样式定义**（字体/字号/对齐/缩进/间距/行距/大纲级别）→ [style-map.md](references/style-map.md)
 - **执行细则**（S1-S7 / 格式核对模式 / 批注与修订复核交付模式 / 「脚本 × 场景」命令全表）→ [workflow.md](references/workflow.md)——**动手做之前翻这一份**
+- **读取口径（含修订/批注的 Word）**（三口径 / 提取脚本模板 / 加载时机 / 已知不覆盖）→ [read-docx.md](references/read-docx.md)；执行件 [extract_final_text.py](scripts/extract_final_text.py)（只读，源文件零写操作）
 - **批注复核规范**（交付形态双轨 / 4 行紧凑结构 / 编号体系 / 类型词表 / 字体 / 锚点 / 门禁）→ [annotations.md](references/annotations.md)；**修订稿交付规范**（三模式 / rev 字段 / 落定 / 修改清单 / 门禁）→ [revisions.md](references/revisions.md)；执行器 = `ibd-doc-annotate`
 - **章节复核交付约定**（默认交付形态 / 执行链路 / 职权划分 / 触发语路由 / 批注纪律）→ [delivery.md](references/delivery.md)
 - **对外接口契约**（交付口径 / 门禁 CLI / 问题清单 schema / 编号与词表 / 脚本入口 / 版本下限）→ [interface.md](references/interface.md)；机器可执行 schema = [problems.schema.json](references/problems.schema.json)（语义源 = interface.md §3 + annotations.md §4）
@@ -138,7 +140,7 @@ agent_created: true
 
 | 维度 | 说明 |
 |---|---|
-| 🔴 **必须** | 任一 Word 处理工具（`minimax-docx`〔🟨官方市场〕 或 `tencent-docx`〔🟦内置〕至少一，套样式/新建用）+ 内置脚本 `check_styles.py` / `check_content.py`〔含 `content_common.py` / `content_text.py` / `content_table.py` 三配套模块〕 / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py`〔⬛随包自带，docx 侧零依赖；仅 `check_annotations.py --pdf` 的 PDF 侧需 pymupdf，缺失时跳过并提示〕 |
+| 🔴 **必须** | 任一 Word 处理工具（`minimax-docx`〔🟨官方市场〕 或 `tencent-docx`〔🟦内置〕至少一，套样式/新建用）+ 内置脚本 `check_styles.py` / `check_content.py`〔含 `content_common.py` / `content_text.py` / `content_table.py` 三配套模块〕 / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py` / `extract_final_text.py`〔读源件终稿文本，只读〕〔⬛随包自带，docx 侧零依赖；仅 `check_annotations.py --pdf` 的 PDF 侧需 pymupdf，缺失时跳过并提示〕 |
 | 🟡 **推荐** | `tencent-local-office-edit`〔🟦内置〕（局部样式微调，体验最佳）；模板 docx（`assets/templates/`〔⬛随包自带〕，可替换即定制样式） |
 | 🟢 **可选** | 外部数据源（金融数据终端，仅交叉验证时用）；知识库后端（KB_BACKEND：知识库/云文档/本地目录任选——检索同类范例，非必需）；`officecli`（渲染层物理缺陷扫描 + OpenXML 架构校验，S6 补充门禁，独立二进制按需自备） |
 | **运行模式** | 单用户直接使用；也可作为 `ibd-doc-write` 的格式层被串联调用（见「上游接口与边界」） |
@@ -148,7 +150,7 @@ agent_created: true
 ## 边界与协作
 
 - **默认上游 = `ibd-doc-write`**（内容层产出草稿并声明样式场景）→ 交本 skill 套样式 + 校验；**上游开放**——人工撰写、其他 AI 流程、外部导入的 Word 文档均可调用套样式 / 格式核对
-- **下游调用点（doc-write ≥0.10.0）**：写作链已把 `deliver_gate.py` 嵌进其流程（`--md` 模式在**套样式之前**做文字规范预检、`--docx` 模式作**交付前综合核验**）⇒ **本脚本改动会直接影响写作链**，升版时须同步核对 doc-write 依赖下限（当前 ≥0.15.8）。兼容性：`--annotated` / `--revised` 为新增开关，不给开关时行为与旧版完全一致（仍九项），写作链无需改动
+- **下游调用点（doc-write ≥0.10.0）**：写作链已把 `deliver_gate.py` 嵌进其流程（`--md` 模式在**套样式之前**做文字规范预检、`--docx` 模式作**交付前综合核验**）⇒ **本脚本改动会直接影响写作链**，升版时须同步核对 doc-write 依赖下限（当前 ≥0.15.8）。兼容性：`--annotated` / `--revised` 为新增开关，**开关语义不变**；⚠️ **基础项数 0.24.0 起由 9 项增至 10 项**（新增常驻项「标点用法」，见 rules.md 三·8）——下游若断言过项数须同步
 - **顺序规则：内容质量门禁在前、格式落地在后**——write 草稿先过 `ibd-quality-gates`（数字五要素/反模式/G1-G5 + 数值自洽 check_data.py，md 即可跑），内容定稿后再交本 skill 套样式
 - **⚠️ 文字规范必须在「套样式之前」先查（2026-09-10 实测）**：完整顺序 = **内容定稿 → `check_content.py --checks text`（标点全角化）→ 套样式 → `deliver_gate.py` 综合核验（复核产物加 `--annotated`/`--revised`）→ 交付**；理由与实测数据（384 处半角引号漏到套样式之后） → [workflow.md](references/workflow.md) 附录「两条时序铁律」
 - **交付前一律先跑 `deliver_gate.py`**：基础九项一次跑完、只输出结论行，复核产物再加 `--annotated` / `--revised`；不要用分散的多条核验命令替代（实测同一指标被反复统计 5-8 次，输出本身成为 token 大头）

@@ -30,7 +30,7 @@
 
 模块结构（2026-09-11 按业务域拆组，P2-⑧）：
   content_common.py  共享基础层：Issue / docx 解析 / 中文序号基元 / 标点基元
-  content_text.py    文字类 7 个核对项
+  content_text.py    文字类 8 个核对项
   content_table.py   表格类 4 个核对项
   check_content.py   ← 本文件：核对项登记表 + 编排（run / render_report / main）
   本文件是**唯一 CLI 入口**，对外契约（参数/报告文件名/退出码）与拆组前完全一致。
@@ -64,6 +64,7 @@ from content_text import (
     check_geo,
     check_heading_seq,
     check_punctuation,
+    check_punct_usage,
     check_spaces,
     check_terms,
     load_external_rules,
@@ -82,6 +83,7 @@ CHECK_REGISTRY = [
     {"id": "dates", "group": "text", "name": "日期写法统一（十种形式识别）", "severity": "MEDIUM"},
     {"id": "spaces", "group": "text", "name": "多余空格/数字与英文前后空格/重复标点", "severity": "HIGH"},
     {"id": "punctuation", "group": "text", "name": "中英文标点（前后字符判定）", "severity": "HIGH"},
+    {"id": "punct_usage", "group": "text", "name": "标点用法（数值范围浪纹线/省略号并禁/表下注末尾句号）", "severity": "MEDIUM"},
     {"id": "abbr", "group": "text", "name": "释义简称统一（含未定义使用检出）", "severity": "MEDIUM"},
     {"id": "geo", "group": "text", "name": "国家/城市表述合规（外部清单）", "severity": "HIGH"},
     {"id": "table_font", "group": "table", "name": "表格字号体系（五号/小五）", "severity": "HIGH"},
@@ -134,6 +136,7 @@ def run(input_path, check_ids, geo_file=None, terms_file=None):
         "dates": lambda: check_dates(items),
         "spaces": lambda: check_spaces(items),
         "punctuation": lambda: check_punctuation(items),
+        "punct_usage": lambda: check_punct_usage(items),
         "abbr": lambda: check_abbr(full_text),
         "geo": lambda: check_geo(full_text, geo_rules),
         "table_font": lambda: check_table_font(tables),

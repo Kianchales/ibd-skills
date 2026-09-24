@@ -222,7 +222,7 @@ python scripts/deliver_gate.py --docx <修订稿.docx> --revised --expect-revise
 - 修订稿检查项（revise 版）：ins==del 对、author 归责、id 成对唯一、delText/ins 非空、settings 开 trackRevisions、clean 化后 ins 文本落定；clean 版：无修订标记残留
 - **加粗判定须按语义**：`<w:b w:val="0">` 是**显式取消加粗**，不能只判 `<w:b>` 元素存在——否则合规批注会被误判 FAIL（实测 2026-09-11，已修 `check_annotations.py` 与 `deliver_gate.py`）
 - **任一 FAIL → 退回 `ibd-doc-annotate` 重新注入/生成，不交付**
-- **自测**：`python scripts/tests/test_deliver_gate.py`（17 项）/ `test_check_annotations.py`（10 项）/ `test_check_revisions.py`（11 项）/ `test_check_styles.py`（18 项）——改动脚本后务必全跑
+- **自测**：`python scripts/tests/test_deliver_gate.py`（26 项）／`test_check_annotations.py`（10）／`test_check_content.py`（22）／`test_check_revisions.py`（11）／`test_check_styles.py`（18）／`test_validate_schema.py`（21）／`test_extract_final_text.py`（12）——**共 120 项**；改动脚本后务必全跑
 
 ---
 
@@ -232,6 +232,7 @@ python scripts/deliver_gate.py --docx <修订稿.docx> --revised --expect-revise
 
 | 你要做什么 | 命令 | 说明 |
 |---|---|---|
+| **读源件取终稿文本（读前先跑）** | `python scripts/extract_final_text.py <docx> [--check] [-o out.txt] [--json]` | 先探测 `w:ins`／`w:del`／批注 → 取「接受全部修订 ＋ 剔除全部批注」的终稿并标注；**只读，源文件零写操作**；细则 → [read-docx.md](read-docx.md) |
 | **交付前综合核验（首选）** | `python scripts/deliver_gate.py --docx <件> --md <源.md> --anchors "A;B" --scenario <招股书\|反馈回复> [--expect-vmerge N] [--officecli]` | 基础九项一次跑完、只输出结论行，退出码 0/1 作交付判据；加 `--officecli` 追加物理扫描（共十项，未装则 SKIP 不阻断） |
 | 交付**批注版** | `python scripts/deliver_gate.py --docx <批注版> --annotated --expect-annotated N` | 九项 + 批注三项 = 十一项 |
 | 交付**修订版** | `python scripts/deliver_gate.py --docx <修订稿> --revised --expect-revised N` | 九项 + 修订三项 = 十一项（含落定证明） |
@@ -245,7 +246,7 @@ python scripts/deliver_gate.py --docx <修订稿.docx> --revised --expect-revise
 | 校验批注（docx） | `python scripts/check_annotations.py --input <带批注.docx 或目录>` | 四件套/4 段无空行/加粗分布/编号 |
 | 校验批注（pdf） | `python scripts/check_annotations.py --pdf <带注释.pdf> --expect N` | 需 pymupdf |
 | 校验修订稿 | `python scripts/check_revisions.py --input <修订稿.docx> --mode <revise\|clean> [--expect N]` | ins/del 对/author/id/落定 |
-| **改脚本后自测** | `python scripts/tests/test_deliver_gate.py` 等四份 | 共 56 项，务必全跑 |
+| **改脚本后自测** | `python scripts/tests/test_deliver_gate.py` 等七份 | 共 120 项，务必全跑 |
 
 **两条时序铁律**（写在这里，因为都是"动手前"的事）：
 1. **文字规范必须在套样式之前查**——`check_content.py --checks text` 先跑（标点全角化/数字空格），再套样式。套样式后才发现文字问题会导致样式重做（实测一份交付件 384 处半角引号一路漏到套样式之后）

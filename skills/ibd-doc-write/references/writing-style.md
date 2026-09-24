@@ -22,6 +22,7 @@
 - **口径先行**：动笔前确认口径卡已生效；口径未定不写、口径冲突停问（→ [paragraph-collab.md](paragraph-collab.md) §0）
 - **敏感词族识别即停**：命中即停下报定性，不先行书写（→ [paragraph-collab.md](paragraph-collab.md) §2）
 - **中文与半角字符不留空格**：中文（含全角标点）与阿拉伯数字、拉丁字母之间**一律不加空格**——写「XPU芯片」「SVAC国标」「AI技术」「占比80.06%」「符合GB 35114标准」；唯一保留是**两个半角字符之间**的空格（GB 35114 类标准号内部、Total Solution 类英文短语词间）（→ `ibd-doc-review` `references/rules.md` 三·3；机械校验：`check_content.py --checks spaces` / `deliver_gate.py` 标点规范项）
+- **标点用法按国标**：**数值范围起止用浪纹线 `~`**（「40%~55%」「1,000~2,000万元」「2023~2025年」）——短横线 `-` 只用于**连接号码与编号**（年月日「2011-02-15」、表号「表2-8」、型号「WZ-10」、外来语「盎格鲁-撒克逊人」），这些**是正确的、不要改**；**省略号不与「等」并用**（二者二选一）；**表下注末尾不加句号**（「注：」「资料来源：」行末无「。」）；**引号内引用原文照录**、不按规范改写他方原文（→ `ibd-doc-review` `references/rules.md` 三·8，规范源 GB/T 15834—2011《标点符号用法》；机械校验：`check_content.py --checks punct_usage` / `deliver_gate.py` 标点用法项）
 - **文件类型名写产品名形态**：面向读者的措辞中，文件类型统一写 **Word / Excel / PPT / PDF**，不写 skill 名形态（`docx` / `xlsx` / `pptx`）——① 防歧义（`docx` 既像文件类型又像 skill 名，曾致 P2.5 依赖声明门禁在 `ibd-doc-review` 上误判 4 处）② 中英混排下读者更友好。**例外（保留原形）**：技术对照语境（「docx 侧 vs PDF 侧」「docx 格式分支」——指代码断言分组/格式分支标识，非工具名，改「Word 侧」会破坏与 PDF 侧的对称）、`--docx` 类参数名、`assets/templates/` 文件名、代码标识符（→ `rule-capture` R-0006；`ibd-doc-review` 已改 3 处）
 
 ## 投行语言词汇句法库（写作时强制套用）

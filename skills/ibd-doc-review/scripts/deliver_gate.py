@@ -593,6 +593,35 @@ def check_physical(docx_path, enabled, explicit_path=None, expect_issues=0):
 
 # ----------------------------------------------------------------- 主流程
 
+def check_punct_usage_gate(text):
+    """标点用法（GB/T 15834—2011）：数值范围浪纹线 / 省略号不与「等」并用 / 表下注末尾句号。
+
+    规范源复用 `content_text.check_punct_usage`（**单一事实源**，勿在本文件另写判据）。
+    严重度：HIGH / MEDIUM 计入 PASS-FAIL；**LOW（数值范围用短横线）仅提示、不阻断**
+    —— 实务语料该写法基数大（2026-09-24 实测 1132 : 46），判阻断会致门禁失效（同 R-0015 教训）。
+    """
+    if not text:
+        return None
+    try:
+        _d = os.path.dirname(os.path.abspath(__file__))
+        if _d not in sys.path:
+            sys.path.insert(0, _d)
+        from content_text import check_punct_usage
+    except Exception:
+        return "标点用法", None, "跳过（content_text 不可导入）", []
+    # 按行切分为独立 item —— 表下注判据依赖【行首】匹配，整篇当一行会静默失效
+    items = [("para", {"text": ln}) for ln in text.split("\n") if ln.strip()]
+    issues = check_punct_usage(items)
+    n_hi = sum(1 for i in issues if i.severity == "HIGH")
+    n_med = sum(1 for i in issues if i.severity == "MEDIUM")
+    n_low = sum(1 for i in issues if i.severity == "LOW")
+    fails = [f"{i.severity} {i.snippet} → {i.suggestion}"
+             for i in issues if i.severity in ("HIGH", "MEDIUM")]
+    return ("标点用法", n_hi == 0 and n_med == 0,
+            f"HIGH {n_hi} / MED {n_med} / LOW {n_low}（LOW=数值范围短横线，仅提示）",
+            fails)
+
+
 def check_md_structure(md_text):
     """md 阶段：标题/表格行/行数/字符规模（仅报告，不作 FAIL）"""
     n_head = len(re.findall(r"^#{1,6} ", md_text, re.M))
@@ -630,6 +659,7 @@ def run_md_precheck(md_text, anchors, ban):
         check_placeholder(md_text),
         check_anchor_count(md_text, anchors),
         check_md_structure(md_text),
+        check_punct_usage_gate(md_text),
     ]
     return [r for r in results if r is not None]
 
@@ -647,6 +677,7 @@ def run_full(args, md_text, anchors, ban):
         check_structure(root, docx_text),
         check_fingerprint(docx_text, md_text),
         check_footer_hash(strip_punct(xml)),
+        check_punct_usage_gate(docx_text),
     ]
     if args.annotated:
         results.append(check_annotated_parts(args.docx))

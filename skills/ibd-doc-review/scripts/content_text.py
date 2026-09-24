@@ -4,7 +4,7 @@
 归属：本模块原为 `check_content.py` 的「核对项：文字类 / 核对项：标点」两段，
 2026-09-11 按业务域拆组时独立成文件（P2-⑧）。
 
-收录 7 个核对项（与 `check_content.py` 的 `CHECK_REGISTRY` 一一对应）：
+收录 8 个核对项（与 `check_content.py` 的 `CHECK_REGISTRY` 一一对应）：
   · `heading_seq`  标题层级序号连续性（跳号/重号/倒退）                HIGH
   · `terms`        用词规范性（错别字/异形词；支持外部清单扩展）        MEDIUM
   · `dates`        日期写法统一（十种形式识别）                        MEDIUM
@@ -12,6 +12,8 @@
   · `abbr`         释义简称统一（冲突/前置使用/未定义复用/引号风格）    MEDIUM
   · `geo`          国家城市表述合规（外部清单驱动）                    HIGH
   · `punctuation`  中英文标点（前后字符判定）                          HIGH
+  · `punct_usage`  标点用法（数值范围浪纹线/省略号与「等」并禁/表下注末尾句号）
+      —— 规范源＝**GB/T 15834—2011《标点符号用法》**（2026-09-24 新增）
 
 **文字层的执行时序铁律**：本组核对项须在**套样式之前**跑（文字层返工会导致样式重做）。
 详见 `ibd-doc-review` 的 `references/workflow.md` 附录第 1 条时序铁律。
@@ -571,4 +573,96 @@ def check_punctuation(items):
             add(kind, i, info, t, dq_hits[0], dq_hits[0] + 1,
                 f"中文语境使用直排引号 \" （共 {len(dq_hits)} 处）",
                 "建议改用「」或全角弯引号“”", "LOW")
+    return issues
+
+
+# ------------------------------------------------------- punct_usage 标点用法
+# 规范源＝GB/T 15834—2011《标点符号用法》（2026-09-24 新增核对项）。
+# 与上一项 `punctuation`（半角/全角）分工：本项管【用法】，不reshape 字符形态。
+
+# 数值范围：短横线 `-` 只用于「连接号码」（门牌/电话/年月日，§4.13.3.1 b）
+# 与编号（表2-8）、复合名词、产品型号；【数值范围起止须用浪纹线 `~`】（§4.13.3.2 b）。
+RE_RANGE_PCT = re.compile(r"(?<![\d.])(\d{1,3}(?:\.\d+)?)%\s*-\s*(\d{1,3}(?:\.\d+)?)%")
+RE_RANGE_UNIT = re.compile(
+    r"(?<![\d.])"
+    r"(\d[\d,]*(?:\.\d+)?)\s*-\s*(\d[\d,]*(?:\.\d+)?)"
+    r"\s*(万元|亿元|元|吨|公斤|千克|克|米|年|个月|天|人|台|个|倍|片)"
+)
+# 省略号不得与「等」「等等」并用（附录 A.9.2）
+RE_ELLIPSIS_DENG = re.compile(r"…{2,}[^。，；、！？]{0,8}?(?:等等|等)")
+# 表下注行（附录 A.1：图/表的短语式说明文字末尾不用句号）
+RE_TABLE_NOTE = re.compile(r"^(?:注\s*\d*|资料来源|数据来源|来源|备注)\s*[：:]")
+_QUOTE_OPEN = "「“‘"
+_QUOTE_CLOSE = "」”’"
+
+
+def _in_quotes(t, pos):
+    """pos 是否位于成对引号内（引用原文一律豁免）。"""
+    depth = 0
+    for ch in t[:pos]:
+        if ch in _QUOTE_OPEN:
+            depth += 1
+        elif ch in _QUOTE_CLOSE:
+            depth = max(0, depth - 1)
+    return depth > 0
+
+
+def check_punct_usage(items):
+    """标点用法（GB/T 15834—2011）：① 数值范围起止用浪纹线；② 省略号不与「等」并用；
+    ③ 表下注末尾不加句号。引号内为引用原文，全部豁免。
+
+    ⚠️ ① 定为 **LOW（提示）**：实务语料中数值范围以短横线为主的基数很大
+    （2026-09-24 全库实测百分之区间 `-` 1132 处 vs `~` 46 处），
+    判 HIGH 会致「逢查必红」（同 R-0015 教训）⇒ 只提示、不阻断交付。
+    """
+    issues = []
+
+    def add(i, info, start, end, s, problem, suggestion, severity):
+        ctx_l = max(0, start - 12)
+        snippet = s[ctx_l:end + 12].replace("\n", "")
+        loc = ("表格" + f"表{info['table_no']}" if info.get("table_no")
+               else f"正文#{i + 1}") + f"「…{snippet[:26]}…」"
+        issues.append(Issue("punct_usage", "标点用法", loc,
+                            s[start:end], problem, suggestion, severity))
+
+    for i, (kind, info) in enumerate(items):
+        t = info.get("text") or ""
+        if not t:
+            continue
+
+        # ① 数值范围用短横线（LOW）
+        for m in RE_RANGE_PCT.finditer(t):
+            if _in_quotes(t, m.start()):
+                continue
+            add(i, info, m.start(), m.end(), t,
+                f"数值范围「{m.group(0)}」用短横线",
+                f"改浪纹线「{m.group(0).replace('-', '~')}」"
+                f"（数值范围起止用浪纹线，GB/T 15834 §4.13.3.2 b）", "LOW")
+        for m in RE_RANGE_UNIT.finditer(t):
+            if _in_quotes(t, m.start()):
+                continue
+            add(i, info, m.start(), m.end(), t,
+                f"数值范围「{m.group(0)}」用短横线",
+                f"改浪纹线「{m.group(1)}~{m.group(2)}{m.group(3)}」"
+                f"（同上；单位可省但不可换成短横线）", "LOW")
+
+        # ② 省略号与「等」并用（MEDIUM）
+        for m in RE_ELLIPSIS_DENG.finditer(t):
+            if _in_quotes(t, m.start()):
+                continue
+            add(i, info, m.start(), m.end(), t,
+                f"省略号与「等」并用：「{m.group(0)}」",
+                "二选一——留「等」则删省略号，或删「等」留省略号"
+                "（GB/T 15834 附录 A.9.2）", "MEDIUM")
+
+        # ③ 表下注末尾句号（MEDIUM；仅正文段，表格单元格不适用）
+        if kind != "cell":
+            s2 = t.strip()
+            if RE_TABLE_NOTE.match(s2) and s2.endswith("。"):
+                pos = t.rstrip().rfind("。")
+                add(i, info, pos, pos + 1, t,
+                    "表下注末尾用了句号",
+                    "删去末尾句号（图/表的短语式说明文字末尾不用句号，"
+                    "GB/T 15834 附录 A.1）", "MEDIUM")
+
     return issues

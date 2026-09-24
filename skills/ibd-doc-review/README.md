@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.23.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.25.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -76,7 +76,7 @@ ibd-doc-review/
 ├── README.md             # 本文件
 ├── CHANGELOG.md          # 版本记录（0.15.0+；更早见 references/changelog-archive.md）
 ├── assets/templates/     # 样式源模板（报告/反馈回复/表格）
-├── references/           # 规范与规则（workflow/annotations/revisions/style-map/delivery/toolchain 等）
+├── references/           # 规范与规则（workflow/read-docx/annotations/revisions/style-map/delivery/toolchain 等）
 └── scripts/              # 校验门禁脚本（含自测）
 ```
 
@@ -86,6 +86,8 @@ ibd-doc-review/
 
 ## 📌 近期更新
 
+- **2026-09-24 · v0.25.0**：**新增「读取面」分册 ＋ 提取脚本**——把「读含修订/批注的 Word」从判据下沉为可执行细则：新增 [references/read-docx.md](references/read-docx.md)（三口径：**先探测** `w:ins`／`w:del`／`word/comments.xml` → 按「**接受全部修订 ＋ 剔除全部批注**」取终稿 → **输出标注**「该文件原件含修订/批注」）与 [scripts/extract_final_text.py](scripts/extract_final_text.py)（**只读、零第三方依赖**；`w:ins` 计入／`w:del` 子树排除／批注不进正文／跳过 `mc:Fallback` 去重；`--check`／`-o`／`--json`）。**动因（实证）**：审核问询回复原件含 `w:ins` **2,017**／`w:del` **2,979**／批注 **100**，直接取 `paragraph.text` **漏 17,242 字（正文 18.5%）且不报错**，致三线同时误判。双测 **12/12**（阳性 ＋ 阴性，含源文件 sha256 不变的只读证明）；同批校正「脚本 × 场景」命令表与自测枚举（**七份／120 项**）。判据正文仍在 `docs/CONVENTIONS.md` §一（**本包只回指针**）
+- **2026-09-24 · v0.24.0**：**新增核对项「标点用法」（规范源＝GB/T 15834—2011《标点符号用法》）**——把国标中三项可机械判定的规则纳入文字层门禁：**数值范围起止用浪纹线 `~`**（短横线只用于年月日/表号/型号等连接号码与编号，故「2011-02-15」「表2-8」不报）、**省略号不与「等」并用**、**表下注末尾不加句号**；**引号内引用原文豁免**（照录不改写）。严重度：前两项 MEDIUM、数值范围项 **LOW 仅提示**（实务该写法基数极大，1132 : 46，判阻断即「逢查必红」）。`deliver_gate.py` 侧改为 **import 复用**同一判据（不再双写正则），并修正其「整篇当一行」致表下注判据**静默失效**的缺陷；顿号层次、书名号范围因需语义判断未纳入。同步 `ibd-doc-write` 写前红线；小样 **15/15** 通过
 - **2026-09-18 · v0.20.1**：**`validate_schema.py` 去第三方依赖**——发布冒烟「零依赖审计」拦下该脚本引用的 `jsonschema` 库（与「校验脚本全部标准库、解压即跑」承诺冲突）；改为内置 JSON Schema 子集校验器（覆盖 schema 实际用到的全部校验关键字），**契约与返回码 0/1/2 不变**，新增自测 **21 项**；schema 出现未支持关键字时**显式报错而非静默放行**。本版另含同批纯文档修正（用词口径 Word 化 / P4 裸路径修复 / badge 同步）
 - **2026-09-16 · v0.20.0**：**「中英文之间不加空格」纳入格式铁律并全链路闭环**——rules.md 三·3 由「数字前后不加空格」扩为「**中文与半角字符（数字＋字母）之间一律不加空格**」（唯一保留收拢为两处，均在两个半角字符之间：标准号内部缩写↔数字、英文词间）；`content_text.py` / `deliver_gate.py` 新增 `RE_SPACE_CJK_ALPHA` 检测并挂入 `spaces` 子项与「标点规范」项；同批 `ibd-doc-write` 写前红线同步该条（双包联动）
 - **2026-09-15 · v0.19.0**：**批注任务单入口路由**——`check_annotations.py`（尤其 PDF 侧）不再直接暴露，doc-annotate 为唯一对外入口、内部回调；interface.md §1/§5/§6 同步（bump 次版本，脚本本体零改动）
