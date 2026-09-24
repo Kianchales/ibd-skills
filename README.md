@@ -196,11 +196,11 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
 | ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.13.0 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.23.0 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.23.0 | ✅ |
-| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.23.0 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.24.1 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.24.1 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.23.1 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.23.1 | ✅ |
+| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.23.1 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.24.2 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.24.2 | ✅ |
 
 > 下限口径：`ibd-doc-write` 的 ≥0.15.7 = `deliver_gate.py` 引入版；`ibd-doc-annotate` 的 ≥0.19.0 = 批注任务单入口路由版（ADR-0006，check_annotations.py 转内部回调，低于此版单入口声明成死引用）；`ibd-finance-review` 的 ≥0.16.2 = 交付口径单一事实源 `references/delivery.md` 引入版（低于此版该指向成死引用）。
 
@@ -214,6 +214,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 ## 📌 近期更新
 
+- **2026-09-24 · v0.3.8**：**活文档去 ADR 索引**——按「ADR 是开发过程留痕、不应作为索引被保留」的口径，4 个公开包活文档（`SKILL.md`／`README.md`／`references/`）中的 `ADR-xxxx` 引用**全部脱敏**：带说明的**去编号留说明**（`依据 ADR-0020（产物型任务两层路由模型）` → `依据「产物型任务两层路由模型」`），裸编号处**改写为自述**（`### 0. 协作模式路由（先选模式再写作 · ADR-0001）` → `### 0. 协作模式路由（先选模式再写作）`）。`ibd-doc-annotate` 0.10.0 → **0.10.1**；`ibd-doc-review` 0.23.0 → **0.23.1**；`ibd-doc-write` 0.15.2 → **0.15.3**；`ibd-methods-ops` 1.24.1 → **1.24.2**。**`CHANGELOG.md` 不改写**（历史留痕惯例）；`docs/adr/` 本体保留，仅解除活文档对它的引用。版本矩阵与依赖兼容矩阵同步。
 - **2026-09-24 · v0.3.7**：**体系瘦身 ＋ 下游契约登记 ＋ 批注预检 ＋ 方法论库重构收口**——`ibd-methods-ops` 1.17.0 → **1.24.1**（**方法论库结构重构终局**：目录八分／三域按族外置（族卷 ×52）／PL·S 族内分段（段卷 ×30）／PL 族号 15–19 → 01–05（全库 5,972 处）／行业版扁平化／骨架真漏节 8 修；**护栏 13 → 18 项**（0 ERROR）；契约 A3 受理面扩「出处括注」形态（237 处原捕获 0）＋存量归一 819 处；案名／编号体系收口；**入口资产目录化**（`app/` ＋ junction，免管理员））；`ibd-doc-annotate` 0.8.0 → **0.10.0**（`annotate_docx.py` 增 `--dry-run` 锚点质量预检 ＋ **覆盖保护**默认拒绝覆盖，防误盖既有批注版）；`ibd-doc-review` 0.21.1 → **0.23.0**（下游契约登记收口；`annotations.md` §8 编号前缀改述为「1-2 个大写字母」、`J/L/I/Z` 仅为示例非白名单）；`ibd-doc-write` 0.14.5 → **0.15.2**（依赖下限活指针加回指 `interface.md` §6；册内近义并存消重复核）；`ibd-finance-review` 0.8.6 → **0.9.1**（依赖下限加回指；`interpretation-notes.md` 内联补齐以满足可达性契约）；`ibd-methods-query` 0.3.0 → **0.5.0**（`SKILL.md` 瘦身搬家 **−47.0%** 落入 L 档）；`ibd-quality-gates` 0.12.0 → **0.13.0**（`SKILL.md` 瘦身搬家 −5.6%，内容零删减）。版本矩阵与依赖兼容矩阵同步。
 - **2026-09-19 · v0.3.6**：**入口资产同源化（免管理员）＋ 游离文件清理**——`ibd-methods-ops` 1.16.4 → **1.17.0**（**入口资产目录化**：5 个入口资产（蒸馏主脚本／配置／Wind 客户端／说明／计划任务注册脚本）由库根移入 `app/` 子目录，本机以 **junction**（免管理员）挂回原位——实测**文件级符号链接在本机需管理员**，故改走「装进目录 ＋ junction」；主脚本新增 `ROOT_DIR`（= `app/` 的上一级 ＝ 库根）定位数据目录，计划任务与自动化提示词 **9 处调用路径**同步；**退役**镜像脚本（同步机制唯一化，避免两个入口并存漂移）；顺带清理包根层两个「**文件名即正文**」的 0 字节游离文件（曾随 v0.3.5 打包外带，本次两侧同步清除）；「随包脚本数」计数校正 16 → **24**）。版本矩阵与依赖兼容矩阵同步。
 - **2026-09-19 · v0.3.5**：**方法论库治理收口 ＋ 三包输出契约 ＋ 命名统一**——`ibd-methods-ops` 1.6.1 → **1.16.4**（当日连续演进：**案名规范**（规范案名＝证券简称 ＋ 白名单门禁 A4）、**案号体系**（AN 号全量落地、占位编号 `S-TBD`／`PL-TBD` 废除）、**P 系列 442 条 ＋ 体例域批次卷 276 条纳入索引**（分卷「静默缺席」修复：此前 718 条在目录与索引中为 0）、**六项遗留缺口收口**（分卷来源案 716/716／cases 字段 1,324 处归一／cases md 镜像入 git／状态载体跨目录索引／行号抽查挂入 **10 项护栏**）、**回写硬门禁定案「软执行 ＋ dry-run 报告」**（四项指标、不阻断）、库内脚本薄壳化（单一事实源收归 skill 包）；新增脚本 `normalize_case_names`／`apply_case_no`／`check_index_locator`／`replay_gate_report`／`sync_cases_md` 等）；`ibd-doc-review` 0.20.1 → **0.21.1**（**references 命名统一**：`sensitive_terms.json` → `sensitive-terms.json`（kebab-case，对齐工程范式 §3），同步 SKILL／workflow／脚本常量；**历史条目不改写**）；`ibd-quality-gates` 0.11.0 → **0.12.0**（**JSON 输出契约**：`check_gates.py`／`check_data.py` 结构化 `issues[]` ＋ `--output` 报告，退出码不变）；`ibd-doc-annotate` 0.7.0 → **0.8.0**（输出契约 `{tool, target, verdict, error, warn, total, issues[]}`，`--json` 与人类输出二选一；依据工程范式 §4.5 P7「人读摘要／机读 JSON／退出码三值同时成立」）；`ibd-doc-write` 0.14.5（`writing-style.md` 纯文档级，未 bump）；`ibd-methods-query` 0.3.0（CHANGELOG 留痕，未 bump）。版本矩阵与依赖兼容矩阵同步。
