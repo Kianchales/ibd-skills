@@ -9,23 +9,23 @@ XML/结构核验 6 次、锚点 5 次），每次脚本输出都进上下文，�
 把常用核验合并成一次调用、并约定「只输出结论行」，可显著压缩这部分开销。
 
 两种模式（两个参数至少给一个）:
-    ① 交付件全套九项（给 --docx）—— 交付前跑:
+    ① 交付件全套十项（给 --docx）—— 交付前跑:
        python deliver_gate.py --docx 交付件.docx --md 内容源.md --anchors "36,507.55;19.96"
-       （查: 标点 / 样式 / vMerge / 锚点 / 禁用词 / 占位符 / 结构 / 同源核验 / 指纹）
+       （查: 标点 / 样式 / vMerge / 锚点 / 禁用词 / 占位符 / 结构 / 同源核验 / 指纹 / 标点用法）
     ② md 侧预检（只给 --md）—— 套样式「之前」跑，把文字规范门禁前移:
        python deliver_gate.py --md 草稿.md --anchors "36,507.55;19.96"
        （查: 标点全半角 / 禁用词红线 / 占位符 / 锚点计数 / 文档结构）
 
 复核产物挂载（与 ① 叠加，开关式）:
-    --annotated          批注版交付件 → 追加三项（批注部件 / 批注结构 / 批注编号），共十二项:
+    --annotated          批注版交付件 → 追加两项（批注部件 / 批注结构·含编号），共十二项:
                          python deliver_gate.py --docx 批注版.docx --annotated --expect-annotated 42
-    --revised            修订版交付件 → 追加三项（修订成对 / 修订落定 / 修订计数），共十二项:
+    --revised            修订版交付件 → 追加两项（修订成对 / 修订落定·含计数），共十二项:
                          python deliver_gate.py --docx 修订稿.docx --revised --expect-revised 18
     注: 批注版与修订版互斥，不要同时给两个开关（同给即报错）。
 
 物理层扫描挂载（与 ① 叠加，开关式 · officecli 驱动）:
     --officecli          追加「物理扫描」一项：OpenXML 架构校验（validate）+
-                         渲染层缺陷扫描（view issues）。共十项。
+                         渲染层缺陷扫描（view issues）。共十一项。
                          python deliver_gate.py --docx 交付件.docx --officecli
     注: officecli 是**可选外部二进制**，未安装时该项输出 [SKIP] 且**不阻断交付**
         （退出码不受影响）；不给 --officecli 时同样输出 [SKIP] 一行——
@@ -40,7 +40,8 @@ XML/结构核验 6 次、锚点 5 次），每次脚本输出都进上下文，�
 
 可选参数:
     --anchors "A;B"      关键数字锚点，分号分隔（勿用逗号——数字含千分位逗号）
-    --ban "词1,词2"      禁用词，逗号/分号分隔；不传则用内置投行红线（13 词）
+    --ban "词1,词2"      禁用词**临时追加**（阻断档），逗号/分号分隔；不传则纯按
+                         --scenario 从 references/banned-terms.json 装载（行为禁语仅招股书）
     --scenario 反馈回复|招股书|报告   必备样式集合，默认 反馈回复
     --expect-vmerge N    期望的纵向合并标记数
     --expect-annotated N 期望批注条数（配 --annotated；不传则只查三方自洽）
@@ -80,10 +81,74 @@ STYLE_BY_SCENARIO = {
 }
 
 # 投行文档禁用词红线（默认启用；传 --ban 可覆盖）
-DEFAULT_BAN = [
+# 单一事实源 = references/banned-terms.json。三层：behavior（行为禁语·文档类型敏感）
+# / absolute（绝对化用语·全场景）/ legacy_ban（宣传语·全场景）。
+# 此处仅保留「json 缺失时的兜底内置」；json 存在时以 json 为准（装载函数见下）。
+DEFAULT_BAN_FALLBACK = [
     "颠覆", "革命性", "领先全球", "世界第一", "国内首创", "填补空白",
     "唯一", "最先进", "必将", "确保上市", "大力", "赋能", "护城河",
 ]
+BANNED_TERMS_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "references", "banned-terms.json")
+
+# 档位策略：阻断档拉红门禁；提示档仅提示（不阻断面是硬要求——提示类词「本身合规」，
+# 若拉红则把合规文本判为不合格，属门禁误报）
+BLOCKING_LEVELS = ("CRITICAL", "IMPORTANT")
+ADVISORY_LEVELS = ("MINOR",)
+
+def load_ban_rules(scenario=None):
+    """禁词装载（**文档类型敏感**）。返回 [(pattern, level, note, suggestion)]。
+
+    - legacy_ban / absolute：全场景适用（绝对化用语红线与文档类型无关）；
+    - behavior：仅当 scenario ∈ behavior.applies_to 时装载。
+      理由：「经核查，保荐机构认为……」是**反馈回复规范句式**，却是**招股书正文零容忍禁区**
+      ——同一词表的合法性随文档类型变化，摊平到全场景即大面积假阳性（2026-09-28 回归事故）。
+    - scenario 为 None（模块级默认）时按「最严场景」装载，行为禁语全带上。
+    - json 缺失/损坏 ⇒ 兜底 legacy 13 词（纯词，无档位，按 IMPORTANT 计）。
+    """
+    try:
+        with open(BANNED_TERMS_FILE, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return [(w, "IMPORTANT", "兜底内置红线", "") for w in DEFAULT_BAN_FALLBACK]
+
+    rules = []
+    seen = set()
+
+    def _add(p, level, note, suggestion):
+        if p and p not in seen:
+            seen.add(p)
+            rules.append((p, level, note, suggestion))
+
+    for w in data.get("legacy_ban", []):
+        _add(str(w), "IMPORTANT", "宣传语/承诺语红线（全场景）", "改为事实陈述或删除")
+
+    beh = data.get("behavior") if isinstance(data.get("behavior"), dict) else {}
+    beh_scope = beh.get("applies_to")
+    beh_on = (beh_scope is None) if scenario is None else (scenario in (beh_scope or []))
+    groups = [("behavior", beh, beh_on), ("absolute", data.get("absolute"), True)]
+    for _, grp, enabled in groups:
+        if not enabled:
+            continue
+        if isinstance(grp, dict):
+            items = list(grp.get("strong", [])) + list(grp.get("weak", []))
+        elif isinstance(grp, list):
+            items = grp
+        else:
+            continue
+        for item in items:
+            if isinstance(item, dict):
+                _add(item.get("pattern", ""), item.get("level", "IMPORTANT"),
+                     item.get("note", ""), item.get("suggestion", ""))
+            else:
+                _add(str(item), "IMPORTANT", "", "")
+    if not rules:
+        return [(w, "IMPORTANT", "兜底内置红线", "") for w in DEFAULT_BAN_FALLBACK]
+    return rules
+
+# 模块级默认：最严场景（行为禁语全带上）——调用方应按 --scenario 重算
+DEFAULT_BAN_RULES = load_ban_rules(None)
 
 # 中文标点成对表
 DQ_HALF, DQ_L, DQ_R = '"', "\u201c", "\u201d"
@@ -223,14 +288,36 @@ def check_anchors(docx_text, md_text, anchors):
     return "关键锚点", ok, detail, fails
 
 
-def check_ban(docx_text, words):
-    if not words:
+def check_ban(docx_text, rules):
+    """禁用词红线（档位感知）。
+
+    rules：[("词", "档位", "说明", "建议")]，由 load_ban_rules(scenario) 按文档类型装载。
+    阻断档（CRITICAL/IMPORTANT）命中 ⇒ FAIL；提示档（MINOR）命中 ⇒ 只提示不阻断。
+    """
+    if not rules:
         return None
-    hits = [(w, docx_text.count(w)) for w in words if w and docx_text.count(w)]
-    ok = not hits
-    detail = "0 处命中" if ok else f"命中 {sum(c for _, c in hits)} 处"
-    fails = [f"{w}: {c} 处" for w, c in hits]
-    return "禁用词红线", ok, detail, fails
+    blocking, advisory = [], []
+    for entry in rules:
+        if isinstance(entry, (list, tuple)):
+            w, level = entry[0], (entry[1] if len(entry) > 1 else "IMPORTANT")
+            note = entry[2] if len(entry) > 2 else ""
+        else:
+            w, level, note = str(entry), "IMPORTANT", ""
+        n = docx_text.count(w) if w else 0
+        if not n:
+            continue
+        line = f"{w}: {n} 处"
+        if note:
+            line += f" — {note}"
+        (advisory if level in ADVISORY_LEVELS else blocking).append((line, w, n))
+    if blocking:
+        detail = f"命中 {sum(x[2] for x in blocking)} 处" + \
+                 (f"（另有提示 {len(advisory)} 项）" if advisory else "")
+        fails = [x[0] for x in blocking] + [f"（提示·不阻断）{x[0]}" for x in advisory]
+        return "禁用词红线", False, detail, fails
+    detail = "0 处命中" if not advisory else f"0 处硬禁；提示 {len(advisory)} 项（不阻断）"
+    fails = [f"（提示·不阻断）{x[0]}" for x in advisory]
+    return "禁用词红线", True, detail, fails
 
 
 def check_placeholder(docx_text):
@@ -665,7 +752,7 @@ def run_md_precheck(md_text, anchors, ban):
 
 
 def run_full(args, md_text, anchors, ban):
-    """交付件核验：基础九项 + 按开关追加批注/修订三项 + 物理扫描一项"""
+    """交付件核验：基础十项 + 按开关追加批注/修订两项 + 物理扫描一项"""
     docx_text, root, xml = read_docx(args.docx)
     results = [
         check_punct(docx_text),
@@ -692,14 +779,16 @@ def run_full(args, md_text, anchors, ban):
 
 def main():
     ap = argparse.ArgumentParser(description="交付前综合核验（一次跑完 · 极简输出）")
-    ap.add_argument("--docx", help="交付件 docx（给了跑全套九项）")
+    ap.add_argument("--docx", help="交付件 docx（给了跑全套十项）")
     ap.add_argument("--md", help="内容源 md；只给 --md 则跑「套样式前」的 md 侧预检（标点/禁用词/占位符/锚点/结构）")
     ap.add_argument("--annotated", action="store_true", help="批注版交付件：追加批注部件/结构/编号三项")
     ap.add_argument("--revised", action="store_true", help="修订版交付件：追加修订成对/落定/计数三项")
     ap.add_argument("--anchors", default="",
                     help="关键数字锚点，分号分隔（勿用逗号——数字含千分位逗号），如 '36,507.55;19.96'")
-    ap.add_argument("--ban", default="", help="禁用词，逗号或分号分隔；不传则用内置红线（13 词）")
-    ap.add_argument("--scenario", default="反馈回复", choices=list(STYLE_BY_SCENARIO))
+    ap.add_argument("--ban", default="",
+                    help="临时追加禁用词（逗号或分号分隔）；不传则按 --scenario 装载 banned-terms.json 红线")
+    ap.add_argument("--scenario", default="反馈回复", choices=list(STYLE_BY_SCENARIO),
+                    help="文档类型：决定样式集与**禁词作用域**（行为禁语『经核查』等仅招股书适用）")
     ap.add_argument("--expect-vmerge", type=int, default=None)
     ap.add_argument("--expect-annotated", type=int, default=None, help="期望批注条数（配 --annotated）")
     ap.add_argument("--expect-revised", type=int, default=None, help="期望已修订条数（配 --revised）")
@@ -721,7 +810,9 @@ def main():
         ap.error("--revised 需配 --docx（修订校验只在交付件上做）")
 
     anchors = [a.strip() for a in args.anchors.split(";") if a.strip()]
-    ban = [b.strip() for b in re.split(r"[;,]", args.ban) if b.strip()] or DEFAULT_BAN
+    extra = [b.strip() for b in re.split(r"[;,]", args.ban) if b.strip()]
+    ban = load_ban_rules(args.scenario) + [
+        (w, "IMPORTANT", "临时追加（--ban）", "") for w in extra]
     md_text = read_md(args.md) if args.md else ""
 
     if args.docx:
@@ -754,6 +845,10 @@ def main():
                 print(f"         └─ {f}")
             if len(fails) > args.detail:
                 print(f"         └─ …另有 {len(fails) - args.detail} 条（用 check_content.py / check_styles.py 看全量）")
+        elif fails:
+            # PASS 但带提示档明细（MINOR·不阻断）——提示必须可见，否则等于静默丢弃
+            for f in fails[: args.detail]:
+                print(f"         └─ {f}")
 
     print("-" * 72)
     total = len(results)

@@ -78,7 +78,7 @@ with io.open(SRC, "r", encoding="utf-8") as f:
     lines = f.readlines()
 
 if len(lines) < 100:
-    print("!! 源文件已是入口薄壳（%d 行），跳过切割。如需重跑：从 archive/ 全量备份恢复源文件。" % len(lines))
+    print("!! 源文件已是库首页（%d 行），跳过切割。如需重跑：从 archive/ 全量备份恢复源文件。" % len(lines))
     sys.exit(0)
 
 print("源文件: %s（%d 行）" % (os.path.basename(SRC), len(lines)))

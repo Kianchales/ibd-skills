@@ -51,6 +51,8 @@
 | 表格型文档锚点选唯一数值 | [annotate-runbook.md](annotate-runbook.md) §六 |
 | 复杂 run 检测为兜底而非缺陷 | [annotate-runbook.md](annotate-runbook.md) §二 |
 | 修订删除文本用 `w:delText` | [revise-runbook.md](revise-runbook.md) §二 |
+| 复核对象带修订标记（`w:ins`/`w:del`）须先探测口径，否则 `p.text` 语义残缺致误判 | [annotate-runbook.md](annotate-runbook.md) §八 |
 | settings 开 `w:trackRevisions`（含插入位置） | [revise-runbook.md](revise-runbook.md) §二 |
 | 新文本 run 继承锚点首 run rPr | [revise-runbook.md](revise-runbook.md) §二 |
 | 同段多锚点倒序应用／重叠转待人工 | [revise-runbook.md](revise-runbook.md) §三 |
+| 注入丢同段 `w:tab` run（原文零改动须逐段核验＋zip 级补回） | [annotate-runbook.md](annotate-runbook.md) §七 |

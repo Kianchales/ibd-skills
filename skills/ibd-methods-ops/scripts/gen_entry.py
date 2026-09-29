@@ -119,6 +119,7 @@ for df in DOMAIN_FILES:
 
 route_rows = "\n".join("| %s | %d 条 | %d 行 | ~%dKB |" % r for r in rows)
 tot_kb = sum(r[3] for r in rows)
+max_kb = max(r[3] for r in rows) if rows else 0
 upd = max_updated(DOMAIN_FILES)
 
 entry = """---
@@ -145,7 +146,9 @@ __ROUTE_ROWS__
 
 问询问题 → 索引 28Q 速查 → 映射表定位条目编号 → 条目标题目录得「域文件 + 行号」 → Read offset/limit 定向读单条
 
-单次读取：965KB → 入口 ~10KB + 单域 ≤230KB（按需行号段读仅 ~20KB）；token 全量载入降 90%+，定向读降 98%。
+单次读取（**域文件全量**口径，数值随生成时实测）：__TOT_KB__KB → 入口 ~10KB + 单域 ≤__MAX_KB__KB（按需行号段读仅 ~20KB）；token 全量载入降 90%+，定向读降 98%。
+
+> **口径说明**：上列「域文件全量」**统计面 ＝ 跨案域正文 ＋ 语言专项 ＋ `50_分卷/` 正文**（即上表逐行所列各件之和，可逐行核对）；**不含** `30_行业版/`（行业合并版）、`40_单案/`（案内条目）、`60_notes/`（过程笔记）、`_generated/`（生成物）与根级元文件。后四类与行业版均按「编号 → 文件:行号」定向读，不进全量载入面。
 
 ## 使用法
 
@@ -162,6 +165,7 @@ __ROUTE_ROWS__
 """
 
 entry = entry.replace("__VER__", ENTRY_VERSION).replace("__UPD__", upd).replace("__SUMMARIES__", summaries)
+entry = entry.replace("__TOT_KB__", str(tot_kb)).replace("__MAX_KB__", str(max_kb))
 
 d = os.path.dirname(ENTRY)
 if d:

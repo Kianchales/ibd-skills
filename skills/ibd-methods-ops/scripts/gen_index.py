@@ -57,7 +57,7 @@ DOMAINS = [
     ("Q3", "毛利率与盈利质量", ["毛利率", "毛利", "单位毛利", "金属价", "量价", "贡献矩阵", "剔除还原", "连环替代", "负毛利", "EBITDA", "价差", "盈利拐点"]),
     ("Q4", "成本与采购（原材料/客供料/副产品/返利折让）", ["原材料", "采购价", "领用成本", "副产品", "客供料", "返利", "折让", "废料", "价格传导", "采购", "在途物资"]),
     ("Q5", "存货", ["存货", "跌价", "周转率", "库龄", "在途", "发出商品"]),
-    ("Q6", "应收账款/票据/保理", ["应收", "保理", "票据", "供应链金融", "6+9", "承兑", "贴现", "坏账"]),
+    ("Q6", "应收账款/票据/保理", ["应收", "保理", "票据", "供应链金融", "6+9", "承兑", "贴现", "坏账", "质保金", "合同资产"]),
     ("Q7", "经营现金流", ["现金流", "现金", "票据还原"]),
     ("Q8", "研发（费用率/资本化/样机）", ["研发", "样机", "资本化", "立项", "解释15"]),
     ("Q9", "产能与产能利用率", ["产能", "利用率", "瓶颈", "约当", "产能口径", "爬坡", "良率"]),
@@ -137,6 +137,7 @@ lines_out.append("# 方法论调用索引（问询问题类型 → 方法论条�
 lines_out.append("")
 lines_out.append("> 生成：脚本化（P0 拆分版）｜ 解析全部域文件条目（财务/法律/行业/写作/W 系列）｜ 供写反馈回复「问题拆解→查条目」与 G4 门禁引用清单使用；条目行号见 `methods/_generated/方法论_条目标题目录.md`（含域文件+行号）。")
 lines_out.append("> **使用法**：拿到问询函问题 → 按「问题域速查表」找到 Q 编号 → 去「全量映射表」查该 Q 下所有条目 → 按条目标题目录（域文件+行号）用 Read offset/limit 定向读对应条目/行业合并版/单案文件。")
+lines_out.append("> **首读面提示（2026-09-26 WO-24）**：「**一、速查表**」＋「**三、跨域桥接**」合计 @@FIRST_KB@@，**首读只需这两段**；「二、全量映射」与两个附表是**按需全量查询面**（@@FULL_KB@@ ／ 即「不可约内核」），**勿整册读取**。（两值**由本次生成实测**，非手写。）")
 lines_out.append("")
 
 # ============ 一、速查表（问题域 → 推荐条目） ============
@@ -175,13 +176,13 @@ for qid, name, kws in DOMAINS:
     wdids = "、".join([e["eid"] for e in wd[:6]])
     if wdids:
         ids += "（W：" + wdids + "…）"
-    lines_out.append("| %s | %s | %s |" % (qid, name, ids if ids else "待归类"))
+    lines_out.append("| %s | %s | %s |" % (qid, name, ids if ids else "未分类（旧称：待归类）"))
 lines_out.append("")
 
 # ============ 二、全量条目映射表 ============
 lines_out.append("## 二、全量条目映射表")
 lines_out.append("")
-lines_out.append("> 条目编号 | 主题标签 | 可答复问询问题类型（Q） | 域文件位置。**宁全勿漏**；未能归入现有问题域的标「待归类」。")
+lines_out.append("> 条目编号 | 主题标签 | 可答复问询问题类型（Q）。**宁全勿漏**；未能归入现有问题域的标「未分类」。**位置（域文件＋行号）不在此列——统一见 `方法论_条目标题目录.md`**；本册只存「Q ↔ 编号 ＋ ≤28 字标签」，标题行只存位置目录（2026-09-26 WO-24 索引不变量）。")
 lines_out.append("")
 
 def chap_label(dom):
@@ -198,11 +199,11 @@ def add_row(e):
     seen.add(key)
     qs = classify(e["title"])
     if not qs:
-        qs_str = "待归类"
+        qs_str = "未分类"
     else:
         qs_str = "、".join(sorted(qs))
     theme_str = theme(e["title"])
-    lines_out.append("| %s | %s | %s | %s |" % (e["eid"], theme_str, qs_str, chap_label(e["dom"])))
+    lines_out.append("| %s | %s | %s |" % (e["eid"], theme_str, qs_str))
 
 # HEAD 按域文件顺序，W 条目单独一节
 head_entries = [e for e in entries if e["kind"] == "HEAD"]
@@ -213,33 +214,40 @@ pl_entries = [e for e in entries if e["kind"] in ("WD", "WD_LIST") and e["eid"].
 for e in head_entries:
     add_row(e)
 
-lines_out.append("## 附：WL 系列（回复语言句式 · 正文在 methods/20_语言专项/投行语言专项_回复WL系列.md）")
+lines_out.append("## 附：WL 系列（回复语言句式 · **%d 条** · 正文在 methods/50_分卷/投行语言专项_回复WL系列_卷*.md）" % len(wd_entries))
 lines_out.append("")
-lines_out.append("| 条目编号 | 核心句式要点（简） | 可答复问询问题类型（Q） | 域文件位置 |")
-lines_out.append("|---|---|---|---|")
+lines_out.append("> **本节承载 I1 意义上的「不可约内核」**：每行 ＝ `编号 ｜ ≤28 字标签 ｜ Q 列表`——**位置（卷文件＋行号）只在位置目录**"
+                 "（`_generated/方法论_条目标题目录.md`），**本节不装位置列**。两册分工＝**语义映射 vs 定位**，各存一份、互不重复。")
+lines_out.append("> **取数口径（读条数者看这里）**：WL 系列条数 ＝ **%d**（即本节标题所示），取自本次生成实况，**不必再数表格行**。" % len(wd_entries))
+lines_out.append("")
+lines_out.append("| 编号 | ≤28 字标签 | 可答复问询问题类型（Q） |")
+lines_out.append("|---|---|---|")
 for e in wd_entries:
-    qs = classify(e["title"])
-    qs_str = "、".join(sorted(qs)) if qs else "待归类"
-    lines_out.append("| %s | %s | %s | 投行语言专项·回复WL系列 |" % (e["eid"], e["title"][:60], qs_str))
+    _qs = classify(e["title"])
+    lines_out.append("| %s | %s | %s |" % (e["eid"], theme(e["title"]),
+                                           "、".join(sorted(_qs)) if _qs else "未分类"))
 
 # ---- 附：P 系列（招股书语言范式 · 2026-09-19 纳入；正文在外置卷）----
 lines_out.append("")
 lines_out.append("## 附：PL 系列（招股书语言范式 · %d 条 · 正文在 methods/50_分卷/投行语言专项_招股书PL系列_卷N.md）" % len(pl_entries))
 lines_out.append("")
-lines_out.append("> **语用＝招股书**（陈述／披露），与 WL 系列（回复语用）分列；写招股书时取本表，写回复时取 WL 表。条目正文在外置卷 `50_分卷/投行语言专项_招股书PL系列_卷*.md`，行号为该卷内行号。")
+lines_out.append("> **语用＝招股书**（陈述／披露），与 WL 系列（回复语用）分列；写招股书时取 PL、写回复时取 WL。"
+                 "条目正文在外置卷 `50_分卷/投行语言专项_招股书PL系列_卷*.md`，行号为该卷内行号。")
+lines_out.append("> **本节承载 I1 意义上的「不可约内核」**：每行 ＝ `编号 ｜ ≤28 字标签 ｜ Q 列表`——**位置（卷文件＋行号）只在位置目录**，本节不装位置列。")
+lines_out.append("> **取数口径（读条数者看这里）**：PL 系列条数 ＝ **%d**（即本节标题所示），取自本次生成实况，**不必再数表格行**。" % len(pl_entries))
 lines_out.append("")
-lines_out.append("| 条目编号 | 招股书语言要点（简） | 可答复问询问题类型（Q） | 卷文件位置 |")
-lines_out.append("|---|---|---|---|")
+lines_out.append("| 编号 | ≤28 字标签 | 可答复问询问题类型（Q） |")
+lines_out.append("|---|---|---|")
 for e in pl_entries:
-    qs = classify(e["title"])
-    qs_str = "、".join(sorted(qs)) if qs else "待归类"
-    lines_out.append("| %s | %s | %s | %s |" % (e["eid"], e["title"][:60], qs_str, chap_label(e["dom"])))
+    _qs = classify(e["title"])
+    lines_out.append("| %s | %s | %s |" % (e["eid"], theme(e["title"]),
+                                           "、".join(sorted(_qs)) if _qs else "未分类"))
 
 # ============ 三、跨域桥接速查表（A-Mem 语义链接，2026-09-01 接入） ============
 lines_out.append("")
 lines_out.append("## 三、跨域桥接速查表（Q → 各域代表条目）")
 lines_out.append("")
-lines_out.append("> 同 Q 条目散布四域 + W 系列：查完本域条目后按此表跨域跳转——「写作范式 ↔ 财务/法律/行业」桥接（A-Mem 语义链接，2026-09-01 脚本化）。代表条目取自速查表核心推荐（每域前 3），完整条目见全量映射表。")
+lines_out.append("> 同 Q 条目散布四域 + W 系列：查完本域条目后按此表跨域跳转——「写作范式 ↔ 财务/法律/行业」桥接（A-Mem 语义链接，2026-09-01 脚本化）。代表条目取自速查表核心推荐（每域前 3），完整条目见「二、全量映射」（正文条目）与两个附表（WL／PL）。")
 lines_out.append("")
 lines_out.append("| Q | 问询问题类型 | 财务域 | 法律域 | 行业域 | 写作域 | W 系列 |")
 lines_out.append("|---|---|---|---|---|---|---|")
@@ -262,8 +270,19 @@ for qid, name, kws in DOMAINS:
 d = os.path.dirname(OUT)
 if d:
     os.makedirs(d, exist_ok=True)
+
+# ---- 首读面体积：派生（不手写；手写必漂——实测曾写 ≈137KB 而真实仅 81KB）----
+_buf = "\n".join(lines_out)
+_i2 = _buf.index("## 二、")
+_i3 = _buf.index("## 三、")
+def _kb(seg):
+    return "≈%dKB" % max(1, round(len(seg.encode("utf-8")) / 1024.0))
+_first = _buf[_buf.index("## 一、"):_i2] + _buf[_i3:]
+_full = _buf[_i2:_i3]
+_buf = _buf.replace("@@FIRST_KB@@", _kb(_first)).replace("@@FULL_KB@@", _kb(_full))
+
 with io.open(OUT, "w", encoding="utf-8", newline="\n") as f:
-    f.write("\n".join(lines_out) + "\n")
+    f.write(_buf + "\n")
 
 print("OUTPUT:", OUT)
 print("HEAD rows:", len(head_entries), "W rows:", len(wd_entries), "P rows:", len(pl_entries))

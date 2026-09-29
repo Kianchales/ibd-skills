@@ -33,6 +33,12 @@ test_validate_schema.py — validate_schema.py 自测（纯标准库实现版）
   F. CLI 契约
     19. --quiet 仅输出结果行
     20. 合法类型词边界：integer 不接受布尔
+  B2. anyOf 条件必填（advice｜rev 二者至少其一）
+    21. 只给 rev（文本定稿形态）→ PASS
+    22. advice 与 rev 并存 → PASS
+    23. 两者皆缺 → FAIL（暴露两支原因）
+    24. anyOf 单元语义：任一支通过即通过
+    25. P2 新增两类合规标签已被词表接纳
 
 运行：python scripts/tests/test_validate_schema.py
 """
@@ -177,6 +183,44 @@ class ValidateSchemaTest(unittest.TestCase):
         r = self.run_script([valid_item(page=True)])
         self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
         self.assertIn("类型应为 integer", r.stdout)
+
+    # ---------- B2. anyOf 条件必填（advice｜rev 二者至少其一）----------
+
+    def test_21_rev_only_passes(self):
+        """文本定稿形态（P1）：只给 rev、不给 advice → PASS（rev 是主交付物）"""
+        item = valid_item(rev="改为按明细加总口径列示。")
+        del item["advice"]
+        r = self.run_script([item])
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("PASS", r.stdout)
+
+    def test_22_advice_and_rev_together_passes(self):
+        r = self.run_script([valid_item(rev="改为按明细加总口径列示。")])
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_23_neither_advice_nor_rev_fails(self):
+        """两字段皆缺 → anyOf 无一分支通过 → FAIL（并暴露两支原因，便于定位）"""
+        item = valid_item()
+        del item["advice"]
+        r = self.run_script([item])
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("anyOf 无一分支通过", r.stdout)
+        self.assertIn("`advice`", r.stdout)
+        self.assertIn("`rev`", r.stdout)
+
+    def test_24_anyOf_semantics_unit(self):
+        """单元级：任一支通过即通过；全支失败才报错。"""
+        sch = {"type": "object", "anyOf": [{"required": ["a"]}, {"required": ["b"]}]}
+        self.assertEqual(vs.validate({"a": 1}, sch), [])
+        self.assertEqual(vs.validate({"b": 1}, sch), [])
+        self.assertTrue(vs.validate({}, sch))
+
+    def test_25_new_compliance_types_accepted(self):
+        """P2：新增两类合规标签（禁用表述/来源限定）已被 schema 词表接纳"""
+        for t in ("合规·禁用表述", "合规·来源限定"):
+            with self.subTest(type=t):
+                r = self.run_script([valid_item(type=t)])
+                self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     # ---------- D. 环境错误 ----------
 

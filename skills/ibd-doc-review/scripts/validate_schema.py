@@ -29,7 +29,7 @@ SCHEMA_PATH = Path(__file__).resolve().parent.parent / "references" / "problems.
 # 已实现的 schema 关键字：元数据（无校验语义）+ 校验关键字
 META_KEYS = {"$schema", "$id", "title", "description"}
 CHECK_KEYS = {"type", "required", "properties", "additionalProperties",
-              "items", "enum", "minLength", "minimum", "pattern"}
+              "items", "enum", "minLength", "minimum", "pattern", "anyOf"}
 SUPPORTED_KEYS = META_KEYS | CHECK_KEYS
 
 
@@ -112,6 +112,17 @@ def validate(value, schema, path=""):
                 errors.extend(validate(sub_value, props[key], _join(path, key)))
             elif schema.get("additionalProperties") is False:
                 errors.append((_join(path, key), "不允许的额外字段 `%s`" % key))
+
+    if "anyOf" in schema:
+        branches = schema["anyOf"]
+        if not isinstance(branches, list) or not branches:
+            errors.append((_display(path), "anyOf 应为非空数组"))
+        else:
+            sub = [validate(value, b, path) for b in branches]
+            if all(e for e in sub):
+                # 全支失败：附各支首条失败原因，便于定位（语义：**任一支通过即通过**）
+                reasons = "；".join((e[0][1] if e else "不通过") for e in sub)
+                errors.append((_display(path), "anyOf 无一分支通过：%s" % reasons))
 
     if isinstance(value, list) and "items" in schema:
         for index, item in enumerate(value):

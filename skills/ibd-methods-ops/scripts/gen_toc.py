@@ -94,12 +94,14 @@ for e in head:
 
 # ---- 4. W 系列条目（粗体条目 + W-D 列表）----
 if wd_w:
-    out.append("## 附：WL 系列（回复语言句式 · %d 条 · 正文在 methods/20_语言专项/投行语言专项_回复WL系列.md）" % len(wd_w))
+    # 2026-09-28：WL 系列按段卷方法外置至 `50_分卷/投行语言专项_回复WL系列_卷NN_*.md`
+    #   ⇒ 附表由 3 列（主文件＋行号）改为 4 列（卷文件＋行号），与 PL 附表同构（定向读键＝卷文件:行号）。
+    out.append("## 附：WL 系列（回复语言句式 · %d 条 · 正文在 methods/50_分卷/投行语言专项_回复WL系列_卷*.md）" % len(wd_w))
     out.append("")
-    out.append("| 编号 | 核心句式要点 | 行号 |")
-    out.append("|------|-------------|------|")
+    out.append("| 编号 | 核心句式要点 | 卷文件 | 行号 |")
+    out.append("|------|-------------|--------|------|")
     for e in wd_w:
-        out.append("| %s | %s | %d |" % (e["eid"], e["title"], e["ln"]))
+        out.append("| %s | %s | %s | %d |" % (e["eid"], e["title"], e["dom"], e["ln"]))
     out.append("")
 
 # ---- 4b. P 系列条目（招股书语言范式 · 正文在外置卷）----

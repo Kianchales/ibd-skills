@@ -7,6 +7,12 @@ test_deliver_gate.py — deliver_gate.py 自测（含批注/修订挂载开关�
      1. 合格交付件 + 同源 md → 十项全 PASS，退出码 0
      2. 半角标点 / 禁用词 / 同源不一致 → 对应项 FAIL，退出码 1
      3. 只给 --md → md 侧预检五项
+  A2. 禁词作用域（文档类型敏感 · 回归护栏）
+    19. 反馈回复：「经核查，保荐机构认为…」→ 禁用词 PASS（规范句式）
+    20. 招股书：同句式 → FAIL（PL-05 正文零容忍）
+    21. 绝对化用语 / legacy 宣传语 → 全场景 FAIL
+    22. MINOR 档（提示类）→ 不阻断，但提示可见
+    23. --ban 追加词 → 按阻断档生效
   B. --annotated 挂载（批注三项）
      4. 合规批注件（2 条）→ 十二项全 PASS
      5. 批注结构违规（段落数≠4 / 标签行未加粗 / 编号格式错 / 编号重复）→ FAIL
@@ -287,6 +293,67 @@ class TestBaseGate(TmpDirMixin, unittest.TestCase):
                     "公司于2026年6月30日前完成交割，金额36,507.55万元。\n")
         rc, out = run_gate(["--md", md, "--anchors", "36,507.55"])
         self.assertEqual(rc, 0, out)
+
+
+# ========================================= A2. 禁词作用域（文档类型敏感·回归护栏）
+
+class TestBanScope(TmpDirMixin, unittest.TestCase):
+    """回归护栏（2026-09-28）：行为禁语『经核查』**仅招股书适用**。
+
+    事故：0.26.0 把 behavior 词表摊平到全场景 → 反馈回复里「经核查，保荐机构认为…」
+    （规范句式）被门禁判 FAIL。本组用例锁死「按 --scenario 分域」这一契约。
+    """
+
+    def _gate(self, body_text, scenario):
+        docx, md = self.p(f"{scenario}_{abs(hash(body_text)) % 9999}.docx"), \
+                   self.p(f"{scenario}_{abs(hash(body_text)) % 9999}.md")
+        make_docx(docx, good_body((body_text,)))
+        with open(md, "w", encoding="utf-8") as f:
+            f.write(f"# {TEXT_TITLE}\n\n## {TEXT_SUB}\n\n{body_text}\n")
+        return run_gate(["--docx", docx, "--md", md, "--scenario", scenario])
+
+    def test_01_reply_allows_verify_phrase(self):
+        """反馈回复：「经核查，保荐机构认为…」是规范句式 → 禁用词 PASS、退出码 0"""
+        rc, out = self._gate("经核查，保荐机构认为上述会计处理符合准则规定。", "反馈回复")
+        self.assertEqual(line_of(out, "禁用词红线").group(1), "PASS", out)
+        self.assertEqual(rc, 0, out)
+
+    def test_02_prospectus_blocks_verify_phrase(self):
+        """招股书：同一句式属 PL-05 正文零容忍禁区 → 禁用词 FAIL、退出码 1"""
+        rc, out = self._gate("经核查，上述会计处理符合准则规定。", "招股书")
+        self.assertEqual(line_of(out, "禁用词红线").group(1), "FAIL", out)
+        self.assertEqual(rc, 1, out)
+
+    def test_03_absolute_banned_in_all_scenarios(self):
+        """绝对化用语与文档类型无关 → 回复场景同样 FAIL"""
+        rc, out = self._gate("公司为全球第一的供应商。", "反馈回复")
+        self.assertEqual(line_of(out, "禁用词红线").group(1), "FAIL", out)
+        self.assertEqual(rc, 1, out)
+
+    def test_03b_legacy_ban_banned_in_all_scenarios(self):
+        """legacy 宣传语红线同为全场景 → 回复场景 FAIL"""
+        rc, out = self._gate("公司将赋能行业并颠覆现有格局。", "反馈回复")
+        self.assertEqual(line_of(out, "禁用词红线").group(1), "FAIL", out)
+        self.assertEqual(rc, 1, out)
+
+    def test_04_minor_term_is_advisory_not_blocking(self):
+        """提示档（MINOR）本身合规 → 不阻断门禁，但提示必须可见（不得静默丢弃）"""
+        rc, out = self._gate("本文件不构成盈利预测或业绩承诺，仅供审核使用。", "招股书")
+        self.assertEqual(line_of(out, "禁用词红线").group(1), "PASS", out)
+        self.assertIn("提示", out)
+        self.assertEqual(rc, 0, out)
+
+    def test_05_ban_override_still_applies(self):
+        """--ban 临时追加词按阻断档生效（契约保留）"""
+        rc, out = self._gate("本项目采用自主研发方案。", "反馈回复")
+        self.assertEqual(line_of(out, "禁用词红线").group(1), "PASS", out)
+        docx, md = self.p("ovr.docx"), self.p("ovr.md")
+        make_docx(docx, good_body(("本项目采用自主研发方案。",)))
+        with open(md, "w", encoding="utf-8") as f:
+            f.write(f"# {TEXT_TITLE}\n\n## {TEXT_SUB}\n\n本项目采用自主研发方案。\n")
+        rc2, out2 = run_gate(["--docx", docx, "--md", md,
+                              "--scenario", "反馈回复", "--ban", "自主研发"])
+        self.assertEqual(line_of(out2, "禁用词红线").group(1), "FAIL", out2)
 
 
 # ================================================================== B. 批注挂载

@@ -12,6 +12,7 @@
         abbr        释义简称统一（冲突/前置使用/未定义复用/引号风格）          MEDIUM-LOW
         geo         国家城市表述合规（--geo-file 外部清单驱动）              HIGH
         punctuation 中英文标点（前后字符判定）                              HIGH
+        punct_usage 标点用法（数值范围浪纹线/省略号并禁/表下注末尾句号）      MEDIUM
   table 表格类（实现见 content_table.py）：
         table_font  字号体系（五号21pt/小五18pt，其余违规）                 HIGH
         table_align 数字单元格右对齐                                    MEDIUM

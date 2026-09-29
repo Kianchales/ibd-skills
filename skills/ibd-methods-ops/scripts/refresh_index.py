@@ -38,6 +38,14 @@ STEPS = [
     ("gen_entry.py", "重写 入口（路由表 + 摘要保留）"),
 ]
 
+# 反向视图（诊断生成物 · **非阻断**）
+# 2026-09-26（WO-21）：它只产出诊断视图、**不参与索引/目录/入口三者一致性**，
+#   故**不并入** STEPS 的「任一失败即中断」序列——失败只告警，不阻断索引刷新。
+OPTIONAL_STEPS = [
+    ("gen_refgraph.py", "生成 方法论_引用图谱.md（反向视图 · 只报不建议）"),
+    ("gen_schema.py", "重写 库内 schema 入口 SCHEMA.md（自描述 ＋ 版本水位）"),
+]
+
 
 def run_step(script, desc):
     path = _HERE / script
@@ -67,7 +75,11 @@ def main():
         if not run_step(script, desc):
             print("!! 中断：后续步骤未执行（索引/目录/入口可能不一致，请修复后重跑）", file=sys.stderr)
             return 1
-    print("=== 全部完成：索引 / 条目标题目录 / 路由入口 已同步 ===")
+    for script, desc in OPTIONAL_STEPS:
+        if not run_step(script, desc):
+            print("⚠ 非阻断步骤失败（%s）：%s —— 不影响索引/目录/入口一致性" % (script, desc),
+                  file=sys.stderr)
+    print("=== 全部完成：索引 / 条目标题目录 / 路由入口 已同步（反向视图为诊断附加产物）===")
     return 0
 
 

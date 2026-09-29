@@ -3,7 +3,8 @@
 > 本文承接 SKILL.md「使用流程」的**执行细则**——动手做的时候翻这里。
 > **分工**：SKILL.md 留「进门看什么」（场景决策树 + 样式应用铁律）；本文装「做到哪一步查什么」（S1-S7 执行流程 / 格式核对模式 / 批注与修订复核交付模式）。
 >
-> 本文含 3 节 + 1 张统一命令表：
+> 本文含 3 节 + 1 张统一命令表（另含 §零 进门与铁律）：
+> 0. **§零·一 进门：第 0 步 = 检查项声明**（复核类委托先出声明单，明细 → [check-scope.md](check-scope.md)）／§零·一·补 片段模式／§零·二 样式应用铁律
 > 1. 执行流程 S1-S7（样式落地主线）
 > 2. 格式核对模式（`check_content.py`，只读不改文件）
 > 3. 批注与修订复核交付模式（规范 + 只读校验）
@@ -16,7 +17,26 @@
 > 承接 SKILL.md「使用流程」第 1 节的详规——SKILL.md 只留「场景 → 工具」导航表，**判定细节与降级协议在本节**。
 
 ```
-用户请求（写 word / 改 word + 样式要求）
+用户请求（写 word / 改 word + 样式要求 / 复核）
+│
+├─ ★ **第 0 步：进门第一档 ＝ 三要素反问确认 ＋ 检查项声明（仅复核类委托 · R-0057）**
+│     判据：请求属「复核类」（帮我看看 / 核对 / 过一遍 / 研究下XX节）
+│     ⇒ **该文档首次委托：先出「动手前三问」小表**（检查范围／交付形态／深度档位，各附推荐：
+│        声明单 L2 预填／批注版／L2 标准），**用户确认或改选后再动手**；
+│        **同一文档内后续委托沿用已确认组合不重问；换文档 ⇒ 重新三问**
+│     确认后出《本轮检查项声明》，四要素：
+│        ① 查哪些项（A 文字格式／B 内容质量／C 财务〔C-P 专业判断／C-Q 数值正确性／C-D 执行要求〕，按编号列）
+│        ② 不查哪些 ＋ 为什么（逐项点名，禁静默缩范围）
+│        ③ S1–S4 专项命中（读取前置／片段模式／敏感议题／数据基准）
+│        ④ 交付前将跑 F 域交付件核验
+│     明细清单与模板 → [check-scope.md](check-scope.md)；动作规范 → [delivery.md](delivery.md) §零
+│     非复核类（纯套样式 / 新建）⇒ 跳过本步，直接进下方场景
+│
+├─ **前置探测：输入完整性（先做这一步，再选场景）**
+│     ├─ 完整性判定：输入含文档结构（章首/标题层级/多段上下文）⇒ **整篇模式**（按下列场景走）
+│     ├─ 片段判定：输入为**段落碎片**（无文档结构/无章首/明确说「这一段」）⇒ **片段模式**
+│     │     → 核对项收窄到「本段自洽」子集，全文性核对项跳过并**在报告头声明**（见下「零·一·补」）
+│     └─ 判定存疑：按整篇模式走，但报告头声明「未探测到章首，全文性核对项若失败可能系片段所致」
 │
 ├─ 场景A：已有 docx，整套套用样式 ──→ minimax-docx apply-template
 │     （source=用户文件, template=对应模板, output=新文件）
@@ -48,16 +68,16 @@
       注：交付前跑一条命令即可涵盖本场景 → deliver_gate.py --revised
 
 场景H：**交付前综合核验（一次跑完 · 极简输出）** ──→ scripts/deliver_gate.py
-      （基础九项 标点/样式/vMerge/锚点/禁用词/占位符/结构/同源/指纹 合并为**一次调用**；
-        按产物形态挂载复核三项——`--annotated` 加 批注部件/批注结构/批注编号，
-        `--revised` 加 修订成对/修订落定/修订计数，均为十一项；
+      （基础十项 标点/样式/vMerge/锚点/禁用词/占位符/结构/同源/指纹/标点用法 合并为**一次调用**；
+        按产物形态挂载复核项——`--annotated` 加 批注部件/批注结构（含编号），
+        `--revised` 加 修订成对/修订落定（含计数），均为十二项；
         另挂「物理扫描」一项（officecli 驱动，`--officecli` 启用；未装则 SKIP 不阻断），
         输出「一行一指标」：PASS 不展开、FAIL 才给明细。**设计目的就是压缩核验输出**——
         实测教训：分散核验时同一指标被反复统计（引号 8 次、结构核验 6 次、锚点 5 次），
         每次脚本输出都进上下文，成为 token 消耗大头。退出码 0/1 可直接作交付判据）
       **三态**：[PASS] 通过 / [FAIL] 计入退出码 / [SKIP] 未执行——SKIP **不阻断交付**
         （不计入 PASS 率），存在的意义是让「未跑物理扫描」在输出里**显式可见**，不靠人记
-      用法：九项 `--docx X --md Y`；批注版 `--docx X --annotated [--expect-annotated N]`；
+      用法：十项 `--docx X --md Y`；批注版 `--docx X --annotated [--expect-annotated N]`；
         修订版 `--docx X --revised [--expect-revised N]`（两开关互斥）；
         物理扫描 `--officecli [--officecli-path P] [--expect-issues N]`
 ```
@@ -67,7 +87,7 @@
 2. 已有文件整套套样式 → `minimax-docx apply-template`（实测通过，XSD 校验门禁防损坏）
 3. 局部微调/改段落样式 → `tencent-local-office-edit`（唯一编辑中枢）
 4. 样式校验 → 本 skill 自带脚本 [check_styles.py](../scripts/check_styles.py)
-5. **交付前综合核验 → [deliver_gate.py](../scripts/deliver_gate.py)（基础九项一次跑完、只输出结论行；批注版加 `--annotated`、修订版加 `--revised`）**
+5. **交付前综合核验 → [deliver_gate.py](../scripts/deliver_gate.py)（基础十项一次跑完、只输出结论行；批注版加 `--annotated`、修订版加 `--revised`）**
 
 **失败降级协议（脚本兜底 + 标注局限）**：
 
@@ -78,6 +98,22 @@
 | 局部编辑工具不可用 | 脚本直接修改 document.xml 的样式字段 | 注明降级；编辑器同步风险提示 |
 | 文档含脚本兜底覆盖不了的元素（封面/TOC/图片等） | 不硬撑——输出 Markdown + 样式应用说明 | 注明非最终形态，建议走专业工具 |
 | 校验门禁未过 | 返回 S4/S5 修正后重跑 | 门禁结果摘要（必备样式/裸段落/空段落/跳级） |
+
+**零·一·补 片段模式（P4 · 输入完整性探测的落地）**
+
+> **动因**：逐段粘贴—逐段复核是常规节奏（用户常只给一段文字，无全文上下文）。若按整篇口径跑全文性核对项，会产生**成批假阳性**——「序号不连续」是因为只贴了一段，「简称未定义」是因为定义在没贴的部分。每次都要人工解释「这是片段」，是纯摩擦。
+
+| 项 | 整篇模式 | **片段模式** |
+|---|---|---|
+| 触发 | 输入含章首/标题层级/多段上下文 | 输入为段落碎片、或用户明说「这一段」「只看这段」 |
+| **可核（本段自洽子集）** | 全部 | 标点规范／禁用词红线（**按文档类型**）／数字格式与前后空格／错别字异体词／术语用词一致性／本段内简称是否冲突／句内歧义与指代 |
+| **跳过（全文性）** | —— | 标题序号连续性／释义首次定义位置／简称前置使用／跨章口径衔接／日期全文统一／表格样式组／骨架样式与空段落 |
+| 交付形态 | 三形态路由（见 delivery.md §五） | 通常**文本定稿形态**（逐段改点＋改后文本），不进批注 |
+| **声明义务** | 报告头声明范围与深度 | 报告头**必须**写明：「**片段模式**：全文性核对项已跳过 N 项（标题序号/释义定义/跨章衔接…）；序号不连续等提示不适用」 |
+
+- **不许静默降级**：跳过全文性项目必须**显式声明**（与 SKIP 同纪律——静默缩范围＝静默失败）。
+- **片段模式不是低标准**：本段自洽子集内**仍按文档类型全套红线与品类规则核**（招股书片段照禁「经核查」）。
+- **升级路径**：用户补齐全文后，把片段结论并入整篇复核，**不重跑**已核的片段子项。
 
 ---
 
@@ -133,8 +169,8 @@
 - 表格三线表规范（框线/字号/对齐/tblHeader/合计加粗）→ [rules.md](rules.md) 第二节
 
 **S6 校验门禁**
-- **交付前综合核验（推荐先跑这一条）**：`python deliver_gate.py --docx <交付件.docx> --md <内容源.md> --anchors "36,507.55;19.96" --scenario 反馈回复 --expect-vmerge N` —— 基础九项一次跑完、只输出「一行一指标」，**PASS 不展开、FAIL 才给明细**；退出码 0/1 直接作交付判据。`--ban` 可省略（默认启用内置投行禁用词红线 13 词），`--anchors` 用**分号**分隔（数字含千分位逗号，勿用逗号）。需要全量明细再单独跑 check_styles / check_content
-- **复核产物交付（批注版/修订版）在九项之上加开关**：批注版 `--annotated [--expect-annotated N]`（追加 批注部件/批注结构/批注编号）、修订版 `--revised [--expect-revised N]`（追加 修订成对/修订落定/修订计数），均为十一项；两开关**互斥**、且必须配 `--docx`。带 `--annotated` 时 `check_annotations.py` 的 docx 侧断言已全覆盖（PDF 侧高亮注释仍需单独跑）；带 `--revised` 时 `check_revisions.py --mode revise` 的断言已全覆盖（**含落定证明**），`--mode clean` 的「无残留」判据用 `--revised` 时 ins/del 计数为 0 即等价成立
+- **交付前综合核验（推荐先跑这一条）**：`python deliver_gate.py --docx <交付件.docx> --md <内容源.md> --anchors "36,507.55;19.96" --scenario 反馈回复 --expect-vmerge N` —— 基础十项一次跑完、只输出「一行一指标」，**PASS 不展开、FAIL 才给明细**；退出码 0/1 直接作交付判据。`--ban` 可省略（默认按 `--scenario` 从 `banned-terms.json` 装载投行禁用词红线——**行为禁语「经核查」等仅招股书装载**，回复件不报），`--anchors` 用**分号**分隔（数字含千分位逗号，勿用逗号）；`--ban` 传值则作为**临时追加**词（阻断档）。需要全量明细再单独跑 check_styles / check_content
+- **复核产物交付（批注版/修订版）在十项之上加开关**：批注版 `--annotated [--expect-annotated N]`（追加 批注部件／批注结构·含编号）、修订版 `--revised [--expect-revised N]`（追加 修订成对／修订落定·含计数），均为十二项；两开关**互斥**、且必须配 `--docx`。带 `--annotated` 时 `check_annotations.py` 的 docx 侧断言已全覆盖（PDF 侧高亮注释仍需单独跑）；带 `--revised` 时 `check_revisions.py --mode revise` 的断言已全覆盖（**含落定证明**），`--mode clean` 的「无残留」判据用 `--revised` 时 ins/del 计数为 0 即等价成立
 - 成品文档校验：`python check_styles.py --input <docx或目录> --scenario <招股书|反馈回复>`（脚本位于本包 scripts/）（`报告` 为 `招股书` 别名，兼容旧调用；默认 `--mode document`）
 - 模板/样式库校验：`--mode template`（检查 styles.xml 中 000-009 / 0011+001 / a4-a6 是否齐全；模板正文为空属正常，勿用 document 模式误判）
 - 内容完整性校验：`--verify-content <原文.docx>`（套样式后文本与原文逐字对比，严禁修改原文内容）
@@ -144,7 +180,7 @@
 - 检查项：必备样式已应用（000 + 场景一级：招股书 001 / 反馈回复 0011+001）、无裸正文段落、无空段落（段落间禁止空行）、标题层级无跳级
 - `minimax-docx apply-template` 自带 XSD 校验门禁（防损坏）
 - **补充门禁（officecli 驱动 · 软门禁不卡流程；承接 ibd-quality-gates 原 G6 语义——内容层 0.6.0 起不再持有 officecli，docx 物理扫描统一在本节）**：
-  - **一条命令挂进 deliver_gate**：`python scripts/deliver_gate.py --docx <件> --officecli [--officecli-path P] [--expect-issues N]` —— 追加「物理扫描」一项（共十项）
+  - **一条命令挂进 deliver_gate**：`python scripts/deliver_gate.py --docx <件> --officecli [--officecli-path P] [--expect-issues N]` —— 追加「物理扫描」一项（共十一项）
   - 底层两个动作：架构校验 `officecli validate <docx>`（OpenXML schema 合法性，防文件损坏/Word 打不开）+ 渲染层缺陷扫描 `officecli view <docx> issues`（文本溢出、正文首行缩进缺失、公式错误等物理缺陷）
   - **三态语义**：未加 `--officecli` → `[SKIP] 未启用`；加了但没装 officecli → `[SKIP] 未找到`——**两种 SKIP 都不阻断交付**（不计入退出码、不计入 PASS 率），但**都会在输出里显式可见**——这样「未跑物理扫描」不再靠人记
   - **哪些算 FAIL**：架构校验不通过，或渲染缺陷数 > `--expect-issues`（默认 0）→ 返回 S4/S5 修正后重跑
@@ -175,7 +211,7 @@ python scripts/check_content.py --input <docx> --checks table           # 只查
 python scripts/check_content.py --input <docx> --checks geo,table_na    # 指定子项
 ```
 
-> **模块结构（2026-09-11 拆组，P2-⑧）**：`check_content.py` 是唯一 CLI 入口，按业务域分为三配套模块——`content_common.py`（共享基础层：Issue / docx 解析 / 中文序号基元 / 标点基元）、`content_text.py`（文字类 7 项）、`content_table.py`（表格类 4 项）。组名 `text`/`table` 与模块边界一一对应；**扩展新核对项时只动对应域文件**。三模块须与入口同目录（入口内为绝对 import）；对外参数/报告名/退出码不变。
+> **模块结构**：`check_content.py` 是唯一 CLI 入口，按业务域分为三配套模块——`content_common.py`（共享基础层：Issue / docx 解析 / 中文序号基元 / 标点基元）、`content_text.py`（文字类 **8** 项）、`content_table.py`（表格类 4 项）。组名 `text`/`table` 与模块边界一一对应；**扩展新核对项时只动对应域文件**。三模块须与入口同目录（入口内为绝对 import）；对外参数/报告名/退出码不变。
 
 **两大组别 × 严重程度矩阵**（HIGH=错误须改 / MEDIUM=警告大概率改 / LOW=提示人工酌情；docx 载体）：
 
@@ -185,6 +221,8 @@ python scripts/check_content.py --input <docx> --checks geo,table_na    # 指定
 | | 用词规范性（错别字/异形词，内置规则可经 term_rules.json 扩展） | MEDIUM | 内置+外部清单正则扫描 |
 | | 日期写法统一（十种形式：中英、年月/年月日、连写、分隔符等） | MEDIUM | 形式占比统计→主导写法判定→少数派明细；分隔符一致性 |
 | | 多余空格/数字与英文前后空格/重复标点 | HIGH | 中文间双空格、**中文与数字之间空格**、**中文与英文之间空格（数字/英文前后均不加空格，见 rules.md 三·3）**、全角标点叠用、半角标点连打、中英混排 |
+| | 中英文标点（前后字符判定） | HIGH | 中文语境里夹半角引号 `"`／半角括号 `()` 等 |
+| | 标点用法（数值范围/省略号/表下注句号） | MED | 数值范围短横线 vs 浪纹线（**仅提示、不阻断**）、省略号写法、表下注末尾句号 |
 | | 释义简称统一（冲突/前置使用/疑似未定义复用/引号风格） | MED-LOW | 定义对提取+前后位置比对+括号短语频次分析 |
 | | 国家城市表述合规（--geo-file 外部敏感词清单驱动） | HIGH | 清单命中即报，出现次数与首现上下文 |
 | **表格类 table** | 字号体系：全表五号（10.5pt），放不下可用小五（9pt），其余违规 | HIGH | 单元格 w:sz 扫描（21/18 合法） |
@@ -213,16 +251,16 @@ python scripts/check_annotations.py --input <带批注.docx 或目录>          
 python scripts/check_annotations.py --pdf <带注释.pdf> --expect <条数>          # 批注 pdf 侧（需 pymupdf）
 python scripts/check_revisions.py --input <修订稿.docx> --mode revise --expect N # 修订稿（Word 修订模式稿）
 python scripts/check_revisions.py --input <修订稿_clean.docx> --mode clean       # 修订稿（干净版）
-# 交付前想一条命令跑完（含基础九项）→ 直接加开关，不必再单跑上面两条：
+# 交付前想一条命令跑完（含基础十项）→ 直接加开关，不必再单跑上面两条：
 python scripts/deliver_gate.py --docx <批注版.docx> --annotated --expect-annotated N
 python scripts/deliver_gate.py --docx <修订稿.docx> --revised --expect-revised N
 ```
 
 - 批注检查项：comments 条数 == cs/ce/ref 对数、每条 4 段无空行、标签/标题整行加粗、引导词加粗正文常规、编号前缀（1-2 大写字母）且唯一、CommentText/CommentReference 样式、Content_Types/rels 注册
 - 修订稿检查项（revise 版）：ins==del 对、author 归责、id 成对唯一、delText/ins 非空、settings 开 trackRevisions、clean 化后 ins 文本落定；clean 版：无修订标记残留
-- **加粗判定须按语义**：`<w:b w:val="0">` 是**显式取消加粗**，不能只判 `<w:b>` 元素存在——否则合规批注会被误判 FAIL（实测 2026-09-11，已修 `check_annotations.py` 与 `deliver_gate.py`）
+- **加粗判定须按语义**：`<w:b w:val="0">` 是**显式取消加粗**，不能只判 `<w:b>` 元素存在——否则合规批注会被误判 FAIL（实测，已修 `check_annotations.py` 与 `deliver_gate.py`）
 - **任一 FAIL → 退回 `ibd-doc-annotate` 重新注入/生成，不交付**
-- **自测**：`python scripts/tests/test_deliver_gate.py`（26 项）／`test_check_annotations.py`（10）／`test_check_content.py`（22）／`test_check_revisions.py`（11）／`test_check_styles.py`（18）／`test_validate_schema.py`（21）／`test_extract_final_text.py`（12）——**共 120 项**；改动脚本后务必全跑
+- **自测**：`python scripts/tests/test_deliver_gate.py`（32 项）／`test_check_annotations.py`（10）／`test_check_content.py`（22）／`test_check_revisions.py`（11）／`test_check_styles.py`（18）／`test_validate_schema.py`（26）／`test_extract_final_text.py`（12）——**共 131 项**；改动脚本后务必全跑
 
 ---
 
@@ -233,20 +271,20 @@ python scripts/deliver_gate.py --docx <修订稿.docx> --revised --expect-revise
 | 你要做什么 | 命令 | 说明 |
 |---|---|---|
 | **读源件取终稿文本（读前先跑）** | `python scripts/extract_final_text.py <docx> [--check] [-o out.txt] [--json]` | 先探测 `w:ins`／`w:del`／批注 → 取「接受全部修订 ＋ 剔除全部批注」的终稿并标注；**只读，源文件零写操作**；细则 → [read-docx.md](read-docx.md) |
-| **交付前综合核验（首选）** | `python scripts/deliver_gate.py --docx <件> --md <源.md> --anchors "A;B" --scenario <招股书\|反馈回复> [--expect-vmerge N] [--officecli]` | 基础九项一次跑完、只输出结论行，退出码 0/1 作交付判据；加 `--officecli` 追加物理扫描（共十项，未装则 SKIP 不阻断） |
-| 交付**批注版** | `python scripts/deliver_gate.py --docx <批注版> --annotated --expect-annotated N` | 九项 + 批注三项 = 十一项 |
-| 交付**修订版** | `python scripts/deliver_gate.py --docx <修订稿> --revised --expect-revised N` | 九项 + 修订三项 = 十一项（含落定证明） |
+| **交付前综合核验（首选）** | `python scripts/deliver_gate.py --docx <件> --md <源.md> --anchors "A;B" --scenario <招股书\|反馈回复> [--expect-vmerge N] [--officecli]` | 基础十项一次跑完、只输出结论行，退出码 0/1 作交付判据；加 `--officecli` 追加物理扫描（共十一项，未装则 SKIP 不阻断） |
+| 交付**批注版** | `python scripts/deliver_gate.py --docx <批注版> --annotated --expect-annotated N` | 十项 + 批注两项 = 十二项 |
+| 交付**修订版** | `python scripts/deliver_gate.py --docx <修订稿> --revised --expect-revised N` | 十项 + 修订两项 = 十二项（含落定证明） |
 | 套样式后校验样式 | `python scripts/check_styles.py --input <docx或目录> --scenario <招股书\|反馈回复>` | 必备样式/裸段落/空段落/跳级 |
 | 校验模板/样式库 | `python scripts/check_styles.py --input <模板> --mode template` | 查 000-009 / 0011+001 / a4-a6 是否齐全 |
 | 证明没改原文 | `python scripts/check_styles.py --input <结果.docx> --verify-content <原文.docx>` | 逐字对比，改一个字即 FAIL |
 | 出格式问题清单 | `python scripts/check_styles.py --input <结果.docx> --diff <原文.docx>` | 生成 `_格式修改清单.md` |
 | 出格式修订稿 | `python scripts/check_styles.py --input <结果.docx> --revise <原文.docx>` | w:pPrChange 修订 + trackChanges |
 | 序号段落核对 | `python scripts/check_styles.py --input <docx> --check-numbering` | 列序号段落及上下文 |
-| **格式核对（只读）** | `python scripts/check_content.py --input <docx> [--checks text\|table\|geo,table_na]` | 十项核对，出 `_格式核对报告.md` |
+| **格式核对（只读）** | `python scripts/check_content.py --input <docx> [--checks text\|table\|geo,table_na]` | 十二项核对，出 `_格式核对报告.md` |
 | 校验批注（docx） | `python scripts/check_annotations.py --input <带批注.docx 或目录>` | 四件套/4 段无空行/加粗分布/编号 |
 | 校验批注（pdf） | `python scripts/check_annotations.py --pdf <带注释.pdf> --expect N` | 需 pymupdf |
 | 校验修订稿 | `python scripts/check_revisions.py --input <修订稿.docx> --mode <revise\|clean> [--expect N]` | ins/del 对/author/id/落定 |
-| **改脚本后自测** | `python scripts/tests/test_deliver_gate.py` 等七份 | 共 120 项，务必全跑 |
+| **改脚本后自测** | `python scripts/tests/test_deliver_gate.py` 等七份 | 共 131 项，务必全跑 |
 
 **两条时序铁律**（写在这里，因为都是"动手前"的事）：
 1. **文字规范必须在套样式之前查**——`check_content.py --checks text` 先跑（标点全角化/数字空格），再套样式。套样式后才发现文字问题会导致样式重做（实测一份交付件 384 处半角引号一路漏到套样式之后）

@@ -6,7 +6,11 @@
   "type": "array",
   "items": {
     "type": "object",
-    "required": ["anchor", "type", "sev", "title", "desc", "advice"],
+    "required": ["anchor", "type", "sev", "title", "desc"],
+    "anyOf": [
+      {"required": ["advice"]},
+      {"required": ["rev"]}
+    ],
     "additionalProperties": false,
     "properties": {
       "anchor": {
@@ -26,14 +30,16 @@
           "表述·歧义",
           "披露·充分性",
           "披露·时效",
-          "合规·一致性"
+          "合规·一致性",
+          "合规·禁用表述",
+          "合规·来源限定"
         ],
-        "description": "固定 10 项词表，新增须在 annotations.md §4 登记，禁止自造标签"
+        "description": "固定 12 项词表，新增须在 annotations.md §4 登记，禁止自造标签"
       },
       "sev": {
         "type": "string",
         "enum": ["高", "中", "低"],
-        "description": "高=必改 / 中=应改 / 低=建议改"
+        "description": "高=必改 / 中=应改 / 低=建议改。升档规则（双维度取高）见 annotations.md §4：合规·禁用表述/来源限定恒「高」；涉审核关注点的披露充分性问题升「高」"
       },
       "title": {
         "type": "string",
@@ -48,7 +54,7 @@
       "advice": {
         "type": "string",
         "minLength": 1,
-        "description": "修改建议"
+        "description": "指令式修改建议（如「核对…后统一…」）。与 rev 二者至少其一（anyOf）。文本定稿形态下 advice 可与 rev 同源（承载可直接粘贴的定稿文本）"
       },
       "author": {
         "type": "string",
@@ -61,7 +67,7 @@
       },
       "rev": {
         "type": "string",
-        "description": "修订稿替换文本，缺则入「待人工」"
+        "description": "**可直接粘贴的替换文本**（不是指令式建议）。**必填形态**：文本定稿形态（逐条「原文→改后」）与修订稿形态——文本定稿形态下 rev 为主交付物、advice 可省；批注形态下 rev 可缺（缺则入总览「待人工定位/待定稿」）"
       },
       "page": {
         "type": "integer",

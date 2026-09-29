@@ -97,7 +97,7 @@ DOMAIN_FILE_LIST = (FINANCE_DOMAIN_FILE, LAW_DOMAIN_FILE, INDUSTRY_DOMAIN_FILE,
                     STYLE_DOMAIN_FILE, WRITING_DOMAIN_FILE)
 
 # ── 语言专项（C3b 拟移至 20_语言专项/） ───────────────────────────────────
-LANG_W_FILE = "投行语言专项_回复WL系列.md"     # 正文装 WL- 编号（364 条，位于根级）；2026-09-23 WO-06 名实对齐
+LANG_W_FILE = "投行语言专项_回复WL系列.md"     # WL- 系列**入口壳**（0 条）；正文 2026-09-28 按段卷方法外置至 `50_分卷/投行语言专项_回复WL系列_卷NN_*.md`；2026-09-23 WO-06 名实对齐
 LANG_P_FILE = "投行语言专项_招股书PL系列.md"   # PL- 卷入口壳（正文在 50_分卷/，542 条）；2026-09-23 WO-06 名实对齐
 
 # ── glob 模式（**含目录前缀**；C3b 2026-09-23） ────────────────────────────
@@ -112,22 +112,37 @@ DOMAIN_GLOBS = (DOMAIN_GLOB, LANG_GLOB)                  # 兼容旧用法
 #   ⇒ 「源 vs 生成物」靠**位置**可分，脚本不再逐个硬写其文件名。
 # 变量语义：`*_FILE` ＝ **相对 METHODS 的路径**（含子目录），供 `os.path.join(METHODS, X)` 直接用；
 #          `*_BASENAME` ＝ 纯文件名，仅用于「顶层若出现则排除」类判据。
-ENTRY_BASENAME = "通用方法论_最终版.md"        # 路由入口薄壳（gen_entry 生成）
+ENTRY_BASENAME = "通用方法论_最终版.md"        # 路由库首页（gen_entry 生成）
 TOC_BASENAME = "方法论_条目标题目录.md"         # 编号 → 域文件+行号（gen_toc 生成）
 INDEX_BASENAME = "方法论调用索引.md"            # 28Q 速查＋全量映射（gen_index 生成）
+REFGRAPH_BASENAME = "方法论_引用图谱.md"        # 反向视图：入度/失效/单向（gen_refgraph 生成；WO-21 2026-09-26）
+SOURCE_MAP_BASENAME = "来源代号映射.json"      # 来源代号的**物理指向**单一事实源（gen_source_map 生成；WO-33 2026-09-26 · G1 前置）
+SCHEMA_BASENAME = "SCHEMA.md"                  # 库内 schema 入口（gen_schema 生成）
+BARE_PAGE_BASELINE = 1740                      # 裸页码**存量水位**（2026-09-28 二次下调：有据改注第二批 85 处补代号后实测；第 24 项「增量零裸页码」的对照值）
+#   ↑ 水位沿革：1836（初测）→ 1825（首批有据改注 11 处）→ 1740（本批 85 处）。「验过」池每次补代号后复核下调。
+#   ↑ 为什么是「水位」而不是「待办」：存量 1836 处按设计边界**不回溯补注**（机器逐一复验仅 3.1% 够格、
+#     人工亦不可裁）⇒ 判据改为「**不得再上升**」。**下降时应复核后下调本值**（防基线松弛成摆设）。
+#   ↑ **位置例外**：留在**库根**、不入 `_generated/` —— 因「入口」的全部价值在于**打开库即可见**；
+#     身份判据仍与其余生成物一致（**无 frontmatter ＋ 首行即说明**），故条目扫面不受影响。
+#     立意：**库应自描述**——由哪一版 schema 管、规矩在哪、当前结构实况，都写在库内，
+#     不依赖使用者的外部记忆或习惯去兜。
 
 ENTRY_FILE = "%s/%s" % (GENERATED_NAME, ENTRY_BASENAME)
 TOC_FILE = "%s/%s" % (GENERATED_NAME, TOC_BASENAME)
 INDEX_FILE = "%s/%s" % (GENERATED_NAME, INDEX_BASENAME)
 
-GENERATED_FILES = {TOC_FILE, INDEX_FILE, ENTRY_FILE}                 # 相对 METHODS 的路径
-GENERATED_BASENAMES = {TOC_BASENAME, INDEX_BASENAME, ENTRY_BASENAME}
+REFGRAPH_FILE = "%s/%s" % (GENERATED_NAME, REFGRAPH_BASENAME)
+SOURCE_MAP_FILE = "%s/%s" % (GENERATED_NAME, SOURCE_MAP_BASENAME)
+SCHEMA_FILE = SCHEMA_BASENAME                  # 相对 METHODS（库根，不在 _generated/）
+GENERATED_FILES = {TOC_FILE, INDEX_FILE, ENTRY_FILE, REFGRAPH_FILE, SOURCE_MAP_FILE, SCHEMA_FILE}   # 相对 METHODS 的路径
+GENERATED_BASENAMES = {TOC_BASENAME, INDEX_BASENAME, ENTRY_BASENAME, REFGRAPH_BASENAME,
+                       SOURCE_MAP_BASENAME, SCHEMA_BASENAME}
 
 # 顶层「非条目文件」——条目扫描时排除（历史两名同容：check_entry_contract `EXCLUDE_TOP` /
 # normalize_case_names `SKIP_TOP`，2026-09-23 归一为此外唯一常量）
 TOP_LEVEL_NON_ENTRY = {
     TOC_BASENAME, INDEX_BASENAME, MERGED_MAP, OLD_NUM_MAP, NUM_GUIDE, README_NAME,
-    ENTRY_BASENAME, CANON_TABLE,
+    ENTRY_BASENAME, CANON_TABLE, SCHEMA_BASENAME,
 }
 
 # ── 遍历跳过面 ────────────────────────────────────────────────────────────
@@ -155,6 +170,100 @@ SKIP_DIRS_CASE_NO = SKIP_DIRS_DEEP | SKIP_EXTRA_CASE_NO              # apply_cas
 #    域文件命名规范：`通用方法论_<域>域.md`（以「域」字结尾，避开单案文件）＋ `投行语言专项_*.md`；
 #    2026-09-19 起纳入 `50_分卷/*.md`（P 系列 PL- 与体例域批次卷 S- 的条目正文唯一存放地）。
 
+# ── 编号引用正则（**全族单一事实源** · 2026-09-26）────────────────────────────
+# 背景：编号族「**形态枚举不全**」已**五犯**（I-0088／0091／0092／0094 ＋ 2026-09-26 的 PL／S
+#   整族漏检：`[FLIW]L?-\d{6}` 不含 `PL-`（542 条）／`S-`（364 条）＝ 全库 53.6%）。
+#   根因之一是**同一枚举被复制到多个脚本**、各自漂移 ⇒ 收为本常量，**各脚本一律引用、禁再复制**。
+# 硬约束：左界 `(?<![A-Za-z])` 必需（编号族存在「短前缀 ⊂ 长前缀」：`L-` ⊂ `WL-`／`PL-`）。
+# 新增编号族时**只改本常量**（同时须进 `check_methods_health.py` 的 `_ID_RX` 登记表以受元自检）。
+RX_ID_FAMILY = r"(?<![A-Za-z])(?:WL|PL|[FLIWS])-\d{6}|(?<![A-Za-z])I-CL\d{2}-\d{2}"
+
+# ── 「已声明的历史引用」（**单一事实源** · 2026-09-26 WO-33）────────────────────
+# 引用处**自带注记**说明该编号在主库无对应（如「`W-070008`（历史编号·主库无对应·待核）」）。
+# 这是 **A6 降级留痕的合法形态**（显式声明、机器可识别）——不是「漏改的引用」，而是
+# 「**确实引用了不在库内的历史编号，且已告知读者**」⇒ **不计失效欠账**，单列可见即可。
+# 收为常量：体检第 8 项与 `gen_refgraph.py` **必须同判**（否则同一库出现「体检报 9／图谱报 13」
+#   —— 本库在「多份枚举各自漂移」上已五犯，此处不再复制）。
+RX_DECLARED_HIST = r"历史编号[^\n]{0,24}(?:无对应|待核)|(?:无对应|待核)[^\n]{0,24}历史编号"
+
+# ── 来源代号：规范表 ＋ 别名表（**单一事实源** · 2026-09-26 WO-33 · G1 前置）────────
+# 契约册 §4 只登记**规范代号**；但库内实际书写高度异形（实测 59 种、约占标注总数四成）。
+# 若「解析」只认规范号 ⇒「把 `招 P152` 回到原文」对近半标注直接失败 ⇒ 溯源校验落不了地。
+# 处置（与《方法论_案名规范表》三表**同构**）：**别名仅供解析，不入白名单**；新条目须写规范代号；
+# 别名**不追溯回改**（属 ③ 内容回写、需语义判断）。
+SOURCE_ALIASES = {
+    "招": ("招", "招股书", "招股说明书"),
+    "招·注册稿": ("招·注册稿", "注册稿"),
+    "招·上会稿": ("招·上会稿", "上会稿"),
+    "招·申报稿": ("招·申报稿", "申报稿"),
+    "招·反馈回复稿": ("招·反馈回复稿",),
+    "问1": ("问1", "问询1", "一轮", "一轮回复", "首轮回复", "第1轮", "第1轮回复",
+            "回复1", "问1回复", "一次问询", "R1"),
+    "问2": ("问2", "问询2", "二轮", "二轮回复", "第2轮", "第2轮回复", "回复2", "二次问询", "R2"),
+    "问3": ("问3", "问询3", "三轮", "三轮回复", "第3轮", "第3轮回复", "回复3", "R3"),
+    "反馈": ("反馈", "反馈意见", "反馈回复"),
+    "落实函": ("落实函", "意见落实函", "审核中心意见落实函"),
+    "上会": ("上会",),
+    "回复": ("回复", "问", "问询"),        # 「问」/「问询」＝轮次判不出 ⇒ 契约兜底号「回复」
+    "财务包": ("财务包", "财务", "财务阅读包", "阅读包_财务"),
+    "法律包": ("法律包", "法律", "法律阅读包", "阅读包_法律"),
+    "行业包": ("行业包", "行业", "行业阅读包", "阅读包_行业"),
+    # 2026-09-26 二次裁定：三个蒸馏专家产出件署名代号**不入库**——条目正文已全部中性化
+    #   （「产出_X_蒸馏.md」引用写法同步中性化），别名表不再收编；cases/ 原始件名不动（历史事实）。
+}
+SOURCE_ALIAS2CANON = {a: c for c, _lst in SOURCE_ALIASES.items() for a in _lst}
+# 复合标注的分段符：标注常写成「（<前文片段>，<真代号> P…）」⇒ 取**末段**才是真代号。
+# `·` 亦入列 —— `<案例主体>·招`→`招`、`招·注册稿`→`注册稿`（再由别名表还原为 `招·注册稿`），两向皆通。
+SOURCE_CODE_SPLIT = "，,、；;＋+→/："   # 2026-09-26 裁定加全角冒号（字段连接符：「实证：招 P97」→「招」）
+
+
+def normalize_source_code(head):
+    """把来源标注的「头」归一到规范代号；认不出返回 None（**不猜**）。
+
+    `head` ＝ 标注 `（` 与 ` P<数字>` 之间的原文片段（可能含前文残片）。
+    """
+    if not head:
+        return None
+    seg = head
+    for ch in SOURCE_CODE_SPLIT:
+        seg = seg.split(ch)[-1]
+    seg = seg.split("·")[-1]
+    seg = seg.strip().strip("`*（）()[]【】 ")
+    return SOURCE_ALIAS2CANON.get(seg)
+
+
+# ── 计数一致性扫描面（**活文档白名单** · 2026-09-26 · 体检第 20 项共用）──────────
+# 背景：同一批「护栏 N 项／随包脚本 N 个」声明散布在 8+ 处**活文档**里、各自漂移
+#   （2026-09-26 当日实测四度：护栏 16/18/19；脚本 15/25/26/27；README 版本徽章滞后一版）。
+# 判据：**只扫活文档**——CHANGELOG（历史）、logs/（操作日志 append-only）、tasks/ 与 docs/
+#   （执行记录）、archive/、methods/**（条目正文内的「护栏第 N 项」是**项号引用**、非计数声明）
+#   **一律不扫**。历史记录保留原值，改它即是伪造。
+# 活文档内遇「近期更新／版本历史」类小节即**停止扫描**（该节属历史）。
+_COUNT_DOCS_FIXED = (                    # 相对 **skill 根**：根级三件
+    "SKILL.md",
+    "README.md",
+    "scripts/check_methods_health.py",   # 本脚本自身（docstring 表头 ＋ argparse 描述亦属声明）
+)
+#   ↑ 判据＝**活文档**（长期被读、会被读者当事实源的册子）。
+#   **派生面 ＝ `references/**/*.md` 全量**（不再逐件枚举）——理由＝**失败方向**：
+#     枚举的失败方向是**静默漏扫**（新增册子忘登记 ⇒ 永久在面外，既不 ERROR 也不 WARN）；
+#     派生的失败方向是**多扫**，而多扫只产生**可见**的报告项、可由人裁定。
+#     ⇒ **把失败方向从静默翻转为可见**，是本节采用派生的唯一理由。
+#     `CHANGELOG.md` 属历史记录、不进面内；各册的「近期更新／版本历史」小节亦停止扫描。
+_COUNT_DOCS_REFS = tuple(sorted(
+    os.path.relpath(os.path.join(_r, _f), str(SKILL_DIR)).replace(os.sep, "/")
+    for _r, _dirs, _fs in os.walk(str(SKILL_DIR / "references"))
+    for _f in _fs if _f.endswith(".md")
+))
+COUNT_DOCS = _COUNT_DOCS_FIXED + _COUNT_DOCS_REFS   # 相对 **skill 根**
+COUNT_DOCS_WORKSPACE = (            # 相对 **工作区根**
+    "state/README.md",
+    "state/维护体检计数.md",
+)
+COUNT_SCAN_STOP_HEADING = r"^#{1,6}\s*[^\w\s]{0,4}\s*(?:近期更新|版本历史|变更记录|CHANGELOG)"
+#   ↑ `[^\w\s]{0,4}` 容许标题内的 emoji／符号前缀（实测 `## 📌 近期更新` —— 无此段会**漏停**、
+#     把 README 历史小节的「8 个脚本」当成计数声明误报）。
+
 # ── 阈值 ─────────────────────────────────────────────────────────────────
 DOMAIN_SIZE_WARN_BYTES = 300 * 1024     # 单域文件体积警戒线（check_methods_health 第 9 项）
 
@@ -164,6 +273,11 @@ def ensure_utf8():
 
     凡有中文输出的脚本，应在 argparse 之后、首次输出之前调用本函数。
     （历史上各脚本各自写 `sys.stdout.reconfigure(...)`，2026-09-23 收为本函数唯一落点。）
+
+    **去留已定论（2026-09-28 实测复核）**：本函数**当前零调用**（全包 grep 调用点 ＝ 0），
+    但它**是 `check_conformance.py` A8 判据认可的编码处理标准入口**（判据：含中文输出且
+    既无 `reconfigure` 也无 `ensure_utf8` ⇒ 报 WARN）⇒ **保留**。删它须**同批改 A8 判据**
+    （改动面两处、收益为零），且会连带删掉「编码已处理」的判定依据。**勿再作为死代码项重议。**
     """
     import sys
     for stream in (sys.stdout, sys.stderr):

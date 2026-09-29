@@ -123,7 +123,7 @@ def main():
                           "orphan": len(orphan), "written": written}, ensure_ascii=False))
     else:
         print("[%s] %s → %s" % ("APPLY" if a.apply else "DRY-RUN", src, mir))
-        print("  新增 %d ｜ 更新 %d ｜ 未变 %d ｜ 孤儿 %d（%s）｜ 已写 %d"
+        print("  新增 %d ｜ 更新 %d ｜ 未变 %d ｜ 无引用条目 %d（%s）｜ 已写 %d"
               % (len(add), len(upd), same, len(orphan),
                  "prune 已清理" if (a.apply and a.prune) else "默认保留", written))
         for _, _, rel in (add + upd)[:10]:

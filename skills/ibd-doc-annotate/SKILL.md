@@ -8,7 +8,7 @@ description: >
   ① 批注版（现役）：接收结构化复核问题清单（作者/类型/严重度/锚点/标题/描述/建议）与原文
   docx 或 PDF，自动把每条问题变成一条 Word 审阅批注或 PDF 高亮注释锚定在原文问题句段上，
   并同步生成与批注编号一一对应的精简总览报告（**双轨并存、批注优先**——交付口径见
-  `ibd-doc-review` skill 的 delivery.md；总览**双格式交付 = MD + Word**，2026-09-18 用户裁定；
+  `ibd-doc-review` skill 的 delivery.md；总览**双格式交付 = MD + Word**；
   总览兼作兜底：无法自动锚定的条目在其中列出
   待人工定位）。脚本自动完成：编号分配（清单 code 字段 + 该前缀序号，脚本不内置任何
   人名/代号映射）、锚点定位（docx 跨 run 拆分且保留原格式 / PDF 字符级容忍空白）、
@@ -18,7 +18,7 @@ description: >
   输出修订稿 docx + 修改清单（已修订/待人工两区）。
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.10.2
+version: 0.10.3
 agent_created: true
 ---
 
@@ -61,7 +61,7 @@ agent_created: true
 
 ### 2. 执行注入 / 修订
 
-**判据**：批注 → `annotate_docx.py`（docx）／`annotate_pdf.py`（PDF）；修订 → `revise_docx.py --mode revise|clean|both`（**形态先与用户确认，不按措辞自动路由**）。**`annotate_docx.py --dry-run`（2026-09-23 补）**：只报「命中／未锚定」统计与目标路径、**不写任何文件**，用于锚点质量预检；**目标已存在时默认拒绝覆盖**，要覆盖须显式 `--force`——本脚本是产线里**唯一直写交付件**的环节，误盖 ＝ 静默丢上一轮复核结果。
+**判据**：批注 → `annotate_docx.py`（docx）／`annotate_pdf.py`（PDF）；修订 → `revise_docx.py --mode revise|clean|both`（**形态先与用户确认，不按措辞自动路由**）。**`annotate_docx.py --dry-run`**：只报「命中／未锚定」统计与目标路径、**不写任何文件**，用于锚点质量预检；**目标已存在时默认拒绝覆盖**，要覆盖须显式 `--force`——本脚本是产线里**唯一直写交付件**的环节，误盖 ＝ 静默丢上一轮复核结果。
 
 ```bash
 # ── 批注版 ──（PDF 侧 --pages "5-6" 可节选页）
@@ -109,7 +109,7 @@ python scripts/revise_docx.py --docx <原文.docx> --issues issues.json --mode r
 
 ## 边界与协作
 
-**判据**：批注链路只加批注不改原文（修订链路只改 anchor 区间）；复杂 run／骑跨超链接·页眉页脚 → 记「未锚定」或「待人工」不硬撑；格式规范以 `ibd-doc-review` 的 annotations.md／revisions.md 为唯一依据；上游开放（清单可来自任何审查流程）。原文四条见 [ops-notes.md](references/ops-notes.md) §边界与协作。
+**判据**：批注链路只加批注不改原文（修订链路只改 anchor 区间）；复杂 run／骑跨超链接·页眉页脚 → 记「未锚定」或「待人工」不硬撑；格式规范以 `ibd-doc-review` 的 annotations.md／revisions.md 为唯一依据；上游开放（清单可来自任何审查流程）。**「原文零改动」须交付前逐段核验**（比对原文与批注版 `p.text` 列表）——门禁只查批注配对，查不出正文被改（同段 `w:tab` run 会被注入吞掉）。**复核对象含修订标记（`w:ins`/`w:del`）时，先探测并按「接受／拒绝修订后」重建文本再复核**——`python-docx` 的 `p.text` 读不到 `w:ins`/`w:del` 内 run，会呈现语义残缺并致大面积误判。原文六条见 [ops-notes.md](references/ops-notes.md) §边界与协作。
 
 ## 踩坑与要点
 
@@ -117,12 +117,12 @@ python scripts/revise_docx.py --docx <原文.docx> --issues issues.json --mode r
 
 - **同段多批注互相清除 range**（comments.xml 有批注、document.xml 丢 range）→ 补跑 `fix_missing_ranges.py` 后重跑门禁；**门禁只校验 cs/ce/ref 对数**，顺序颠倒曾静默放行
 - **表格型文档锚点选唯一数值**（表标题／合并单元格常含多 run → MISS）：定锚前先做命中计数，**取命中数 = 1 的数值串**
-- **跨载体清单须先按载体拆分再注入**（实测 2026-09-24）：一份复核批次的问题可能分属不同载体（如附注 docx ＋ 申报报表 xlsx）。把不可锚定条目一并传入时，脚本仍会为它们生成 comments 条目，导致**门禁 FAIL（comments 条数 > cs/ce/ref 对数）**。处置：按载体拆清单，**只把能锚定到该载体原文的条目传入**；其余条目的编号在清单侧另设段号（如附注 J-01~J-53、报表 J-54~J-65），并在清单「编号规则」处写明两段对应关系——编号仍保持一一对应
+- **跨载体清单须先按载体拆分再注入**：一份复核批次的问题可能分属不同载体（如附注 docx ＋ 申报报表 xlsx）。把不可锚定条目一并传入时，脚本仍会为它们生成 comments 条目，导致**门禁 FAIL（comments 条数 > cs/ce/ref 对数）**。处置：按载体拆清单，**只把能锚定到该载体原文的条目传入**；其余条目的编号在清单侧另设段号（如附注 J-01~J-53、报表 J-54~J-65），并在清单「编号规则」处写明两段对应关系——编号仍保持一一对应
 - **xlsx 侧批注走 Excel 单元格批注（另一条链路）**：Excel 无 Word 审阅批注等价形态，用 `openpyxl` 单元格 `Comment` 落地。三条硬约束：① **必须 `load_workbook(path)`（不带 `data_only=True`）**，否则保存时公式被替换为缓存值——申报报表底稿基本靠公式串联，这一步错了会静默毁掉整本；② **先扫既有批注**（`c.comment`），只补不改——原表常带审计/复核人已写的批注，覆盖即丢证据；③ **只写副本、绝不写原文件**（`--out` 另存），并在文件名标注「（Excel 副本）」，避免误作申报版本流转。同段多单元格同一条目时逐格写入（如同一问题打在 B22/C22/D22），便于逐期核对
 - **批注编号还原（跨载体/子集交付时）**：脚本编号＝「前缀＋段内序号」，重出一版子集会让同一问题出现两套号（旧 J-02 ↔ 新 J-01），破坏清单↔批注一一对应。若必须保持原号，可**后处理 `word/comments.xml`**：`re.sub(r"J-\d{2}", map, xml)` **一次遍历替换**（勿链式替换，否则 J-01→J-02 会被二次命中），其余 zip 条目原样拷出；总览 md 同步替换后用 `overview_to_docx.py` 重生成 Word，最后重跑门禁确认编号唯一
 - **修订删除文本用 `w:delText` 而非 `w:t`**，且须开 settings `w:trackRevisions`（元素名不是 trackChanges）
 
-> 其余八条（pymupdf 页对象须持有引用／跨 run 锚定／批注内禁空行段／编号一次性分配／复杂 run 为兜底／ins-del 同 id 成对 author 归责／新文本 run 继承 rPr／多锚点倒序）按主题落在 [annotate-runbook.md](references/annotate-runbook.md) 与 [revise-runbook.md](references/revise-runbook.md)；**踩坑全文分布索引**见 [ops-notes.md](references/ops-notes.md) §踩坑全文分布。
+> 其余九条（pymupdf 页对象须持有引用／跨 run 锚定／批注内禁空行段／编号一次性分配／复杂 run 为兜底／ins-del 同 id 成对 author 归责／新文本 run 继承 rPr／多锚点倒序／注入丢同段 `w:tab` run）按主题落在 [annotate-runbook.md](references/annotate-runbook.md) 与 [revise-runbook.md](references/revise-runbook.md)；**踩坑全文分布索引**见 [ops-notes.md](references/ops-notes.md) §踩坑全文分布。
 
 ## 维护
 

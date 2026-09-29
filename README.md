@@ -90,13 +90,13 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
-| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.15.4 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
-| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.13.1 | 零硬依赖（基座之一） |
-| [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.10.0 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.25.0 | 零外部 skill 依赖（基座） |
-| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.10.2 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.24.4 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
-| [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.5.0 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
+| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.16.0 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
+| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.13.3 | 零硬依赖（基座之一） |
+| [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.12.0 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.27.0 | 零外部 skill 依赖（基座） |
+| [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.10.3 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.33.16 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.2 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]
 > **`ibd-doc-write` 尚不成熟，无法满足「独立撰写整段投行文件」的要求。**
@@ -213,6 +213,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 - 集合 Release：`ibd-skills-vX.Y.Z`，zip 含 `README.md` + `skills/` 全部包
 
 ## 📌 近期更新
+
+- **2026-09-29 · v0.4.0**：**复核线 0.27.0「进门第一档」全量落地 ＋ 写作线 0.16.0 写前分层 ＋ 档位性质轴**——`ibd-doc-review` 0.25.0 → **0.27.0**（**进门第一档＝检查项声明**：新增 [check-scope.md](skills/ibd-doc-review/references/check-scope.md) 五域 52 项单一事实源（A 文字格式 12／B 内容质量 8／C 财务 18〔**C-P 专业判断 16＋C-Q 数值正确性 1＋C-D 执行要求 1**〕／F 交付件核验 10／S 四类前置门＋**D 法律·E 行业预留域**）；**三问小表反问确认制**（每份文档首次委托：检查范围/交付形态/深度档位各附推荐，同文档沿用、换文档重问）；**档位轴＝性质**（L2 装机器能判的：含五类机械勾稽全算＋逐数台账；L3 才装只有人能判的：专业判断 16 维，预留法律/行业）；声明单/表单全量人话化）；`ibd-doc-write` 0.15.4 → **0.16.0**（**写前分层**：文档类型＝项目级（换项目重问）＋动作判定＝委托级（句段标保持/改写/新增/删除）；**骨架不确认直接取用**（问型族匹配，纠偏后置）；**口径制**：数据基准按类型默认（招股书←审计报告／回复←招股书）＋口径与待核清单交付必附＋审改倾向记忆项目级）；`ibd-doc-annotate` 0.10.2 → **0.10.3**（批注链路同步）；`ibd-finance-review` 0.10.0 → **0.12.0**（执行纪律＋敏感议题前置门＋条目清单 schema anyOf）；`ibd-methods-ops` 1.24.4 → **1.33.16**（证据判据路线 1.33.13–16：可判案率 40.2%＋裸页码治理＋号段守卫；蒸馏批次卷扩容）；`ibd-methods-query` 0.5.0 → **0.6.2**（双路并行检索：索引路＋全文路，未分类 34% 存量不再漏检）；`ibd-quality-gates` 0.13.1 → **0.13.3**（勾稽容差 n 倍允差对齐）。版本矩阵与依赖兼容矩阵同步。
 
 - **2026-09-24 · v0.3.10**：**读取含修订/批注的 Word ＋ 标点用法门禁 ＋ 条目契约补录**——`ibd-doc-review` 0.23.1 → **0.25.0**（**读取含修订/批注的 Word**：新增 `references/read-docx.md` ＋ `scripts/extract_final_text.py`（按口径提取最终文本，处理修订与批注两态）＋ 12 项阴阳双测；**标点用法门禁**：`check_content.py --checks punct_usage` 与 `deliver_gate.py` 标点用法项，规范源 **GB/T 15834—2011《标点符号用法》**）；`ibd-doc-annotate` 0.10.1 → **0.10.2**（踩坑节四条：**跨载体清单须先按载体拆分再注入**（否则不可锚定条目也生成 comments ⇒ 门禁 FAIL）／**xlsx 侧批注走 openpyxl 单元格 Comment** 三硬约束／**批注编号还原**一次遍历替换）；`ibd-doc-write` 0.15.3 → **0.15.4**（`writing-style.md` 新增「标点用法按国标」：数值范围起止用 `~`、短横线只用于号码与编号、省略号不与「等」并用、表下注末尾不加句号、引号内引用原文照录）；`ibd-methods-ops` 1.24.3 → **1.24.4**（`entry-contract.md` 新增 **§4.1「非案例来源条目的实证位」**（外部规范入编时字段名不变、内容挂规范条款号、必标「非案例」）＋ 来源标注适用范围注）。版本矩阵与依赖兼容矩阵同步。
 

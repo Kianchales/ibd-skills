@@ -3,14 +3,20 @@
 使回写起草时上下文一次到位（免去逐条开文件的来回读）。
 
 用法：
+    # ① 回写工作表（S7 起草时一次到位）
     python gen_replay_worksheet.py --case 1 [--filter 中高] [--list <清单路径>] [--methods-root <工作区根>]
+    # ② 回响检查（级联 · S7 收尾必跑）：列出「清单未覆盖但受实质影响」的条目候选
+    python gen_replay_worksheet.py --echo --case 1 [--keywords 明股实债,票据] [--methods-root <工作区根>]
 
 参数：
-    --case          清单节序号（1=第 1 案、2=第 2 案 …，与清单 `### N. 案名` 对应）
+    --case          清单节序号（1=第 1 案…，与清单 `### N. 案名` 对应）；**回响模式下可省**
     --filter        只取指定重合度（高 / 中高 / 中 / 全部，默认全部）
     --list          回写清单路径（默认 <工作区根>/tasks/建议回写清单.md）
-    --methods-root  方法论库所在的工作区根（其下应有 methods/、tasks/）；
-                    默认 $METHODS_ROOT，未设置时按脚本所在目录的上级推断
+    --echo          回响检查模式：按关键词**全库扫**（跨案域／语言专项／分卷），列出命中**且不在清单
+                    已见编号集合**里的条目 —— 即**候选清单未覆盖但受实质影响**者。**只列候选、不作判断**。
+    --keywords      回响模式关键词（逗号分隔）。⚠️ 关键词越通用命中越多（如「票据」这类词会命中大量
+                    仅顺带提及的条目）——**建议用案名、专有实体或明确的主张短语**，让清单短而准。
+    --methods-root  方法论库所在的工作区根（其下应有 methods/、tasks/）；默认 $METHODS_ROOT
 
 输出：<工作区根>/tasks/_replay_ws_case<N>_<YYYYMMDD>.md
 """
@@ -25,10 +31,13 @@ from _lib.layout import (METHODS_NAME, SINGLE_NAME, TOC_FILE, DIR_DOMAIN,
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-_ap = argparse.ArgumentParser(description="S7 回写工作表生成器")
-_ap.add_argument("--case", type=int, required=True, help="清单节序号")
+_ap = argparse.ArgumentParser(description="S7 回写工作表生成器 ＋ 回响检查（级联候选）")
+_ap.add_argument("--case", type=int, default=0, help="清单节序号（回响模式下可省，改由 --keywords 给关键词）")
 _ap.add_argument("--filter", default="", help="重合度筛选（高/中高/中）")
 _ap.add_argument("--list", default="", help="回写清单路径")
+_ap.add_argument("--echo", action="store_true",
+                 help="**回响检查模式**：按关键词全库扫，列出「清单未覆盖但受实质影响」的条目候选（只列不判）")
+_ap.add_argument("--keywords", default="", help="回响模式的关键词（逗号分隔，如「明股实债,票据」）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="方法论库所在的工作区根（默认 $METHODS_ROOT，或脚本上级目录）")
 _a = _ap.parse_args()
@@ -38,6 +47,87 @@ LIB = ROOT / METHODS_NAME
 LIST = Path(_a.list) if _a.list else ROOT / "tasks" / "建议回写清单.md"
 if not LIB.is_dir():
     sys.exit("✗ 未找到方法论库：%s\n  用法：--methods-root <库所在的工作区根>（其下应有 methods/ 子目录）" % LIB)
+
+# ── 回响检查（级联 · 清单未覆盖但受实质影响者） ──────────────────────────────
+# 为什么需要它：回写由清单驱动，**清单只能覆盖它看见的**。受本批同实体／同口径／同主张影响、
+#   却未被列进清单的旧条目，此前**永远不会被回写**（机制层面有「被取代」块的写法，缺的是
+#   **触发器**：谁去发现该加块的旧条目）。本模式即那个触发器——按关键词**全库扫一遍**，
+#   把「命中关键词 且 不在清单已见集合里」的条目列出来，交人裁定。
+ID_IN_HEAD = re.compile(r"((?:WL|PL|I-CL|[FLIWS])-(?:AN\d{4}|\d{6})(?:-\d{1,3})?)")
+
+
+def echo_mode():
+    kws = [k.strip() for k in (_a.keywords or "").split(",") if k.strip()]
+    if _a.case:
+        try:
+            _t = io.open(LIST, encoding="utf-8").read().split("\n")
+            for i, l in enumerate(_t):
+                if re.match(r"^### %d\. " % _a.case, l):
+                    kws.insert(0, re.match(r"^### \d+\. ([^_（]+)", l).group(1))
+                    break
+        except OSError:
+            pass
+    if not kws:
+        sys.exit("✗ 需给 --keywords（逗号分隔）或 --case")
+    seen = set()
+    try:
+        for i, l in enumerate(io.open(LIST, encoding="utf-8").read().split("\n")):
+            for m in ID_IN_HEAD.finditer(l):
+                seen.add(m.group(1))
+    except OSError:
+        pass
+    scan = [str(LIB / DIR_DOMAIN), str(LIB / "20_语言专项"), str(LIB / "50_分卷")]
+    hits = []
+    for d in scan:
+        for fp in sorted(glob.glob(os.path.join(d, "*.md"))):
+            try:
+                lines = io.open(fp, encoding="utf-8", errors="replace").read().split("\n")
+            except OSError:
+                continue
+            cur_id, cur_hit, buf = "", [], []
+            def _flush():
+                if cur_id and cur_hit and cur_id not in seen:
+                    hits.append((os.path.relpath(fp, str(LIB)).replace("\\", "/"),
+                                 cur_id, cur_hit, buf[0].strip()[:70]))
+            for l in lines:
+                if l.startswith("### "):
+                    _flush()
+                    mm = ID_IN_HEAD.search(l)
+                    cur_id, cur_hit, buf = (mm.group(1) if mm else ""), [], [l]
+                    for k in kws:
+                        if k in l:
+                            cur_hit.append(k)
+                else:
+                    if cur_id and l.strip() and len(buf) < 3:
+                        buf.append(l)
+                    if cur_id:
+                        for k in kws:
+                            if k in l and k not in cur_hit:
+                                cur_hit.append(k)
+            _flush()
+    out = ROOT / "tasks" / ("_回响检查_%s.md" % (_a.case and ("案%d" % _a.case) or "关键词"))
+    with io.open(str(out), "w", encoding="utf-8", newline="\n") as f:
+        f.write("# 回响检查（级联）—— 清单未覆盖但受实质影响者\n\n")
+        f.write("> 关键词：%s ｜ 清单已见编号 %d 个 ｜ 命中 **%d** 条\n"
+                "> **用途**：逐条裁定「是否需回写／是否需加『已被取代』块」；**本表只列候选、不作判断**。\n\n"
+                % ("、".join(kws), len(seen), len(hits)))
+        f.write("| # | 位置 | 编号 | 命中关键词 | 标题 |\n|---|---|---|---|---|\n")
+        for i, (fp, eid, hk, t) in enumerate(hits, 1):
+            f.write("| %d | `%s` | `%s` | %s | %s |\n" % (i, fp, eid, "／".join(hk[:4]), t))
+    print("回响检查完成：关键词 %s ｜ 清单已见 %d ｜ **未覆盖但命中 %d 条**"
+          % ("、".join(kws), len(seen), len(hits)))
+    print("落点：%s" % out)
+    for fp, eid, hk, t in hits[:15]:
+        print("  · %s ｜ %s ｜ %s" % (eid, "／".join(hk[:3]), t[:50]))
+
+
+if _a.echo:
+    echo_mode()
+    sys.exit(0)
+
+if not _a.case:
+    sys.exit("✗ 回写工作表模式需 --case <清单节序号>；若要做级联回响检查，请加 --echo")
+
 if not LIST.exists():
     sys.exit("✗ 未找到回写清单：%s\n  可用 --list 指定" % LIST)
 

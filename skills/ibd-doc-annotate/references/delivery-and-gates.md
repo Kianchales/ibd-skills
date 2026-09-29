@@ -13,7 +13,7 @@
 |---|---|
 | `<原文>_<YYYYMMDD>_v<N>_批注版.docx/pdf` | 批注版第一交付物（Word 审阅面板 / PDF hover 弹注） |
 | `<原文>_<YYYYMMDD>_v<N>_批注版_批注总览.md` | 双轨兜底：编号×类型×严重度×锚点摘要×作者×状态；未锚定条目列清单待人工定位 |
-| `<原文>_<YYYYMMDD>_v<N>_批注版_批注总览.docx` | 总览 **Word 版**——与 md 同源同内容（双格式交付，2026-09-18 用户裁定：MD 供程序/检索、Word 供批阅流转）；由 `overview_to_docx.py` 同链路自动产出 |
+| `<原文>_<YYYYMMDD>_v<N>_批注版_批注总览.docx` | 总览 **Word 版**——与 md 同源同内容（双格式交付：MD 供程序/检索、Word 供批阅流转）；由 `overview_to_docx.py` 同链路自动产出 |
 | `<原文>_<YYYYMMDD>_v<N>_修订稿.docx` | 修订稿（revise=Word 修订模式可审阅接受/拒绝；clean=直接改好） |
 | `<原文>_<YYYYMMDD>_v<N>_修订稿_clean.docx` | both 模式另出的干净版（接受全部修订后） |
 | `<原文>_<YYYYMMDD>_v<N>_修订稿_修改清单.md` | 已修订 N 条（原文 → 改为）+ 待人工 M 条（原因+建议），编号同批注体系 |

@@ -23,6 +23,7 @@
 """
 import argparse
 import collections
+import datetime
 import glob
 import io
 import json
@@ -37,7 +38,10 @@ from _lib.layout import (METHODS_NAME, VOLUME_NAME, DIR_DOMAIN, DIR_LANG,
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-HDR = re.compile(r'^(#{2,4})\s+([A-Z]{1,2})-(\d{2})(\d{4})(?!\d)')
+# 2026-09-27 修：库内 WL 条目**混用两种形态** —— `### WL-xxxxxx …`（h3）与 `- **WL-xxxxxx**｜…`（粗体列表项，
+# 历史存量（2026-09-27 实测 `20_语言专项/投行语言专项_回复WL系列.md` 中 132 行为 h3、另有大量 `**` 形；2026-09-28 正文已外置至 `50_分卷/投行语言专项_回复WL系列_卷NN_*.md`）。原正则只认 h3
+# ⇒ 凡目标为 `**` 形条目者一律报 `target_not_in_library`（本批 229/255 条被误判）。现两形态并收。
+HDR = re.compile(r'^(?:#{2,4}\s+|-\s+\*\*|\*\*)([A-Z]{1,2})-(\d{2})(\d{4})(?!\d)')
 ENTRY = re.compile(r'^###\s+[FLI]-AN\d{4}-\d{2}\s*[｜|]\s*(.+?)\s*$')
 ANCHOR = re.compile(r'-\s*\*\*对照锚点\*\*\s*[:：]\s*(.+?)\s*$')
 REL = re.compile(r'\[(强化|扩展|新增)\s*([A-Z]{1,2}-\d{5,6})?\s*([^\]]*)\]')
@@ -71,8 +75,52 @@ def build_index(files):
         for i, ln in enumerate(read_text(p).split('\n')):
             m = HDR.match(ln)
             if m:
-                idx[m.group(2) + '-' + m.group(3) + m.group(4)].append((p, i))
+                idx[m.group(1) + '-' + m.group(2) + m.group(3)].append((p, i))
     return idx
+
+
+_CASE_NAMES = None
+
+
+def _load_case_names(root):
+    """载入「案名规范表」（表一＋表二）的规范案名集合 —— 与门禁 A4 同源。"""
+    global _CASE_NAMES
+    if _CASE_NAMES is not None:
+        return _CASE_NAMES
+    _CASE_NAMES = set()
+    mroot = os.path.join(root, METHODS_NAME)
+    for fn in (os.path.join(mroot, '方法论_案名规范表.md'),
+               os.path.join(mroot, 'state', '单案索引对照表.md'),
+               os.path.join(root, 'state', '单案索引对照表.md')):
+        if not os.path.isfile(fn):
+            continue
+        for ln in read_text(fn).split('\n'):
+            if not ln.strip().startswith('|'):
+                continue
+            cells = [c.strip().strip('*').strip() for c in ln.strip().strip('|').split('|')]
+            if len(cells) >= 3 and re.match(r'^AN\d{4}$', cells[2]):
+                if cells[0] and cells[0] not in ('规范案名', '---'):
+                    _CASE_NAMES.add(cells[0])
+    return _CASE_NAMES
+
+
+def _case_name(case, root=None):
+    """回写标签案名位 —— 用「案名规范表」的规范案名（禁自拟 / 禁截断简称）。
+
+    门禁 `check_entry_contract.py` **A4** 以「案名规范表 表一＋表二」为白名单；
+    本函数使**回写器产出的标签天然符合 A4**（2026-09-27 用户裁定固化标签形态；
+    本轮 246 行曾触发 A4「未按登记案名」）。
+    查不到时**原样返回**（不静默改写），交由 A4 门禁在 S7 收尾拦下。
+    """
+    if root:
+        names = _load_case_names(root)
+        # 「case」既可能是简称也可能是公司全称 —— 取匹配项（简称优先，命中即返回）
+        if case in names:
+            return case
+        for n in names:
+            if n and (n in case or case in n):
+                return n
+    return case
 
 
 def entry_text(case_dir, code):
@@ -166,12 +214,24 @@ def do_rewrite(root, apply_):
         if not title:
             pend.append((r['case'], r['new'], 'source_missing'))
             continue
-        if r['target'] not in idx:
+        # 唯一匹配门（2026-09-26 · 属「**定点定位类**」前置门）
+        #   **恰好 1 处命中才改；0 处／多处一律转人工判定。**
+        #   原实现直接取 `idx[r['target']][0]` ⇒ 同编号在库内多处出现时**静默选第一个**写入
+        #   （多解越权；与「招·招·注册稿」84 处误伤同族：**在无唯一确定性时动手**）。
+        #   注意：本门**只适用于「按编号定位唯一位置」的脚本**；批量改名类（normalize_case_names
+        #   ／fix_volume_case_by_segment）**本来就要改多处同串**，套用本门会改坏 —— 见
+        #   `references/govern/fix-tools.md`「唯一匹配门」节的**分类前置门**表。
+        _hits = idx.get(r['target'], [])
+        if not _hits:
             pend.append((r['case'], r['new'], 'target_not_in_library:' + r['target']))
             continue
+        if len(_hits) != 1:
+            pend.append((r['case'], r['new'],
+                         'target_ambiguous:%s x%d（多处命中，须人工定目标）' % (r['target'], len(_hits))))
+            continue
         body, src = sentence(seg)
-        r.update({'title': title, 'emp': body, 'src': src, 'file': idx[r['target']][0][0],
-                  'line': idx[r['target']][0][1]})
+        r.update({'title': title, 'emp': body, 'src': src,
+                  'file': _hits[0][0], 'line': _hits[0][1]})
         rows.append(r)
     print('可执行回写 %d 条 ｜ 待人工判定 %d 条' % (len(rows), len(pend)))
     c = collections.Counter(x['grade'] for x in rows)
@@ -194,10 +254,14 @@ def do_rewrite(root, apply_):
                 skipped += 1
                 continue
             if r['grade'] == '高':
-                add = '- **%s实证**：%s —— %s（%s）' % (r['case'], r['title'][:60], r['emp'], r['src'])
+                # 标签形态（2026-09-27 用户裁定固化）：`- **<案名>实证**：<标题> —— <本案实证首句>（<来源>）`
+                # 案名位取「登记案名」（案名规范表简称，与门禁 A4 同源），非自拟；本轮 246 行曾触发 A4 未按登记案名。
+                add = '- **%s实证**：%s —— %s（%s）' % (
+                    _case_name(r['case'], root), r['title'][:60], r['emp'], r['src'])
             else:
-                add = '> **适用场景扩展 2026-09-20（%s）**：%s —— %s（%s）' % (
-                    r['case'], r['title'][:60], r['emp'], r['src'])
+                add = '> **适用场景扩展 %s（%s）**：%s —— %s（%s）' % (
+                    datetime.date.today().isoformat(),
+                    _case_name(r['case'], root), r['title'][:60], r['emp'], r['src'])
             ins[j - 1].append(add)
         for pos in sorted(ins, reverse=True):
             for add in ins[pos]:

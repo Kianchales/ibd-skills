@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""方法论全库健康护栏（18 项检查 · 防结构漂移）
+"""方法论全库健康护栏（24 项检查 · 防结构漂移）
 
 用法：
     python check_methods_health.py [--methods-root <工作区根>] [--quiet]
@@ -17,7 +17,9 @@
 5.  parsed TOTAL 一致性 parsed_titles.txt 首行 TOTAL= vs 实算（防 parse 陈旧 → 目录/索引滞后）
 6.  回写清单一致性      汇总行 = 明细行数、进度行 = 已销项数（防「追加新轮次后未回填汇总」）
 7.  W 编号唯一性        W 系列条目编号不得重复（支持 WL- 格式）
-8.  交叉引用有效性      正文引用 [FLIW]L?-\\d{6} 必须存在（旧格式历史注记跳过）
+8.  交叉引用有效性      引用目标编号必须在登记面（all_ids）内；扫描面＝域/语言/分卷＋行业版＋单案；
+                        全族正则（含 PL-/S-/I-CL）；存量基线**已清零**（2026-09-26 两批订正）⇒ **新增失效即 ERROR**；
+                        自带「历史编号·主库无对应·待核」注记者＝**已声明的历史引用**，不计欠账
 9.  域文件体积警戒线    单域文件 >300KB 触发 WARN + 族级拆分预案提示（防二阶膨胀复发）
 10. 索引行号定位抽查    编号 →「文件 + 行号」随机抽查 12 条须逐条命中（防改内容未刷索引的静默漂移）
 11. 单案产出内容范围    必备四域（F≥8／L≥7／I≥8／W 章存在）逐案齐备；缺项 WARN 并登记补蒸
@@ -31,20 +33,64 @@
                         单案 frontmatter 另含**必填字段**校验（type/case/case_no，见第 1 项）
 16. 撤除载体不得重建    已撤除载体目录存在即 ERROR（`30_行业版/单份细分版/`；2026-09-23 WO-08 撤除，
                         内容归位单案「行业研究详述（叙述型）」章）—— 防无人值守按旧提示词重建
+17. 编号提取正则左界    元自检：`_ID_RX` 登记表逐个跑写入式探针，任产假短号（缺左界致长号被误截）即 ERROR
+                        另含「**覆盖面**」探针：每个在用编号族（F/L/I/W/WL/PL/S/I-CL）须被至少
+                        一个登记正则**完整命中**（2026-09-26 补 · 同族第五犯：PL/S 整族曾漏检）
+                        （单一事实源 → 本文件 `RX_ID_*` 常量组）
+18. 分卷卷号唯一性      族内分卷后「卷NN-S」同域唯一 ＋ 段号自 1 连续 ＋ PL 族号须在 01–05
+19. 条目契约全库校验    调用 check_entry_contract.py --json 取 error，>0 即 ERROR（补「无出口」根因）
+20. 文档计数/元数据一致 元自检：护栏项数 ← 本 docstring 项号清单（须连续 1..N）；脚本数 ← scripts/*.py
+                        实测；**活文档**（白名单，见 _lib.layout.COUNT_DOCS）内「护栏 N 项／脚本 N 个」
+                        必须与实况一致；README 版本徽章须等 SKILL.md `version:`。**排除**「第 N 项」形态
+21. 入库强制字段·互见   增量水位（`HUXIAN_WATERMARK` 2026-09-26 冻结）：族内序号 > 水位者视为新增，
+                        其条目块须含 `**互见**：`（无关联写「无」）；**存量不回溯**。
+                        只判有无该字段、不判内容；单案层与行业版不适用
+22. 登记表完整性对账    两张手写登记表（`方法论_案名规范表.md` 表一·表二／`state/单案索引对照表.md` §一）
+                        的「单案文件」列 ⟷ `40_单案/` 实存，**双向对账**：登记了但不存在＝滞后、
+                        实存但未登记＝漏登，**均报 WARN**（软，不阻断）；另查表一案号连续性
+                        （AN0074/0075 主库直入案为**合法缺口基线** `TABLE22_AN_GAP_OK`）
+                        （权威口径见表 B · 2026-09-26 WO-MF-04）
+23. 库内 schema 水位      库内自描述入口 `SCHEMA.md`（`gen_schema.py` 生成）所记的 schema 版本
+                        ⟷ skill 实况 `SKILL.md` 的 `version:`；另校验其「规矩在哪读」表内的
+                        册子路径**确实存在**（该表已改**派生**：扫 `references/**/*.md`）。
+                        **立项理由**：schema 在库外、靠使用者记得才会跟上，一旦忘了，库的自描述
+                        就悄悄过期——本项把它变成机器可验。**档位分两层**：入口**缺失 ⇒ ERROR**
+                        （库失去自描述＝结构性损失，且该生成步已并入索引刷新链，报了就是真问题）；
+                        仅**水位滞后 ⇒ WARN**（属瞬时态，下次刷索引即自愈）
+24. 增量裸页码            统计活文档内「省略来源代号的裸页码标注」数 ⟷ 常量 `BARE_PAGE_BASELINE`：
+                        上升 ⇒ ERROR（新增了裸页码）；持平 ⇒ PASS；下降 ⇒ WARN（提示复核后下调基线）。
+                        **立项理由**：溯源达标（A1）原定「全库可判案率过半」，实测**结构性不可达**
+                        ——存量既非机器可补（逐一复验仅约 3% 够格），亦非人可裁 ⇒ 判据**改口径**为
+                        「**增量零裸页码**」：存量按设计边界不回溯，增量不得再产生。
+                        与 `check_evidence.py` **同一判据**（同两条正则 ＋ 同一别名表），两处读数应一致
 
-退出码：0 = 全部通过（WARN 不阻塞）；1 = 存在 ERROR
+注：第 12 项（I-CL 条目位置）实现在第 3 项（编号健康）的行业合并版分支内，非独立小节。
+
+三栏信号（2026-09-26 WO-33）：
+  ERROR         **验了发现不符**（有界结论）
+  UNVERIFIABLE  **根本验不了**（本应受检却缺输入/脚本/文件）—— **计入 ERROR 与退出码**，不得当通过
+  WARN(soft)    只进报告与日志，不影响退出码
+
+退出码：0 = 无 ERROR 且无 UNVERIFIABLE（可有 WARN）；1 = 有 ERROR 或 UNVERIFIABLE；
+        2 = 前置失败（未找到库）；3 = `--strict` 下 WARN > 0
 """
-import argparse, io, json, os, re, glob, random, sys
+import argparse, io, json, os, re, glob, random, sys, time
 from pathlib import Path
 
 import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-_ap = argparse.ArgumentParser(description="方法论全库健康护栏（19 项检查）")
+_ap = argparse.ArgumentParser(description="方法论全库健康护栏（24 项检查）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--quiet", action="store_true", help="只输出异常项")
+_ap.add_argument("--strict", action="store_true",
+                 help="WARN > 0 时以退出码 3 退出（默认：退出码只表 ERROR，WARN 只进报告）")
+_ap.add_argument("--no-log", action="store_true",
+                 help="不写操作日志（默认：每次体检向 <工作区根>/logs/库操作日志.md 追加一行）")
+_ap.add_argument("--allow-dup", action="store_true",
+                 help="允许同日同结果重复留痕（默认：同日同「结果行」已存在则跳过，防刷屏）")
 _ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
 _args = _ap.parse_args()
 
@@ -53,18 +99,27 @@ _ls.path.insert(0, _lo.path.dirname(_lo.path.abspath(__file__)))
 from _lib.layout import (resolve as _layout_resolve, ENTRY_FILE, PARSED_FILE, TOC_FILE,
                          DOMAIN_SIZE_WARN_BYTES, SKIP_DIRS, GENERATED_BASENAMES,
                          MERGED_MAP, VOLUME_NAME, LANG_W_FILE, DOMAIN_GLOB, LANG_GLOB,
-                         SINGLE_NAME, DIR_INDUSTRY_MERGED, library_files)
+                         MERGED_GLOB, SINGLE_NAME, DIR_INDUSTRY_MERGED, library_files,
+                         RX_ID_FAMILY, COUNT_DOCS, COUNT_DOCS_WORKSPACE, COUNT_SCAN_STOP_HEADING,
+                         SKILL_DIR, RX_DECLARED_HIST, CANON_TABLE, CASE_INDEX_TABLE,
+                         SCHEMA_BASENAME, BARE_PAGE_BASELINE, GENERATED_NAME,
+                         DIR_DOMAIN, DIR_LANG, DIR_VOLUME, domain_files as _layout_domain_files)
 _ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
 # ---------- 编号提取正则登记表（**单一事实源** · 第 17 项元自检对象） ----------
 # 铁律：凡「**短前缀 ⊂ 长前缀**」的编号族（`L-` ⊂ `WL-`、`I-` ⊂ `WL-`、`L-` ⊂ `PL-`），
 #   提取正则**必须带左界 `(?<![A-Za-z])`**；行首锚定 `^### ` 者天然满足。
 # 背景：同族已四犯（I-0088／0091／0092／0094）—— `[FLI]-\d{6}` 会把 `WL-010020` 误截为
 #   `L-010020`（实测 354 个假阳性）；`([FLIW]L?-\d{6})` 无左界会把 `WL-180035` 匹配两次。
-RX_ID_ANY   = r"(?<![A-Za-z])[FLIW]L?-\d{6}"    # 任意编号（域／族卷／语言专项）
+RX_ID_ANY   = RX_ID_FAMILY      # ← 全族引用正则**单一事实源＝`_lib/layout.py` RX_ID_FAMILY**（2026-09-26 归一）
+#   ↑ 原为本地字面量 `[FLIW]L?-\d{6}`，**不含 `PL-`（542 条）与 `S-`（364 条）**
+#     ⇒ 全库 53.6% 的条目族**整体漏在交叉引用受检面外**（实测「域/语言/分卷」面 2,585 处引用，
+#     原正则只可见 783 处、**漏检 1,802 处 ＝ 69.7%**）。另补 `I-CL{类号}-{序}`（行业合并版条目）。
+#     ⚠️ 与 `RX_ID_HEAD` **必须同改**——只放宽引用正则而不放宽「定义收集」正则，会把整族 S- 误判为失效。
 RX_ID_LANG  = r"(?<![A-Za-z])(?:WL|W)-[A-Za-z0-9\-·~]+"  # W 系列编号
 RX_ID_REGT  = r"(?<![A-Za-z])[FLI]-\d{6}"       # 登记表主库编号（F/L/I）
 RX_ID_REGTW = r"(?<![A-Za-z])WL-\d{6}"          # 登记表语言专项编号
-RX_ID_HEAD  = r"^### ([FLIW])-(\d{6})"          # 标题编号（行首锚定）
+RX_ID_HEAD  = r"^### ([FLIWS])-(\d{6})"         # 标题编号（行首锚定）
+#   ↑ 2026-09-26 补 `S`（原 `[FLIW]` ⇒ 体例域 S 族**从不进入 all_ids**，登记面无 S ⇒ 引用校验无从命中）
 RX_ID_H3CNT = r"^### [FLIWS]-\d{6}|^### （\d+）"  # h3 条目计数（行首锚定）
 _ID_RX = [("任意编号", RX_ID_ANY), ("W 系列编号", RX_ID_LANG), ("登记表主库编号", RX_ID_REGT),
           ("登记表语言专项编号", RX_ID_REGTW), ("标题编号", RX_ID_HEAD), ("h3 条目计数", RX_ID_H3CNT)]
@@ -96,7 +151,12 @@ WHITELIST = {
     MERGED_MAP,
 } | set(GENERATED_BASENAMES)
 
-ERRORS, WARNS = [], []
+ERRORS, WARNS, UNVERIFIABLE = [], [], []
+# `UNVERIFIABLE`（2026-09-26 WO-33）＝ **本应受检、但因缺输入/脚本/文件
+#   而根本判不了**的情形，**与「验了发现不符（ERROR）」分栏**。判据原文：「**验了疑似不符**」与
+#   「**根本验不了**」分两栏；后者 **always need a decision**，不得默默当通过。
+#   本栏**计入 ERROR 与退出码**（FAIL）—— 理由同第 19 项立项目的「**没有出口，就不会有人修**」：
+#   把「判不了」降级成 WARN 或静默跳过，等于让有界检查的缺口永久隐形（本库两次「门禁假绿」同源）。
 
 
 def count_entries(fname, content):
@@ -178,7 +238,15 @@ for p in md_files:
 # 3a. 全局唯一性（跨文件）+ 3b. 族内连续（每域每族 seq 1..N）
 # 3c. 登记表一致（登记表编号必须存在于域文件/W系列标题；文件可多于登记表=蒸馏新增）
 all_ids = {}   # "F-010001" -> rel 文件（含域文件 ### 标题 + W 系列 ** 条目）
-fam_seqs = {}  # (rel, prefix, fam) -> [seqs]
+GAP_BASELINE = {
+    "PL-01": [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 19, 20],
+    "PL-02": [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 19, 20],
+    "PL-03": [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 19, 20],
+    "PL-04": [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 20],
+    "PL-05": [4, 5, 9, 10],
+}
+
+fam_seqs = {}  # (prefix, fam) -> [(seq, rel)]  （2026-09-26：按「族」聚合，不按文件）
 for p in md_files:
     fn = os.path.basename(p)
     rel = os.path.relpath(p, METHODS)
@@ -199,7 +267,11 @@ for p in md_files:
                 if new_id in all_ids:
                     ERRORS.append("编号跨文件重复: %s 同时出现在 %s 与 %s" % (new_id, all_ids[new_id], rel))
                 all_ids[new_id] = rel
-                fam_seqs.setdefault((rel, prefix, int(full[:2])), []).append(int(full[2:]))
+                # 2026-09-26：族内连续**按「族」聚合、不按文件** —— 原键 `(rel, prefix, fam)` 隐含
+                #   「一族一文件」假设；S／PL 族内分卷（`卷NN-1/2/3`）后**同族跨多文件**，
+                #   按文件算必然误报「缺 1..N」（实测 S-01 报缺 1–10，实为卷 01-1 持有 seq 1–10）。
+                #   契约册原文即「**族内连续**」（族＝切分单元），故改全族聚合。
+                fam_seqs.setdefault((prefix, int(full[:2])), []).append((int(full[2:]), rel))
                 continue
             m = re.match(r"^### （(\d+)）", s)
             if m:
@@ -216,6 +288,9 @@ for p in md_files:
                list(re.finditer(r"^-\s*\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\*\*", content, re.M)) + \
                list(re.finditer(r"^### ((?:WL|W)-\d{6})", content, re.M)) + \
                list(re.finditer(r"^### ((?:PL)-\d{6})", content, re.M))   # 2026-09-23 补 PL-（按族外置后 PL 族卷）
+        for _mm in re.finditer(r"^### (PL-\d{6})", content, re.M):
+            _full = _mm.group(1)[3:]
+            fam_seqs.setdefault(("PL", int(_full[:2])), []).append((int(_full[2:]), rel))   # 2026-09-26：PL 序号纳入族内连续受检面（基线见 GAP_BASELINE）
         for m in wids:
             wid = m.group(1)
             if wid in all_ids:
@@ -244,7 +319,7 @@ for p in md_files:
             if cid in all_ids:
                 ERRORS.append("编号跨文件重复: %s 同时出现在 %s 与 %s" % (cid, all_ids[cid], rel))
             all_ids[cid] = rel
-            fam_seqs.setdefault((rel, "I-CL", int(m.group(1))), []).append(int(m.group(2)))
+            fam_seqs.setdefault(("I-CL", int(m.group(1))), []).append((int(m.group(2)), rel))
         # 位置校验：子行业章之后的 I-CL 条目一律报错（含仍计入编号唯一性）
         if _sub_head is not None:
             for _i in range(_sub_head + 1, len(lines)):
@@ -256,13 +331,19 @@ for p in md_files:
                               % (cid, rel, _i + 1))
                 if cid not in all_ids:
                     all_ids[cid] = rel
-                    fam_seqs.setdefault((rel, "I-CL", int(m.group(1))), []).append(int(m.group(2)))
+                    fam_seqs.setdefault(("I-CL", int(m.group(1))), []).append((int(m.group(2)), rel))
 
-for (rel, prefix, fam), seqs in sorted(fam_seqs.items()):
-    seqs_sorted = sorted(seqs)
+for (prefix, fam), items in sorted(fam_seqs.items()):
+    seqs_sorted = sorted(set(sq for sq, _ in items))
     if seqs_sorted != list(range(1, len(seqs_sorted) + 1)):
         missing = sorted(set(range(1, max(seqs_sorted) + 1)) - set(seqs_sorted))
-        ERRORS.append("族内编号不连续 %s %s-%02d: %d 条，缺 %s" % (rel, prefix, fam, len(seqs_sorted), missing[:10]))
+        _gap_key = "%s-%02d" % (prefix, fam)
+        _gap_base = set(GAP_BASELINE.get(_gap_key, [])) if prefix == "PL" else set()
+        _gap_new = sorted(set(missing) - _gap_base)
+        if _gap_new:
+            ERRORS.append("族内编号不连续 %s-%02d: %d 条，缺 %s" % (prefix, fam, len(seqs_sorted), _gap_new[:10]))
+        elif missing:
+            WARNS.append("族内缺号（历史欠账基线内 %s-%02d 缺 %s）—— 基线外新增缺号才 ERROR" % (prefix, fam, missing[:8]))
 
 # 3c. 登记表一致（自动发现库根 tasks/ 下的编号登记表；兼容历史命名）
 _tasks_dir = os.path.join(os.path.dirname(os.path.dirname(SCRIPTS)), "tasks")
@@ -356,17 +437,61 @@ for df in sorted(glob.glob(os.path.join(METHODS, LANG_GLOB))):
         ERRORS.append("W 编号重复 %s: %s" % (os.path.basename(df), dups))
 
 # ---------- 8. 交叉引用有效性（v37 新增，D6 裁定） ----------
-# 范围：5 个方法论正文本体；规则：引用编号（[FLIW]L?-\d{6}）必须存在于 all_ids；
-# 旧 W 系列形态（W-00xxxx）为历史注记/索引区保留项，跳过不报。
+# 范围：5 个方法论正文本体；规则：引用编号须存在于 all_ids；旧 W 系列形态（W-00xxxx）为历史注记，跳过不报。
 # 2026-09-23 补：纳入 `50_分卷/`（按族外置后 F/L/I 条目正文在此 ⇒ 卷内引用亦须受检）
-for df in sorted(glob.glob(os.path.join(METHODS, DOMAIN_GLOB))) + sorted(glob.glob(os.path.join(METHODS, LANG_GLOB))) \
-        + sorted(glob.glob(os.path.join(METHODS, VOLUME_NAME, "*.md"))):
+# 2026-09-26 补（编号覆盖面）：**纳入 `30_行业版/`（I-CL 条目的引用）＋ `40_单案/`（单案引用主库编号）**
+#   —— 原扫描面只含域/语言/分卷，**单案与行业版整层不受检**（实测该两层含 2,373 处引用）。
+#
+# 存量失效引用（旧称：悬空引用）基线（2026-09-26 · 定案 9「**豁免历史、约束增量**」）
+#   ── 存量**不改内容**（改属 ③ 内容回写面），故登记为**已知欠账**：命中基线者报 **WARN**
+#      （**可见但不阻断**），**新增**失效才报 ERROR。
+#   ── 基线变动（消解或新增）须**同步本表与 `references/govern/health-check.md` 第 8 项**。
+DANGLE_BASELINE = set()   # 2026-09-26 清零（见下注③）
+# ── PL 族缺号基线（2026-09-26 · PL 序号纳入第 3 项「族内连续」受检面当日冻结）────────
+#   实测缺号呈「段状」且五族形态一致（01/02/03 族缺 4-10、14-20；04 族缺 3-10、13-20；05 族缺 4-5、9-10）
+#   ⇒ 指向历史改号/落号事件（悬空两批订正已考古证实），非孤立笔误 ⇒ 一次性登记为**历史欠账基线**：
+#   基线内缺号报 WARN（可见不阻断），**基线外新增缺号才 ERROR**（与悬空同款「豁免历史、约束增量」）。
+# 2026-09-26 收缩 13 → 9 → 5 → **0**：
+#   ① 移出 4 个 `W-` 编号（W-070008／W-180023／W-190001／W-190004）—— 经逐条核原文，其引用处
+#      **自带「历史编号·主库无对应·待核」注记** ⇒ 属 **A6 降级留痕合法形态**，改由 `_RX_DECL_HIST` 单列。
+#   ② 第一批移出 4 个**已订正**编号（用户裁定「按你建议」后执行，属 ③ 内容回写）：
+#      `S-000015 → S-030001`（2 文件同句，括注与标题逐字重合）
+#      `PL-010004 → PL-020024`（称号逐字一致）
+#      `PL-010009 → PL-050013`（标题＋`来源案`＝保伦股份 **双命中**；同名 PL-050037/041/043 案名不符已排除）
+#      `F-000073 → F-AN0017-14`（**非主库引用**：表格内案内序号范围写法；实测 F-AN0017-01..14 齐备）
+#   ③ 第二批移出余 5 个（用户裁定「按你建议继续」，同日执行）——深挖决定性发现：5 号（含重排前旧号
+#      PL-150010／PL-190005／PL-190010／PL-180003）**在库任何历史状态（archive 全部快照）中从未作为
+#      条目存在** ⇒ 非「改号未同步」而是「引用了从未落号的号」。处置＝**指定现存替代 或 删半句**：
+#      `PL-010010 → PL-050014`（保伦侧同族；同句另两号均万源通）
+#      `PL-050005 → PL-050056`（联讯仪器 09-06 < 引用者九目化学 09-16，时序成立；措辞「另证不设效益免责
+#        注」排除标题已含免责注的 PL-050098）
+#      `PL-050010` → 删半句（龙鑫侧保留案内号 PL-AN0048-10；库内无龙鑫来源案的族05条目 ⇒ 龙鑫侧从未落号）
+#      `PL-040003` → 删半句（保留 PL-040023；候选 PL-040035 时序不符——引用者胜业电气 08-29 早于其 09-12 落号）
+#      `I-100005 → I-030003`（同句括注「比例测算法＋口径显式」与 I-030003 标题两项逐字命中）
+#   **baseline 从此为空**：**新增失效即 ERROR，无豁免**；本表保留为机制占位（后续如需豁免须经裁定并落此表）。
+_base_hits = set()
+_decl_hist = set()
+# 「**已声明的历史引用**」＝引用处**自带注记**说明该编号在主库无对应，如
+#   「`W-070008`（历史编号·主库无对应·待核）」——这是 **A6 降级留痕的合法形态**（显式声明、机器可识别），
+#   **不算失效欠账**：它不是「漏改的引用」，而是「**引用了确实不在库内的历史编号，且已告知读者**」。
+#   处置：单列计数、不报 ERROR、不入 baseline（免与「真失效」混算）。判据＝注记词同现。
+_RX_DECL_HIST = re.compile(RX_DECLARED_HIST)
+#   ↑ 判据常量收在 `_lib/layout.py`（**单一事实源**）：体检第 8 项与 `gen_refgraph.py` **同判**。
+_SURF8 = (sorted(glob.glob(os.path.join(METHODS, DOMAIN_GLOB)))
+          + sorted(glob.glob(os.path.join(METHODS, LANG_GLOB)))
+          + sorted(glob.glob(os.path.join(METHODS, VOLUME_NAME, "*.md")))
+          + sorted(glob.glob(os.path.join(METHODS, MERGED_GLOB)))
+          + sorted(glob.glob(os.path.join(METHODS, SINGLE_NAME, "*.md"))))
+for df in _SURF8:
     rel = os.path.relpath(df, METHODS)
     with io.open(df, encoding="utf-8") as f:
         lines = f.read().splitlines()
     for i, l in enumerate(lines):
         s = l.strip()
-        if not s or s.startswith("#") or s.startswith("|") or s.startswith(">"):
+        if not s or s.startswith("#") or s.startswith(">"):
+            # 2026-09-26：**表格行（`|`）纳入扫描面**——原与 `#`／`>` 一并跳过，实测漏 1 处
+            #   （`F-000073` 仅出现在 `40_单案/环动科技` 表格行）；`#`（定义行／自指）与 `>`（引用块）
+            #   仍按设计排除，见 `health-check.md` 第 8 项「覆盖边界」。
             continue
         # 2026-09-23 修：`([FLIW]L?-\d{6})` 无左界 ⇒ `WL-180035` 会被匹配**两次**
         #   （`WL-180035` 与错位起的 `L-180035`）⇒ 同一引用重复报错。加左界 `(?<![A-Za-z])`。
@@ -375,7 +500,20 @@ for df in sorted(glob.glob(os.path.join(METHODS, DOMAIN_GLOB))) + sorted(glob.gl
             if re.match(r"^W-00", ref):  # 旧 W 系列编号（历史注记/索引保留）
                 continue
             if ref not in all_ids:
-                ERRORS.append("交叉引用无效 %s L%d: %s（目标编号不存在，需核对登记表/迁移）" % (rel, i + 1, ref))
+                if _RX_DECL_HIST.search(s):
+                    _decl_hist.add(ref)      # 已声明的历史引用（A6 降级留痕）⇒ 不算失效
+                elif ref in DANGLE_BASELINE:
+                    _base_hits.add(ref)      # 存量欠账：报 WARN（可见、不阻断）
+                else:
+                    ERRORS.append("交叉引用无效 %s L%d: %s（目标编号不存在，需核对登记表/迁移）" % (rel, i + 1, ref))
+if _base_hits:
+    WARNS.append("存量失效引用（历史欠账清单（旧称：基线豁免） **%d 个编号** · 属 ③ 内容回写面，本次**不改内容**）：%s —— **新增**失效才报 ERROR；基线表见脚本 `DANGLE_BASELINE` 与 `health-check.md` 第 8 项"
+                 % (len(_base_hits), "、".join(sorted(_base_hits))))
+if _decl_hist:
+    # **不计欠账**：这些是「引用了确实不在库内的历史编号，且引用处已告知读者」——降级留痕的合法形态。
+    # 单列出来只为**可见**（免与真失效混淆），不入退出码、不入 baseline。
+    WARNS.append("已声明的历史引用 **%d 个编号**（**不计欠账** · A6 降级留痕合法形态）：%s —— 引用处自带「历史编号·主库无对应·待核」注记"
+                 % (len(_decl_hist), "、".join(sorted(_decl_hist))))
 
 # ---------- 9. 域文件体积警戒线（2026-09-03 新增） ----------
 # 对象：四域文件 + 投行语言专项（与拆分代次同一口径）；超线 WARN 不阻塞，提示族级拆分预案
@@ -431,10 +569,17 @@ if os.path.exists(_TOC):
             ERRORS.append("索引行号定位漂移: 抽查 12 条中 %d 条未命中（编号 → 文件:行号 不符；"
                           "多为改内容后未刷索引）—— %s" % (len(_miss), "、".join(_miss[:5])))
         _locator_checked = len(_rows)
+        # 2026-09-26（WO-18）：原输出把「池大小」当「抽样条数」打印 ⇒ 信号失真（实测池 1689、实抽 12）。
+        #   现分别记录，输出「抽样/池」两数，使「覆盖率」可见。
+        _locator_sampled = min(12, len(_rows))
     else:
-        _locator_checked = 0
+        _locator_checked, _locator_sampled = 0, 0
+        UNVERIFIABLE.append("索引行号定位**无法抽查**（第 10 项）：%s 存在但无可解析行"
+                            "—— 定向读取键（编号→文件:行号）本次**零验证**；先跑 refresh_index.py" % TOC_FILE)
 else:
-    _locator_checked = 0
+    _locator_checked, _locator_sampled = 0, 0
+    UNVERIFIABLE.append("索引行号定位**无法抽查**（第 10 项）：%s 不存在"
+                        "—— 定向读取键本次**零验证**（新库首次运行前应先 refresh_index.py）" % TOC_FILE)
 
 # ---------- 11. 单案产出内容范围（2026-09-23 新增 · 用户裁定「确定单案蒸馏内容范围」） ----------
 # 判据：必备四域（财务/法律/行业/写作范式）逐案齐备；条数下限取实测最小值（F>=8 / L>=7 / I>=8）。
@@ -513,8 +658,10 @@ _SINGLE_SEC = ["〇、", "一、", "二、", "三、", "四、", "五、", "六�
 _MERGED_SEC = ["一、", "二、", "三、", "四、"]
 # 2026-09-23 补（判 I-0093）：**真欠账 vs 已定版豁免 二分** ——
 #   原实现把两类混报，导致「修完真欠账后 WARN 数值逐字不变、修复不可见」。
-#   豁免形态五类（2026-09-23 实测逐册核实，判据见 references/templates/README.md「已知例外」）：
-#     ① 第 2 类语言专项（文件名 `投行语言写作范式_*`）；② 「第X章／第X部分」异体系（h1 **或 h2**，实测有 2 册写在 h2）；
+#   豁免形态（2026-09-23 实测逐册核实，判据见 references/templates/README.md「已知例外」）：
+#     原① 第 2 类语言专项（`投行语言写作范式_*`）——**2026-09-26 撤销**（两孤本已并入标准单案并归档，
+#        该文件形态不复存在；保留判据反使同类新孤本漏检，删除即防回潮）；
+#     ② 「第X章／第X部分」异体系（h1 **或 h2**，实测有 2 册写在 h2）；
 #     ③ 单案无 h2 节结构（缺项 ≥6，实测 12 册，h1=1 且七节全缺）；④ 单案只缺〇画像（历史批次无画像节，37 册）；
 #     ⑤ 行业合并版大幅缺段（缺项 ≥3，异体系）。
 _sk_single, _sk_merged, _sk_exempt = [], [], []
@@ -537,8 +684,7 @@ for _f in md_files:
         continue
     _label = os.path.basename(_f).replace("通用方法论_投行知识与写作范式_", "").replace(".md", "")[:16]
     _alt = any(("第" in h and ("章" in h or "部分" in h)) for h in (_h1 + _h2))
-    _exempt = (os.path.basename(_f).startswith("投行语言写作范式_")          # ①
-               or _alt                                                       # ②
+    _exempt = (_alt                                                                # ②
                or (_is_single and len(_miss) >= 6)                           # ③
                or (_is_single and _miss == ["〇"])                           # ④
                or (_is_merged and len(_miss) >= 3))                          # ⑤
@@ -586,8 +732,9 @@ _cec_p, _apw_p = _find_script("check_entry_contract.py"), _find_script("apply_re
 _cec_src, _apw_src = _read_text(_cec_p), _read_text(_apw_p)
 if not (_cec_src and _apw_src):
     _missing = [n for n, s in (("check_entry_contract.py", _cec_src), ("apply_rewrite.py", _apw_src)) if not s]
-    WARNS.append("标签形态集自检跳过：未定位到 %s（包内脚本不在脚本同目录/上级 scripts/ 库 scripts/）"
-                 % "、".join(_missing))
+    UNVERIFIABLE.append("标签形态集自检**无法执行**（第 15 项）：未定位到 %s"
+                        "（包内脚本不在脚本同目录/上级 scripts/ 库 scripts/）—— 本项判据源缺失，"
+                        "形态一致性**本次未被验证**" % "、".join(_missing))
 else:
     _m = re.search(r"BAN_LABEL\s*=\s*re\.compile\(\s*r?[\"'](.+?)[\"']", _cec_src)
     if not _m:
@@ -643,6 +790,23 @@ for _nm, _rx in _ID_RX:
                       " —— 须加 `(?<![A-Za-z])` 左界（族规则：短前缀 ⊂ 长前缀）"
                       % (_nm, _PROBE_IDS, _bad))
 
+# ---------- 17b. 编号**覆盖面**探针（2026-09-26 补 · 判 I-0094 同族第五犯） ----------
+# 背景：原元自检**只测「左界」**（长号被误截为短号），**不测「覆盖面」** ⇒ 「某编号族整体不在
+#   任何登记正则里」这类漏洞**全程通过**。实证：`PL-`（542 条）与 `S-`（364 条）共 **906 条、
+#   占全库 53.6%**，长期漏在交叉引用受检面外（`RX_ID_ANY` 无 PL/S；`RX_ID_HEAD` 无 S ⇒ S 连
+#   登记面都没进）；「域/语言/分卷」面 2,585 处引用中**漏检 1,802 处 ＝ 69.7%**。
+# 判据：对**每个在用编号族**各取一枚样本，要求「**至少一个登记正则能完整命中它**」；
+#   任一族无覆盖 ⇒ ERROR（须在 `_ID_RX` 增补，或说明该族已停用）。
+_PROBE_FAM = {"F": "F-010001", "L": "L-010001", "I": "I-010001", "W": "W-010001",
+              "WL": "WL-010020", "PL": "PL-010001", "S": "S-010001", "I-CL": "I-CL01-01"}
+for _fam, _sample in sorted(_PROBE_FAM.items()):
+    _covered = any(any(_m.group(0) == _sample for _m in re.finditer(_rx, _sample))
+                   for _nm, _rx in _ID_RX)
+    if not _covered:
+        ERRORS.append("编号**覆盖面**缺口（第 17 项覆盖面探针）：编号族「%s」样本 `%s` 未被任何登记正则**完整命中**"
+                      " —— 须在 `_ID_RX` 增补覆盖该族的正则（族规则：短前缀 ⊂ 长前缀，且**每族都须被覆盖**）"
+                      % (_fam, _sample))
+
 # ---------- 18. 分卷卷号「唯一性」与段号连续性（2026-09-23 新增 · 族内分卷后） ----------
 # 背景：族内分卷后卷号形如「卷NN-S」（NN＝族号、S＝段号）；索引标签 chap_label 只取「卷NN-S」
 #   并丢弃其后内容 ⇒ **同域内卷号必须唯一**，否则多段卷收敛为同一标签、定位失效。
@@ -693,7 +857,8 @@ for _fam, _seg, _bn in _vols.get("投行语言专项_招股书PL系列", []):
 import subprocess as _sp
 _cec_p = _find_script("check_entry_contract.py")
 if not _cec_p:
-    WARNS.append("条目契约校验器未找到（第 19 项）：check_entry_contract.py")
+    UNVERIFIABLE.append("条目契约**整体未被校验**（第 19 项）：未找到 check_entry_contract.py"
+                        "—— 契约面（来源标注/字段名/案名/标签）本次**零验证**")
 else:
     try:
         _r = _sp.run([sys.executable, _cec_p, "--methods-root", _ROOT, "--json"],
@@ -707,28 +872,453 @@ else:
             ERRORS.append("条目契约违规 %d 处（第 19 项）：%s —— 跑 check_entry_contract.py 看全量"
                           % (_n, _det[:220]))
     except Exception as _e:
-        WARNS.append("条目契约校验未能执行（第 19 项）：%s" % _e)
+        UNVERIFIABLE.append("条目契约校验**未能执行**（第 19 项）：%s —— 契约面本次**零验证**" % _e)
 
 
+# ---------- 20. 文档计数/元数据一致性（2026-09-26 WO-32 · 元自检） ----------
+# 病根：同一批「护栏 N 项／随包脚本 N 个」声明散布在 8+ 处**活文档**且各自漂移——2026-09-26 当日
+#   实测**四度**（护栏 16/18/19；脚本 15/25/26/27；README 版本徽章滞后一版）。属第 17 项同族
+#   「**多份口径各自维护**」病的**文档面**；修法同上——**收单一事实源 ＋ 元自检**。
+# 单一事实源：
+#   ① 护栏项数 ← **本文件 docstring 的项号清单**（须为连续 1..N；docstring 即登记表，不另设副本）
+#   ② 脚本数   ← `scripts/*.py` 实测（用户面可执行；**不含** `scripts/_lib/` 内部模块）
+# 扫描面：`_lib.layout.COUNT_DOCS`（skill 侧）＋ `COUNT_DOCS_WORKSPACE`（工作区侧）**白名单**——
+#   **只扫活文档**；CHANGELOG／logs（操作日志 append-only）／tasks／docs（执行记录）／archive／
+#   methods/**（条目正文里的「护栏第 N 项」是**项号引用**）**一律不扫**，历史记录保留原值。
+#   活文档内遇「近期更新／版本历史」类小节**停止扫描**。
+# 正则要点：**必须排除「第 N 项」形态**（项号引用 ≠ 计数声明；曾两次误判：
+#   `fix-tools.md` 的「护栏第 16 项」、`templates/README.md` 的「第 14 项护栏」）；
+#   且须 `(?<!\d)` 防「第 14 项」被截成短号（实测：无此界会把「14」的尾数当成计数）。
+_doc_items = [int(_m) for _m in re.findall(r"^(\d{1,2})\.\s+\S", __doc__ or "", re.M)]
+if _doc_items != list(range(1, len(_doc_items) + 1)):
+    ERRORS.append("第 20 项元自检：本脚本 docstring 护栏项号**不连续** → %s（须为 1..N，逐项可数）"
+                  % _doc_items)
+_guard_n = len(_doc_items)
+# ⚠️ 脚本数须取 **skill 的** `scripts/*.py`（`resolve()` 返回的 SCRIPTS 是**工作区**的 scripts/）。
+_script_n = len(glob.glob(os.path.join(str(SKILL_DIR), "scripts", "*.py")))
+_RX_CNT_G = re.compile(r"(?<!第)(?:护栏体检|体检|护栏|检查)(?!第)[^\d\n，。；;｜|第]{0,6}(\d{1,2})\s*项"
+                       r"|(?<!第\s)(?<!第)(?<!\d)(\d{1,2})\s*项(?:护栏体检|体检|护栏|检查)")
+#   ↑ **间隔桥接的取值（2026-09-28 修假红）**：正装形态允许「关键词」与「数字」之间有 ≤6 字间隔，
+#     以容纳「护栏 **N 项」这类加粗/空格写法。但该桥接会产生**假红**：实测「护栏项（体检第 NN 项」
+#     被读成计数声明（关键词「护栏」→ 间隔「项（体检第 」→ 数字 →「项」）⇒ 当场 ERROR。
+#     **治法不是禁「（」**（「体检（NN 项护栏」是**合法**形态，禁它即误伤），而是**禁止间隔里再出现
+#     「第」与「；」**：前者是「项号引用」的标记，后者是分句边界——二者出现在间隔里，说明这里
+#     跨的已是另一句话/另一次引用，不该再当作同一处计数声明。
+#     教训归属：假红与静默漏**同属**该漂移族——前者污染 0-ERROR 基线（本库已两次吃过自动化的亏），
+#     后者让缺陷长期不可见。故桥接的松紧须以此类实测定，不凭想象。
+#     ⚠️ **写注释也别写出真数字**：本条初稿举了带真数字的例，**当场自触发本项**（报 ERROR 两处）
+#        ⇒ 凡**描述**本项形态的文案一律用 `N` 占位。这是「给病写疫苗的人，也会得同一种病」的现场例。
+_RX_CNT_S = re.compile(r"(\d{1,2})\s*个随包脚本|随包脚本[^\d\n]{0,8}(\d{1,2})\s*个"
+                       r"|(?<![\d第])脚本\s*(\d{1,2})\s*个|(?<![\d第])(\d{1,2})\s*个脚本")
+_RX_STOP = re.compile(COUNT_SCAN_STOP_HEADING)
+# ⚠️ 不能用 `os.path.dirname(SCRIPTS)` —— `resolve()` 返回的 `SCRIPTS` 是**工作区**的 `scripts/`，
+#    其上溯即工作区根（曾因此把 skill 侧白名单整批跳过 = 静默失效）。skill 根取 `layout.SKILL_DIR`。
+_SKILL_DIR = str(SKILL_DIR)
+for _base, _rel in ([( _SKILL_DIR, _d) for _d in COUNT_DOCS]
+                    + [(_ROOT, _d) for _d in COUNT_DOCS_WORKSPACE]):
+    _p = os.path.join(_base, _rel)
+    _is_pack_doc = _base == _SKILL_DIR
+    if not os.path.isfile(_p):
+        # **随包文档**缺失＝包损坏 ⇒ 属「根本验不了」（该文档的计数一致性本次未被验证）；
+        # **工作区文档**缺失＝使用者库差异（白名单里含自建/可选件）⇒ 静默跳过，不报。
+        if _is_pack_doc:
+            UNVERIFIABLE.append("文档计数**无法核对**（第 20 项）：随包文档 %s 缺失 ⇒ 其计数一致性本次零验证" % _rel)
+        continue
+    try:
+        _lines = io.open(_p, encoding="utf-8", errors="replace").read().splitlines()
+    except OSError as _e:
+        UNVERIFIABLE.append("文档计数**无法核对**（第 20 项）：%s 读取失败（%s）" % (_rel, _e))
+        continue
+    for _i, _l in enumerate(_lines, 1):
+        if _RX_STOP.match(_l):
+            break                     # 「近期更新／版本历史」及其后属历史，不扫
+        for _m in _RX_CNT_G.finditer(_l):
+            _v = int(_m.group(1) or _m.group(2))
+            if _v != _guard_n:
+                ERRORS.append("文档计数不一致（第 20 项）%s L%d：称「护栏 %d 项」，实况 **%d 项**"
+                              % (_rel, _i, _v, _guard_n))
+        for _m in _RX_CNT_S.finditer(_l):
+            _v = int(next(_g for _g in _m.groups() if _g))
+            if _v != _script_n:
+                ERRORS.append("文档计数不一致（第 20 项）%s L%d：称「脚本 %d 个」，实况 **%d 个**"
+                              % (_rel, _i, _v, _script_n))
+# 20d 版本徽章 vs frontmatter（同一漂移族：README 顶部徽章由人手改、易滞后一版）
+try:
+    _sk_txt = io.open(os.path.join(_SKILL_DIR, "SKILL.md"), encoding="utf-8").read()
+    _mv = re.search(r"(?m)^version:\s*([0-9][^\s]*)", _sk_txt)
+    _rm_txt = io.open(os.path.join(_SKILL_DIR, "README.md"), encoding="utf-8").read()
+    _bv = re.search(r"badge/version-([0-9][^-]*)-", _rm_txt)
+    if _mv and _bv and _mv.group(1) != _bv.group(1):
+        ERRORS.append("文档计数不一致（第 20 项）README.md：版本徽章 %s ≠ SKILL.md `version: %s`"
+                      % (_bv.group(1), _mv.group(1)))
+except OSError:
+    pass
+
+
+# ---------- 21. 入库强制字段·互见（**增量水位** · 2026-09-26 WO-33） ----------
+# 规则（本库 R2）：**新入库**的跨案层／分卷条目须带「互见」字段
+#   （无关联写「**互见**：无」）；**存量不回溯补**（不建反链、不回溯补存量）。
+# 判据：**族内序号 > 水位** 者视为「新增」；其条目块内须出现 `**互见**：`，否则 ERROR。
+#   · 水位表为 **2026-09-26 冻结快照**（各族 max 序号，取自位置目录全量 1689 编号）；
+#   · **新增族**（水位表无该键）⇒ 整族按新增处理；
+#   · 水位表**不应随新增条目更新** —— 更新它等于把新条目「祖父化」，规则即失效。
+# 为何用水位而不用「全库强制」：全库强制会让 1689 条存量**由合规变不合规**（§定案 7 判据属 ②
+#   规范面），且存量补「互见」是内容回写、需语义判断（AI 不猜）⇒ 与 R2「不回溯」原意一致。
+# 覆盖边界：只判「**有无该字段**」，**不判内容**（指向是否合理属 `adversarial-review.md` 面）；
+#   `40_单案/`（案内自指，无互见语义）与 `30_行业版/`（I-CL 条目另制）**不适用**。
+HUXIAN_WATERMARK = {   # 2026-09-26 冻结（族 → 族内 max 序号）
+    "F-01": 31, "F-02": 6, "F-03": 5, "F-04": 5, "F-05": 17, "F-06": 16,
+    "F-07": 18, "F-08": 3, "F-09": 12, "F-10": 5, "F-11": 8, "F-12": 8,
+    "F-13": 8, "F-14": 17, "F-15": 5, "F-16": 4, "F-17": 2, "F-18": 1,
+    "I-01": 6, "I-02": 14, "I-03": 15, "I-04": 6, "I-05": 9, "I-06": 2,
+    "I-07": 7, "I-08": 4, "I-09": 12, "I-10": 3, "I-11": 9, "I-12": 9,
+    "I-13": 7, "I-14": 4, "I-15": 4,
+    "L-01": 19, "L-02": 6, "L-03": 11, "L-04": 4, "L-05": 9, "L-06": 9,
+    "L-07": 10, "L-08": 5, "L-09": 8, "L-10": 2, "L-11": 12, "L-12": 9,
+    "L-13": 9, "L-14": 5, "L-15": 12, "L-16": 2, "L-17": 2, "L-18": 1, "L-19": 2,
+    "PL-01": 125, "PL-02": 122, "PL-03": 123, "PL-04": 122, "PL-05": 112,
+    "S-01": 119, "S-02": 107, "S-03": 72, "S-04": 66,
+    "WL-01": 22, "WL-02": 4, "WL-03": 9, "WL-04": 28, "WL-05": 13, "WL-06": 5,
+    "WL-07": 25, "WL-08": 4, "WL-09": 20, "WL-10": 17, "WL-11": 22, "WL-12": 22,
+    "WL-13": 10, "WL-14": 32, "WL-15": 40, "WL-16": 28, "WL-17": 22, "WL-18": 36,
+    "WL-19": 6,
+}
+_RX_H3ID = re.compile(r"^((?:WL|PL|[FLIWS])-\d{6})")
+_hx_miss, _hx_new = [], 0
+for _f in (sorted(glob.glob(os.path.join(METHODS, DOMAIN_GLOB)))
+           + sorted(glob.glob(os.path.join(METHODS, LANG_GLOB)))
+           + sorted(glob.glob(os.path.join(METHODS, VOLUME_NAME, "*.md")))):
+    try:
+        _txt2 = io.open(_f, encoding="utf-8", errors="replace").read()
+    except OSError:
+        continue
+    # 条目头在三个载体中一律为 `### <ID>…`，且条目内**无嵌套 h3**（实测核对）⇒ 可按 h3 切块。
+    for _chunk in re.split(r"(?m)^###\s+", _txt2)[1:]:
+        _first, _, _body = _chunk.partition("\n")
+        _m = _RX_H3ID.match(_first)
+        if not _m:
+            continue
+        _eid = _m.group(1)
+        _pref, _rest = _eid.split("-")
+        if int(_rest[2:]) > HUXIAN_WATERMARK.get("%s-%s" % (_pref, _rest[:2]), 0):
+            _hx_new += 1
+            if "**互见**：" not in _body:
+                _hx_miss.append("%s(%s)" % (_eid, os.path.relpath(_f, METHODS).replace(os.sep, "/")))
+if _hx_miss:
+    ERRORS.append("入库强制字段缺失（第 21 项）：新增条目 **%d 条** 无「**互见**：」字段 —— %s"
+                  "（无关联请写「**互见**：无」；水位表 `HUXIAN_WATERMARK`，存量不回溯）"
+                  % (len(_hx_miss), "、".join(_hx_miss[:6])))
+
+
+# ---------- 22. 登记表完整性对账（2026-09-26 WO-MF-04） ----------
+# 病根（实证）：两张手写登记表的「单案文件」列与 `40_单案/` 实存**各自漂移、无人对账**——
+#   2026-09-26 实测暴露三类：①孤本并入后旧名未同步（表 A／表 B／README 三处）；
+#   ②新批 10 案（AN0086–0095）表 A 漏登；③计数声明滞后（表 B 标题 80、实况 90）。
+#   全部属「文档说有什么 ⟷ 磁盘上有什么」不一致，且**跨 6 天两批蒸馏零告警**。
+#
+# 判据：**双向对账**（双向对账）
+#   · extra   ＝ 表内登记的文件名，`40_单案/` 内**不存在**
+#   · missing ＝ `40_单案/` 实存的文件，表内**未登记**
+#   · 两侧**均报 WARN**（不阻断）：存量已对齐（2026-09-26 闭合），基线为空；
+#     新增漂移随时可能来自「归档／改名未同步」——**报出来即可，不需 script 自动改**
+#     （修复属语义判断：改表还是改文件，AI 不猜 ⇒ 与 C 档定位一致）。
+#
+# 权威口径（2026-09-26 用户裁定 R-9）：**表 B（`state/单案索引对照表.md`）为准**——
+#   表 A（`方法论_案名规范表.md`）降为「白名单专用视图」；故两表**都查**，差异**分表报**，
+#   以便定位是哪一张滞后。
+# 覆盖边界：只判**文件名一致性**；**不判**案名↔案号↔cases 目录的对应正确性（属内容面）。
+def _norm_cell(_x):
+    """剥 Markdown 加粗/反引号/空白 —— 案号列存在 `**AN0076**` 形态，不剥会整行漏读。"""
+    return _x.replace("**", "").replace("`", "").strip()
+
+def _table_files(_path, _with_an):
+    """从登记表抓「单案文件」列。返回 (文件名集, 案号集)。
+    定位方式：**先在表头行找「单案文件」所在列号，再按该列取值**——
+    两张表列数不同（表 A 末列＝单案文件；表 B 末列＝cases 目录），
+    **禁按固定列位或末列取**（2026-09-26 实测：取末列会把表 B 的 cases 目录当文件名，误报 90 条漏登）。"""
+    _files, _ans = set(), set()
+    try:
+        _t = io.open(_path, encoding="utf-8", errors="replace").read()
+    except OSError:
+        return None, None
+    _col_f = None
+    for _ln in _t.splitlines():
+        if not _ln.strip().startswith("|"):
+            continue
+        _c = [_norm_cell(x) for x in _ln.strip().strip("|").split("|")]
+        if not _c or set("".join(_c)) <= set("-: "):
+            continue
+        # 表头行：定位「单案文件」列（**每张表各设一次**——表一 4 列／表二 7 列，列号不同）
+        if "单案文件" in _c:
+            _col_f = _c.index("单案文件")
+            continue
+        _ai = next((i for i, x in enumerate(_c) if re.fullmatch(r"AN\d{4}", x)), None)
+        if _ai is None:
+            continue
+        if _with_an:
+            _ans.add(_c[_ai])
+        _cand = _c[_col_f] if (_col_f is not None and _col_f < len(_c)) else _c[-1]
+        if _cand.endswith(".md"):
+            _files.add(_cand)
+    return _files, _ans
+
+_SGL_DIR = os.path.join(METHODS, SINGLE_NAME)
+_sgl_actual = set(x for x in os.listdir(_SGL_DIR) if x.endswith(".md")) \
+    if os.path.isdir(_SGL_DIR) else set()
+# 表一「案号不连续」的**合法形态基线**：主库直入案（无单案文件，故不入表一）。
+#   AN0074 胜业电气／AN0075 蘅东光 —— 2026-09-19 分配，登记于 `单案索引对照表.md` §二 台账。
+#   基线内静默；**基线外**缺号才 WARN。新增基线须附来源（防把真欠账洗成基线）。
+TABLE22_AN_GAP_OK = {"AN0074", "AN0075"}
+_TB = {
+    "表A 案名规范表": os.path.join(METHODS, CANON_TABLE),
+    "表B 单案索引对照表": os.path.join(_ROOT, "state", CASE_INDEX_TABLE),
+}
+for _tname, _tpath in _TB.items():
+    _tf, _tan = _table_files(_tpath, True)
+    if _tf is None:
+        UNVERIFIABLE.append("登记表完整性**无法核对**（第 22 项）：%s 读取失败" % _tname)
+        continue
+    _extra = sorted(_tf - _sgl_actual)
+    _miss = sorted(_sgl_actual - _tf)
+    if _extra:
+        WARNS.append("登记表滞后（第 22 项 · %s）：登记了 **%d 个** `40_单案/` 内不存在的文件 —— %s"
+                     "（多为归档/改名后未同步；权威口径见表 B）" % (_tname, len(_extra), "、".join(_extra[:6])))
+    if _miss:
+        WARNS.append("登记表漏登（第 22 项 · %s）：`40_单案/` 实存 **%d 个** 文件未登记 —— %s"
+                     "（新案入库须同步登记；权威口径见表 B）" % (_tname, len(_miss), "、".join(_miss[:6])))
+    if _tan is not None and _tan:
+        _gap = sorted(set("AN%04d" % i for i in range(1, int(max(_tan)[2:]) + 1)) - _tan)
+        # 合法形态：**主库直入案**（登记在表二台账「案号分配依据」、无单案文件）——
+        #   AN0074 胜业电气／AN0075 蘅东光（2026-09-19 分配，见 `单案索引对照表.md` §二）。
+        #   其号不在表一（表一＝有单案文件的案），故在表一面必然表现为「缺号」，**非欠账**。
+        _gap = [g for g in _gap if g not in TABLE22_AN_GAP_OK]
+        if _gap:
+            WARNS.append("案号不连续（第 22 项 · %s）：AN0001–%s 间缺 %d 个 —— %s"
+                         "（若为「主库直入案·无单案文件」属正常，请核表二台账）"
+                         % (_tname, max(_tan), len(_gap), "、".join(_gap[:8])))
+
+
+# ---------- 判定接口与退出码（WO-18 · 2026-09-26） ----------
+# 判据：「**退出码不承载信息，报告才是接口**」。
+# 故本脚本的**判定接口 ＝ 报告输出**（文本 ＋ `--json` 的 `warn` 字段与逐项 `issues`），
+# **退出码只表「有无 ERROR」，不表 WARN** —— 自动化若只读退出码，须**另读报告**才能看见 WARN。
+# 退出码：0 = 无 ERROR 且无 UNVERIFIABLE（可有 WARN）｜1 = 有 ERROR 或 UNVERIFIABLE｜2 = 前置失败｜3 = `--strict` 下 WARN > 0
+# ---------- 三栏信号（WO-33 · 2026-09-26） ----------
+# 承 通用实践「第三栏」判据：「**验了疑似不符**」与「**根本验不了**」**分两栏**；后者 always need
+#   a decision。本库落为 `ERRORS` ／ `UNVERIFIABLE` ／ `WARNS(soft)` 三栏，且 **UNVERIFIABLE 计入
+#   ERROR 与退出码** —— 若降级为 WARN 或静默跳过，「判不了」就永久隐形，正是本库两次「门禁假绿」
+#   （I-0088 标签形态空转、蒸馏产物未归集长期不可见）的同一根因。
+#   覆盖边界：本栏只收「**本该受检却判不了**」；「抽查只覆盖一部分」（如第 10 项 12/1689）属
+#   **抽样局限**、不入本栏（已由 `locator_sampled/locator_pool` 两数透明化）。
+# 2026-09-26 事实订正：原先记录「`--quiet` 吞掉 WARN」**不成立** —— ERROR/WARN 循环本就在
+#   `if not quiet` 之外，两种模式下均照常打印；`--json` 亦早已含 `warn`。真实缺口仅为
+#   「退出码看不见 WARN」，而按上引判据，这**本就不该由退出码承载**。
+# ---------- WARN 档位约定（WO-19 · 2026-09-26） ----------
+# 本库 WARN **一律 soft**（`severity=soft`）：只进报告、只记日志，**不影响退出码**。
+# 需要阻断的场景**不设 hard WARN**，而应把该检查**升格为 ERROR 项**——档位保持单一，避免软硬混用。
+# 关于「警告生命周期绑定检查」（停用某检查 ⇒ 清除其旧 `lint_warnings`）：
+#   **本库不适用** —— 本脚本每次**全库无状态重算**，WARN 由当前实况现场算出、不落盘、无陈旧态可清
+#   ⇒ 该机制解决的是**有状态系统**的「陈旧警告」问题，本库结构上不存在该问题（**设计优势，非缺口**）。
+#   若要观测「新增／已消」的动向，不靠陈旧警告，而靠**操作日志逐次留痕 ＋ 计数 diff**（见 WO-26）。
+# ---------- 23. 库内 schema 水位（库自描述完整性 · 2026-09-28） ----------
+# 病根：schema（规则本体）在 skill 包内、库在库外，两者**各自版本流**。规则改了、库的自描述
+#   却要等人记得重生成——**忘了就悄悄过期，且无任何信号**。本项把「库自描述是否跟得上」变成机器可验。
+# 单一事实源：① 库内水位 ← `SCHEMA.md`「schema 版本水位」行；② skill 实况 ← `SKILL.md` 的 `version:`。
+# 档位：缺失／滞后**均报 WARN（soft）**——理由是**可移植性**：本 skill 分发给他人时其库未必生成过
+#   SCHEMA.md，若报 ERROR 会让对方基线一上来就红。需阻断的场合可后续升格为 ERROR 项。
+# 自愈：`gen_schema.py` 已并入 `refresh_index.py` 的刷新链 ⇒ 正常节奏下（每次蒸馏后刷索引）自动跟上。
+try:
+    _sc_p = os.path.join(METHODS, SCHEMA_BASENAME)
+    if not os.path.isfile(_sc_p):
+        # **档位分两层**（2026-09-28 定）：缺失＝库**结构性**失去自描述，且该生成步**已并入索引
+        #   刷新链**（正常节奏下不该缺）⇒ 报了就是真问题，故升 ERROR。滞后属**瞬时态**、下次刷索引
+        #   即自愈 ⇒ 报 WARN。二者分开，既不让自愈中的状态污染 0-ERROR 基线，也不让结构损失静默。
+        ERRORS.append("库内 schema 入口**缺失**（第 23 项）：`%s` 不存在 ⇒ 本库**失去自描述能力**"
+                      "（由哪一版规矩管、规矩在哪读，只能靠使用者的库外记忆去兜）。"
+                      "重生成：`python gen_schema.py --methods-root <工作区根>`"
+                      % SCHEMA_BASENAME)
+    else:
+        _sc_full = io.open(_sc_p, encoding="utf-8", errors="replace").read()
+        _sc_txt = _sc_full[:4000]
+        _wm = re.search(r"schema\s*版本水位[^\n]*?`([^`\n]+)`", _sc_txt)
+        _sk_txt = io.open(os.path.join(str(SKILL_DIR), "SKILL.md"), encoding="utf-8").read(4000)
+        _sv = re.search(r"(?m)^version:\s*(\S+)", _sk_txt)
+        if not _wm or not _sv:
+            UNVERIFIABLE.append("库内 schema 水位**无法核对**（第 23 项）：`%s` 缺水位行，或 `SKILL.md` 缺 `version:`"
+                                % SCHEMA_BASENAME)
+        elif _wm.group(1) != _sv.group(1):
+            WARNS.append("库内 schema 水位**滞后**（第 23 项）：`%s` 记 **%s** ／ skill 实况 **%s**"
+                         " ⇒ 库的自描述已过期（重生成：`python gen_schema.py --methods-root <工作区根>`；"
+                         "该步已并入索引刷新链，下次蒸馏会自动跟上）"
+                         % (SCHEMA_BASENAME, _wm.group(1), _sv.group(1)))
+        # 23b **导航路径存在性**：第三节「规矩在哪读」已改**派生**（扫 references/**），但**仍须校验**——
+        #   防手改残留、生成器退化、或删册后未及时重生成。派生表的失败方向本该是「多扫」，
+        #   这里补一道**存在性**网，把「指向已不存在的册子」变成可见信号。
+        _nav = re.findall(r"`ibd-methods-ops/(references/[^`]+?\.md)`", _sc_full)
+        _nav = sorted(set(_nav))
+        if not _nav:
+            UNVERIFIABLE.append("库内 schema 的**导航表为空**（第 23 项）：第三节未列出任何册子路径 ⇒ "
+                                "该表可能未派生成功（须为扫 `references/**/*.md` 所得）")
+        _miss = [x for x in _nav if not os.path.isfile(os.path.join(str(SKILL_DIR), x))]
+        if _miss:
+            WARNS.append("库内 schema 导航**指向不存在的册子**（第 23 项）：%s ⇒ 册子已删/改名而未重生成，"
+                         "或本文件被手改（重生成：`python gen_schema.py --methods-root <工作区根>`）"
+                         % "、".join(_miss[:5]))
+except OSError as _e:
+    UNVERIFIABLE.append("库内 schema 水位**无法核对**（第 23 项）：%s" % _e)
+
+
+# ---------- 24. 增量裸页码（基线不上升 · 2026-09-28） ----------
+# 口径：**溯源达标（A1）的可验抓手**——存量裸页码按设计边界「不回溯补注」，但**增量不得再产生**
+#   （契约：凡引用须写来源代号）。判据 ＝「计数不得高于 `BARE_PAGE_BASELINE`」：
+#   上升 ⇒ ERROR（新增了裸页码）；持平 ⇒ PASS；下降 ⇒ WARN（提示复核后下调基线，防基线松弛成摆设）。
+# 与 `check_evidence.py` 用**同一套**判据（同两条正则 ＋ 同一别名表）⇒ 两处读数应一致。
+_CIT_RX24 = re.compile(r"（([^（）]*?(?:PAGE|P)\s*\d+[^（）]*)）")
+_PAGE_TOK_RX24 = re.compile(r"(?:PAGE|P)\s*(\d+)(?:\s*[-–—~至]\s*(\d+))?")
+_SEP24 = re.compile(r"[\s、,，:：]+")
+
+
+def _bare_page_count():
+    """统计活文档内「省略来源代号的裸页码标注」数；缺映射表 ⇒ 返回 None（不可核对）。"""
+    _mp = os.path.join(METHODS, GENERATED_NAME, "来源代号映射.json")
+    if not os.path.isfile(_mp):
+        return None
+    with io.open(_mp, encoding="utf-8") as _fh:
+        _M24 = json.load(_fh)
+    _a2c = {}
+    for _code, _alist in (_M24.get("aliases") or {}).items():
+        for _a in _alist:
+            _a2c.setdefault(_a, _code)
+        _a2c.setdefault(_code, _code)
+    _files = list(_layout_domain_files(METHODS))
+    for _d in (DIR_DOMAIN, DIR_LANG, DIR_VOLUME):
+        _dp = os.path.join(METHODS, _d)
+        if os.path.isdir(_dp):
+            for _f in sorted(os.listdir(_dp)):
+                if _f.endswith(".md"):
+                    _files.append(os.path.join(_dp, _f))
+    _n = 0
+    for _fp in sorted(set(_files)):
+        try:
+            _txt = io.open(_fp, encoding="utf-8", errors="replace").read()
+        except OSError:
+            continue
+        for _blk in re.split(r"(?m)^### ", _txt)[1:]:
+            for _m in _CIT_RX24.finditer(_blk):
+                _lbl = _m.group(1)
+                if not _PAGE_TOK_RX24.search(_lbl):
+                    continue
+                _has = False
+                for _part in re.split(r"[；;]", _lbl):
+                    if not _PAGE_TOK_RX24.search(_part):
+                        continue
+                    _head = _SEP24.sub(" ", _PAGE_TOK_RX24.sub("", _part)).strip()
+                    for _al in _a2c:
+                        if _al and _al in _head:
+                            _has = True
+                            break
+                    if _has:
+                        break
+                if not _has:
+                    _n += 1
+    return _n
+
+
+try:
+    _nbp = _bare_page_count()
+    if _nbp is None:
+        UNVERIFIABLE.append("增量裸页码**无法核对**（第 24 项）：缺 `%s/%s/来源代号映射.json`"
+                            "（先跑 `gen_source_map.py`）" % (METHODS, GENERATED_NAME))
+    elif _nbp > BARE_PAGE_BASELINE:
+        ERRORS.append("**新增裸页码**（第 24 项）：当前 **%d** 处 ＞ 基线 **%d** 处 ⇒ 有 **%d 处**引用未写来源代号"
+                      "（违「凡引用必写来源代号」契约）。存量按设计边界**不回溯补注**，但**增量不得再产生**；"
+                      "修复＝回到产生该引用的那一批产出，**逐处补来源代号**（语义面，须人裁定）"
+                      % (_nbp, BARE_PAGE_BASELINE, _nbp - BARE_PAGE_BASELINE))
+    elif _nbp < BARE_PAGE_BASELINE:
+        WARNS.append("裸页码**低于基线**（第 24 项）：当前 **%d** 处 ＜ 基线 **%d** 处 ⇒ 复核无碍后应**下调** "
+                     "`BARE_PAGE_BASELINE`（防基线松弛、久成摆设）" % (_nbp, BARE_PAGE_BASELINE))
+except OSError as _e:
+    UNVERIFIABLE.append("增量裸页码**无法核对**（第 24 项）：%s" % _e)
+
+
+# ---------- 事件留痕：体检落一行（WO-26 · 2026-09-26） ----------
+# 判据：「N issues found, M auto-fixed」——每次体检落一行事件，
+#   使「新增／已消」的动向可从事件序列 diff 得出（本库无自动修复 ⇒ auto-fixed 恒 0，改记实际四数）。
+# 落点：<工作区根>/logs/库操作日志.md（**append-only**）。
+#   ★ 为何落 logs/ 而非 state/：按 state/README.md 的分工判据 —— `logs/` ＝「**发生过什么**」、
+#     `state/` ＝「**现在到哪了**」；操作日志属前者。`state/` **不重复**（避免两处不同步）。
+#   ★ 本项**只追加、不改判定**：写入失败只记 WARN，绝不影响 ERROR/退出码。
+#   ★ **同日同结果去重（2026-09-27 补 · 承「体检刷屏 29 次」复盘）**：
+#     原实现每次运行一律追加 ⇒ 同日反复跑体检（改库验证时常见）会刷屏
+#     （实测 2026-09-26 单日 29 条，其中连续 11 条结果完全相同）。
+#     判据：**同日 + 同「结果行」已有记录 ⇒ 跳过**（结果行含 ERROR/WARN/正文/索引/单案五数，
+#     任一数不同即视为新事件、照常追加 ⇒ 不丢「新增/已消」的动向）。
+#     与 `log_event.py --no-dup` 的分工：两者判据同源（防同日重复），
+#     本脚本**内联实现**而非跨脚本调用——避免体检对 log_event 产生运行期依赖
+#     （体检是门禁件，须能独立跑；写入失败亦只记 WARN、不影响退出码）。
+#     `--no-log` 可关闭整项；`--allow-dup` 可强制追加（需复现同日同结果时用）。
+if not _args.no_log:
+    try:
+        _ld = os.path.join(_ROOT, "logs")
+        os.makedirs(_ld, exist_ok=True)
+        _lpath = os.path.join(_ld, "库操作日志.md")
+        _today = time.strftime("%Y-%m-%d")
+        _result_line = ("- 结果：ERROR %d ／ UNVERIFIABLE %d ／ WARN %d ｜ 正文 %d ｜ 索引行号抽查 %d/%d ｜ 单案 %d"
+                        % (len(ERRORS), len(UNVERIFIABLE), len(WARNS), fm_checked,
+                           _locator_sampled, _locator_checked, _scope_checked))
+        # 去重：扫全文，若同日同结果行已存在同格式条目 ⇒ 跳过
+        _dup = False
+        if not _args.allow_dup and os.path.exists(_lpath):
+            _prev = io.open(_lpath, encoding="utf-8", errors="replace").read()
+            for _m in re.finditer(
+                    r"^##\s*\[(\d{4}-\d{2}-\d{2})\]\s*体检\s*\|\s*方法论库\s*$", _prev, re.M):
+                _seg = _prev[_m.end():_m.end() + 400]
+                if _m.group(1) == _today and _result_line in _seg:
+                    _dup = True
+                    break
+        if _dup:
+            # 不记 WARN —— 去重是正常行为，记 WARN 会污染巡检基线（WARN 7→8）
+            # 只用 stdout 告知（`--quiet` 下静默）。
+            if not _args.quiet:
+                print("· 事件留痕跳过（同日同结果已存在；`--allow-dup` 可强制）")
+        else:
+            with io.open(_lpath, "a", encoding="utf-8", newline="\n") as _lf:
+                _lf.write("\n## [%s] 体检 | 方法论库\n" % _today)
+                _lf.write(_result_line + "\n")
+                _lf.write("- 依据：check_methods_health.py\n")
+    except OSError as _e:
+        WARNS.append("事件留痕失败（不影响判定）：%s" % _e)
+
+_verdict = "FAIL" if (ERRORS or UNVERIFIABLE) else "PASS"
+if _args.strict and WARNS and not ERRORS and not UNVERIFIABLE:
+    _verdict = "WARN-STRICT"
+_summary = {
+    "tool": "check_methods_health", "target": METHODS, "verdict": _verdict,
+    "error": len(ERRORS), "warn": len(WARNS), "unverifiable": len(UNVERIFIABLE),
+    "scanned": fm_checked,
+    "locator_pool": _locator_checked, "locator_sampled": _locator_sampled,
+    "scope_checked": _scope_checked,
+    "issues": ([{"level": "ERROR", "severity": "hard", "msg": m} for m in ERRORS] +
+               [{"level": "UNVERIFIABLE", "severity": "unknown", "msg": m} for m in UNVERIFIABLE] +
+               [{"level": "WARN", "severity": "soft", "msg": m} for m in WARNS]),
+}
 if _args.json:
-    print(json.dumps({
-        "tool": "check_methods_health", "target": METHODS,
-        "verdict": "FAIL" if ERRORS else "PASS",
-        "error": len(ERRORS), "warn": len(WARNS), "scanned": fm_checked,
-        "issues": ([{"level": "ERROR", "msg": m} for m in ERRORS] +
-                   [{"level": "WARN", "msg": m} for m in WARNS]),
-    }, ensure_ascii=False))
-    sys.exit(1 if ERRORS else 0)
-quiet = _args.quiet
-if not quiet:
-    print("=== 方法论全库健康检查 ===")
-    print("正文文件（frontmatter 校验）: %d 个｜索引行号抽查: %d 条｜单案内容范围: %d 案"
-          % (fm_checked, _locator_checked, _scope_checked))
-print("ERROR %d 项" % len(ERRORS))
-for e in ERRORS:
-    print("  [ERROR] %s" % e)
-if WARNS:
-    print("WARN %d 项" % len(WARNS))
-    for w in WARNS:
-        print("  [WARN] %s" % w)
-sys.exit(1 if ERRORS else 0)
+    print(json.dumps(_summary, ensure_ascii=False))
+else:
+    if not _args.quiet:
+        print("=== 方法论全库健康检查 ===")
+        print("正文文件（frontmatter 校验）: %d 个｜索引行号抽查: %d/%d 条（抽样/池）｜单案内容范围: %d 案"
+              % (fm_checked, _locator_sampled, _locator_checked, _scope_checked))
+    print("ERROR %d 项" % len(ERRORS))
+    for e in ERRORS:
+        print("  [ERROR] %s" % e)
+    if UNVERIFIABLE:
+        print("UNVERIFIABLE %d 项（**验不了**：本应受检却缺输入/脚本/文件 ⇒ 计入 ERROR 与退出码；"
+              "**不得当通过**）" % len(UNVERIFIABLE))
+        for u in UNVERIFIABLE:
+            print("  [UNVERIFIABLE] %s" % u)
+    if WARNS:
+        print("WARN %d 项（一律 soft：只记日志，不影响退出码；需阻断者应升格为 ERROR 项）" % len(WARNS))
+        for w in WARNS:
+            print("  [WARN·soft] %s" % w)
+sys.exit(1 if (ERRORS or UNVERIFIABLE) else (3 if (_args.strict and WARNS) else 0))
