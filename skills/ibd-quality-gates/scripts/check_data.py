@@ -287,7 +287,7 @@ def check_consistency(items):
 
 # ---- calc 表格合计行求和 / 占比列合计≈100%
 
-# 勾稽容差（体系级约定，CONVENTIONS 判据集「勾稽容差 ＝ 0.01」/ R-0038，2026-09-24 用户裁定）：
+# 勾稽容差（体系级约定，CONVENTIONS 判据集「勾稽容差 ＝ 0.01」）：
 # 按该表列示精度取最小位，**不设相对容差**（勾稽比的是同一个数，相对带会吞实质差异）。
 # 百分点列同口径 —— 放行 0.01（即 0.01 个百分点）。
 TOL = 0.01
@@ -388,7 +388,7 @@ def check_calc(tables):
             pct_vals = []
             has_header = False
             for ri, trow in enumerate(texts):
-                # 合计/总计行不计入占比求和：其占比列本身即 100%，计入会使总和恒≈200%（2026-09-24 修，I-0107）
+                # 合计/总计行不计入占比求和：其占比列本身即 100%，计入会使总和恒≈200%
                 if any(("合计" in c) or ("总计" in c) or ("小计" in c) or ("其中" in c)
                        for c in trow if isinstance(c, str)):
                     pct_vals.append(None)

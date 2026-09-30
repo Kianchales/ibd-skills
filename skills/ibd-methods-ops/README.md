@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BB%B4%E6%8A%A4-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-1.33.16-green" alt="version">
+  <img src="https://img.shields.io/badge/version-1.34.1-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -17,7 +17,7 @@
 > **设计原则 · 双向开放**：资料来源与沉淀去向都由用户自己确定——材料从哪来（对话给文件/文件夹/项目，或已接入的库）、沉淀到哪去（本地/Obsidian/云知识库等），全部由用户定；skill 提供流程、规范与工具，不绑定私有环境。
 
 - **蒸馏域**：S0-S7 全流程——**材料来源由用户定**（单文件/文件夹/项目/已接入的库）→ 材料准备（三阅读包）→ 多专家并行蒸馏 → 综合成文（写作范式）→ 模拟回复演练 → 共通点蒸馏 → 沉淀入库（索引刷新 + 护栏校验）
-- **维护域**：库结构健康——24 项护栏体检 → 修复工具箱（先 dry-run）→ 复验幂等
+- **维护域**：库结构健康——25 项护栏体检 → 修复工具箱（先 dry-run）→ 复验幂等
 - **随包工具链**：31 个脚本（索引体系 / 落库 / 门禁 / 修复 / 拆分 / 迁移），全部支持 `--methods-root` 或 `$METHODS_ROOT`
 - **库规范单一事实源**：[references/methods-guide.md](references/methods-guide.md)（目录结构 / 条目结构 / 索引机制 / 规模化拆分）
 
@@ -30,7 +30,7 @@
 
 # 库维护（命令示例）
 python scripts/refresh_index.py --methods-root ~/methods        # 索引一键刷新（四件套编排）
-python scripts/check_methods_health.py --methods-root ~/methods # 24 项护栏体检（0 ERROR 交付）
+python scripts/check_methods_health.py --methods-root ~/methods # 25 项护栏体检（0 ERROR 交付）
 python scripts/update_expert_md.py --entries batch.json --methods-root ~/methods  # 条目落库
 ```
 
@@ -75,7 +75,7 @@ scripts/                 31 个随包脚本（下表为示例；全量清单见 
   gen_entry.py             重写入口（路由表 + 摘要保留）
   update_expert_md.py      条目落库（h3/表格双形态 + 超线归档）
   check_expert_output.py   S4.5 产出自检门禁
-  check_methods_health.py  24 项护栏体检
+  check_methods_health.py  25 项护栏体检
   add_frontmatter.py / add_fm_single.py / b_fmt_unify.py / c_scale_dedup.py   结构修复工具箱
   split_domains.py         单体库 → 域文件拆分（配置驱动）
 references/
@@ -88,6 +88,8 @@ CHANGELOG.md             版本记录
 
 ## 📌 近期更新
 
+- **2026-09-30 · v1.34.1**：**库事实引用对账（第 25 项首读确证后修）**——design-boundaries §1 条目规模硬编码改指针化（现值见 `_generated/方法论_条目标题目录.md` 总览合计），落实「禁硬编码库事实」判据
+- **2026-09-29 · v1.34.0**：**护栏第 25 项「skills 消费侧库事实引用」（用户裁定 R-0065）** —— skills 面活文档**禁硬编码库计数/路径**：① 生成物文件名引用 ⟷ 库内实测存在（SCHEMA.md 例外留库根），断链 ERROR；② 「两位数字＋窄单位词」与库实况（单案数）同形比对，不等 WARN 由人核。护栏挂库侧体检**变更即校验**（漂移根因＝库侧变更），首跑实测 248 文档／断链 0／同形待核 33；同步第 20 项元自检抓出并修正 3 处「24 项」漏网声明
 - **2026-09-22 · v1.21.0**：**随包脚本 +2（24 → 26 个）** —— `normalize_pl_s.py`（S5 后 PL/S 编号归一：两遍＋**幂等**、族内连续零撞号、**已入库案自动跳过**防历史批次脱钩）＋ `apply_rewrite.py`（S7-b 回写执行：高→实证区／中高→独立段、幂等跳过、`--repair` 修截断行，判据＝行末括号深度 > 0）；现有库实测「需改号 0／写入 0／修复 0」＋阳性对照全对
 - **2026-09-22 · v1.20.2**：**写文件调用补齐 `newline="\n"`** —— 全库活跃面行尾归一（402 文件 / 9.32 万行 CRLF→LF）后，实测跑一次 `--refresh-index` 即把 CRLF 写回 4 个生成物（根因＝生成器用普通 `open(p,"w")`，Windows 默认换行转换）；给 8 个脚本 **10 处文本写调用**补齐（余 5 处 `'wb'` 本就正确），复验生成物/活跃面 CRLF 均 0、护栏 0 ERROR
 - **2026-09-22 · v1.20.1**：**回写门禁 ④ 判据修正** —— 原按 `mtime` 取「最新笔记」，编辑历史笔记（如追加沿革订正）会把旧笔记顶到最前，**致假阴性**；改为**按文件名日期为主键**，mtime 仅作并列次序；复跑 4/4 恢复

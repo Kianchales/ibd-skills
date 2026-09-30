@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%89%B9%E6%B3%A8%E4%B8%8E%E4%BF%AE%E8%AE%A2%E4%BA%A4%E4%BB%98-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.10.3-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.11.0-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -79,6 +79,7 @@ ibd-doc-annotate/
 
 ## 📌 近期更新
 
+- **2026-09-29 · v0.11.0**：**批注链修复三件**——①注入器段落重建改**原位保留**（同段他人批注锚点/书签/`w:tab` 兄弟 run 不再被静默删除，支持在已带批注文档上二次批注）；②既有批注内容**合并保留**＋新批注 id 接续（`comments.xml` 不再整体覆写）；③编号同前缀超 99 条**顺延双字母分段**（J-99→JA-01，序号恒两位，不再与门禁冲突）；④**总览默认只产 md**（Word 版须显式 `--overview-docx`）。新增自测 7 项，存量 8 项回归全过
 - **2026-09-18 · v0.7.0**：**总览报告双格式交付（MD + Word）**——新脚本 `overview_to_docx.py`，批注注入后自动同产 `_批注总览.docx`（与 md 同源同内容）；交付口径同步 `ibd-doc-review` delivery.md
 - **2026-09-18 · v0.6.1**：接入点声明入 `ATTACHMENT-POINTS` 总表——补一行**使用者资产**声明（本包**无需自备资产**，模板随包），指向集合仓总表；描述补全，规则/脚本零变化
 - **2026-09-15 · v0.6.0**：**批注任务单入口路由声明**——本 skill 为 docx/PDF 批注唯一对外入口，doc-review 校验脚本转为内部回调；依赖下限升至 `ibd-doc-review ≥ 0.19.0`；

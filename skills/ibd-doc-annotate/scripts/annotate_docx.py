@@ -18,12 +18,15 @@ issues.json（数组，每元素一条复核关注点）:
 }
 
 行为:
-  - 编号自动分配（编号前缀 code + 该前缀内序号，如 J-01/J-02…），顺序 = 清单顺序
-  - 锚点定位：正文段落 + 表格单元格段落；跨 run 按字符拆分注入并**保留原 run 格式**
+  - 编号自动分配（编号前缀 code + 两位序号，如 J-01/J-02…；同前缀超 99 条顺延双字母分段
+    J-99 → JA-01…，序号恒 2 位对齐门禁 LABEL_PAT），顺序 = 清单顺序
+  - 锚点定位：正文段落 + 表格单元格段落；跨 run 按字符拆分注入并**保留原 run 格式**；
+    段落内非文本内容（他人批注锚点/书签/超链接/w:tab·w:br 兄弟 run）与锚点外 run 原位保留，
+    可在已带批注的文档上直接二次批注（新批注 id 接续既有最大 id，既有批注内容合并保留）
   - 边界：锚点段落含复杂 run（换行 w:br / 制表 w:tab / 多 w:t 的 run 等）或锚点骑跨超链接 →
     不自动注入，记入总览「未锚定」清单（人工定位），不报错中断
-  - 输出：<原文名>_批注版.docx（或 --out）+ <输出>_批注总览.md + <输出>_批注总览.docx
-    （总览双格式交付：MD 供程序/检索、Word 供批阅流转——2026-09-18 用户裁定；编号一一对应）
+  - 输出：<原文名>_批注版.docx（或 --out）+ <输出>_批注总览.md
+    （总览默认只产 md；如需 Word 版须显式加 --overview-docx；编号一一对应）
   - 批注正文 4 行紧凑：标签行/标题行整行加粗，问题描述/建议仅引导词加粗
   - 只注入批注，不修改原文文字
 
@@ -71,6 +74,23 @@ def _derive_code(it):
     return "U"
 
 
+def _full_label(code, n):
+    """前缀-序号合成：序号恒 2 位（对齐门禁 LABEL_PAT 的 \\d{2}，位数单一事实源在门禁侧，
+    本函数只适配、不放宽门禁）。同前缀超 99 条顺延双字母分段（J-99 → JA-01…JA-99，
+    单字母前缀容量 26×99）；双字母前缀无顺延空间，超 99 条直接报错提示拆分清单——
+    静默改写显式前缀＝编号漂移，禁。
+    """
+    seg, k = divmod(n - 1, 99)
+    if seg == 0:
+        return f"{code}-{k + 1:02d}"
+    if len(code) >= 2:
+        raise ValueError(f"编号前缀 {code} 为双字母，超 99 条无法分段顺延（第 {n} 条）"
+                         f"——请拆分清单或改用单字母前缀")
+    if seg > 26:
+        raise ValueError(f"编号前缀 {code} 分段容量穷尽（27×99=2673 条）——请拆分清单")
+    return f"{code}{chr(ord('A') + seg - 1)}-{k + 1:02d}"
+
+
 def assign_numbers(issues):
     """编号分配 + 结构校验（方法层只查结构必填，不做内容判断）。
 
@@ -84,7 +104,7 @@ def assign_numbers(issues):
                 raise ValueError(f"条目缺必填字段 {f}: {json.dumps(it, ensure_ascii=False)[:100]}")
         code = _derive_code(it)
         seen[code] = seen.get(code, 0) + 1
-        it["full"] = f"{code}-{seen[code]:02d}"
+        it["full"] = _full_label(code, seen[code])
         it["type"] = it.get("type") or "-"
         it["sev"] = it.get("sev") or "-"
     return issues
@@ -147,74 +167,90 @@ def inject_range(p_el, s, e, cid):
         if not _run_simple(runs[i]):
             return False, "锚点覆盖复杂 run（含换行/制表/多文本段），不自动注入"
 
-    # 逐 run 切片段（覆盖全段落：锚点外 run 单整段原样、锚点内 run 按字符切分）
-    # segments = [(run_idx, seg_text)]
-    segments = []
+    # 逐 run 切片段：只对锚点覆盖区间 [lo, hi] 内的 run 按字符切分并重建；
+    # 锚点外 run 与一切非文本内容保持原位（见下方组装说明）。
+    run_segs = []  # run_segs[i] = [[seg_text, pre_marker, post_marker], ...]，仅覆盖区间的 run 非空
     for i in range(len(runs)):
+        if not (lo <= i <= hi):
+            run_segs.append([])
+            continue
         base = cum[i]
         local = {0, len(texts[i])}
-        if lo <= i <= hi:
-            if base < s < base + len(texts[i]):
-                local.add(s - base)
-            if base < e < base + len(texts[i]):
-                local.add(e - base)
+        if base < s < base + len(texts[i]):
+            local.add(s - base)
+        if base < e < base + len(texts[i]):
+            local.add(e - base)
         cut = sorted(local)
+        segs = []
         for k in range(len(cut) - 1):
-            if cut[k + 1] > cut[k]:
-                segments.append((i, texts[i][cut[k]:cut[k + 1]]))
+            g0, g1 = base + cut[k], base + cut[k + 1]
+            if g1 > g0:
+                segs.append([texts[i][cut[k]:cut[k + 1]], g0 == s, g1 == e])
+        run_segs.append(segs)
 
-    # 片段全局边界 → 事件：起点落在哪一片的开始 → 该片前插 cs；终点落在哪一片的末尾 → 该片后插 ce+ref
-    starts, pos = [], 0
-    for _, seg in segments:
-        starts.append(pos)
-        pos += len(seg)
-    ends = [starts[k] + len(segments[k][1]) for k in range(len(segments))]
-    pre_at, post_at = set(), set()
-    for k in range(len(segments)):
-        if starts[k] == s:
-            pre_at.add(k)
-        if ends[k] == e:
-            post_at.add(k)
-
-    # 组装：保留 pPr，清空其余内容流
+    # 组装（原位保留版）：pPr、锚点外的全部 run、以及一切非 run 子元素——他人批注锚点
+    # （commentRangeStart/End）、书签、超链接、修订标记、w:tab/w:br 兄弟 run 等——一律原位保留；
+    # 仅锚点覆盖的文本 run 被其切片替换，并在锚点首片段前插 commentRangeStart、末片段后插
+    # commentRangeEnd + commentReference。
+    # 此前「保留 pPr、清空其余内容流」的整段重建会静默删除同段他人批注锚点等非文本内容
+    # （2026-09-25 语言复核批次实测数据丢失），已废弃。
     pPr = p_el.find(qn('w:pPr'))
-    for child in list(p_el):
-        if child is not pPr:
-            p_el.remove(child)
 
-    def emit_text(run, text, first):
-        el = run if first else copy.deepcopy(run)
-        for t in el.findall(qn('w:t')):
-            el.remove(t)
+    def emit_text(run, text):
+        for t in run.findall(qn('w:t')):
+            run.remove(t)
         t = OxmlElement('w:t')
         t.text = text
         t.set(XML_SPACE, 'preserve')
-        el.append(t)
-        return el
+        run.append(t)
+        return run
 
-    used_run = None  # 上一个已复用的 run（每 run 首个片段用原元素）
-    for k, (run_idx, seg_text) in enumerate(segments):
-        first = run_idx != used_run
-        used_run = run_idx
-        if k in pre_at:
-            cs = OxmlElement('w:commentRangeStart')
-            cs.set(qn('w:id'), str(cid))
-            p_el.append(cs)
-        p_el.append(emit_text(runs[run_idx], seg_text, first))
-        if k in post_at:
-            ce = OxmlElement('w:commentRangeEnd')
-            ce.set(qn('w:id'), str(cid))
-            p_el.append(ce)
-            rr = OxmlElement('w:r')
-            rpr = OxmlElement('w:rPr')
-            rs = OxmlElement('w:rStyle')
-            rs.set(qn('w:val'), 'CommentReference')
-            rpr.append(rs)
-            rr.append(rpr)
-            ref = OxmlElement('w:commentReference')
-            ref.set(qn('w:id'), str(cid))
-            rr.append(ref)
-            p_el.append(rr)
+    def emit_copy(run, text):
+        el = copy.deepcopy(run)
+        return emit_text(el, text)
+
+    def marker_end_els():
+        ce = OxmlElement('w:commentRangeEnd')
+        ce.set(qn('w:id'), str(cid))
+        rr = OxmlElement('w:r')
+        rpr = OxmlElement('w:rPr')
+        rs = OxmlElement('w:rStyle')
+        rs.set(qn('w:val'), 'CommentReference')
+        rpr.append(rs)
+        rr.append(rpr)
+        ref = OxmlElement('w:commentReference')
+        ref.set(qn('w:id'), str(cid))
+        rr.append(ref)
+        return [ce, rr]
+
+    new_children = []
+    run_no = -1  # runs 按文档序构建，遍历时第 N 个顶层 w:r 即 runs[N]
+    for child in list(p_el):
+        if child is pPr:
+            new_children.append(child)
+        elif child.tag == qn('w:r'):
+            run_no += 1
+            segs = run_segs[run_no]
+            if lo <= run_no <= hi and segs:
+                for k, (seg_text, pre, post) in enumerate(segs):
+                    if pre:
+                        cs = OxmlElement('w:commentRangeStart')
+                        cs.set(qn('w:id'), str(cid))
+                        new_children.append(cs)
+                    # 每 run 首个片段复用原元素（保留 rPr），其余片段深拷贝
+                    new_children.append(emit_text(runs[run_no], seg_text) if k == 0
+                                        else emit_copy(runs[run_no], seg_text))
+                    if post:
+                        new_children.extend(marker_end_els())
+            else:
+                new_children.append(child)  # 未覆盖 run / 零宽 run：原样保留
+        else:
+            new_children.append(child)  # 非 run 子元素（他人批注锚点等）：原位保留
+
+    for child in list(p_el):
+        p_el.remove(child)
+    for el in new_children:
+        p_el.append(el)
     return True, ""
 
 
@@ -362,6 +398,8 @@ def main():
                     help="只报「命中／未锚定」统计与目标路径，**不写任何文件**（锚点质量预检）")
     ap.add_argument("--force", action="store_true",
                     help="目标文件已存在时覆盖（默认拒绝，防误盖既有交付物）")
+    ap.add_argument("--overview-docx", action="store_true",
+                    help="总览另产 Word 版（默认只产 md；总览 Word 版须显式要求）")
     args = ap.parse_args()
 
     with open(args.issues, encoding="utf-8") as fh:
@@ -376,9 +414,11 @@ def main():
         for _e in _errs:
             print(f"  - {_e}")
         sys.exit(2)
-    issues = assign_numbers([dict(x) for x in raw])
-    for i, it in enumerate(issues):
-        it["cid"] = i
+    try:
+        issues = assign_numbers([dict(x) for x in raw])
+    except ValueError as exc:
+        print(f"[ERROR] 编号分配失败：{exc}")
+        sys.exit(2)
     out_docx = args.out or os.path.splitext(args.docx)[0] + "_批注版.docx"
     date_iso = args.date or _now_iso()
     # 覆盖保护（2026-09-23 补）：目标已存在时默认拒绝——本脚本是投行产线里唯一直写交付件的环节，
@@ -389,6 +429,26 @@ def main():
         return 2
 
     doc = Document(args.docx)
+    # 既有批注探测（二次批注场景）：新批注 id 须接续既有最大 id，避免与残留批注 id 冲突；
+    # 既有 comments.xml 在输出阶段合并保留（只增不改，他人批注内容不丢）。
+    existing_comments_xml = None
+    try:
+        with zipfile.ZipFile(args.docx) as z:
+            if "word/comments.xml" in z.namelist():
+                existing_comments_xml = z.read("word/comments.xml")
+    except OSError:
+        existing_comments_xml = None
+    max_existing_id = -1
+    if existing_comments_xml:
+        _root = etree.fromstring(existing_comments_xml)
+        _ids = []
+        for _c in _root:
+            _v = _c.get(qn('w:id'))
+            if _v is not None and str(_v).lstrip("-").isdigit():
+                _ids.append(int(_v))
+        max_existing_id = max(_ids, default=-1)
+    for i, it in enumerate(issues):
+        it["cid"] = max_existing_id + 1 + i
     misses = []
     for it in issues:
         ok, reason = locate_and_inject(doc, it, it["cid"])
@@ -402,7 +462,9 @@ def main():
         print("[DRY-RUN] 未写任何文件。目标路径：%s" % out_docx)
         print("[DRY-RUN] 命中 %d 条 ／ 未锚定 %d 条（未锚定明细见上方逐条 [MISS]）"
               % (len(issues) - len(misses), len(misses)))
-        print("[DRY-RUN] 正式运行将另产：<输出>_批注总览.md ＋ <输出>_批注总览.docx")
+        print("[DRY-RUN] 正式运行将另产：<输出>_批注总览.md"
+              + (" ＋ <输出>_批注总览.docx（--overview-docx）" if args.overview_docx
+                 else "（默认只产 md；如需 Word 版加 --overview-docx）"))
         return 0
 
     tmp = out_docx + ".tmp"
@@ -412,22 +474,34 @@ def main():
     items["word/styles.xml"] = patch_styles(items["word/styles.xml"])
     items["[Content_Types].xml"] = patch_content_types(items["[Content_Types].xml"])
     items["word/_rels/document.xml.rels"] = patch_rels(items["word/_rels/document.xml.rels"])
-    items["word/comments.xml"] = build_comments_xml(issues, date_iso)
+    # 既有批注合并：新批注追加进既有 comments.xml（只增不改，他人批注内容不丢）；无既有批注才整体新建
+    new_comments = build_comments_xml(issues, date_iso)
+    if existing_comments_xml:
+        _root = etree.fromstring(existing_comments_xml)
+        for _c in etree.fromstring(new_comments):
+            _root.append(_c)
+        items["word/comments.xml"] = etree.tostring(
+            _root, xml_declaration=True, encoding='UTF-8', standalone=True)
+    else:
+        items["word/comments.xml"] = new_comments
     with zipfile.ZipFile(out_docx, "w", zipfile.ZIP_DEFLATED) as z:
         for name, data in items.items():
             z.writestr(name, data)
     os.remove(tmp)
     overview = write_overview(out_docx, issues, misses)
-    # 总览双格式交付（2026-09-18 用户裁定）：md 之外同产 Word 版
-    try:
-        from overview_to_docx import convert as _md2docx
-    except ImportError:
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        from overview_to_docx import convert as _md2docx
-    overview_docx = os.path.splitext(overview)[0] + ".docx"
-    _md2docx(overview, overview_docx)
     print("saved:", out_docx)
-    print("overview:", overview, "+", overview_docx)
+    if args.overview_docx:
+        # 总览 Word 版为显式 opt-in（默认只产 md，2026-09-29 口径；原「双格式默认」已废止）
+        try:
+            from overview_to_docx import convert as _md2docx
+        except ImportError:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from overview_to_docx import convert as _md2docx
+        overview_docx = os.path.splitext(overview)[0] + ".docx"
+        _md2docx(overview, overview_docx)
+        print("overview:", overview, "+", overview_docx)
+    else:
+        print("overview:", overview)
     print(f"未锚定 {len(misses)} 条（详见总览）" if misses else "全部锚定 ✅")
     return 0
 

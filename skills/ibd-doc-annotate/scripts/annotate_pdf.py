@@ -13,12 +13,13 @@ issues.json（与 annotate_docx.py 同构；可选 "page": 页码(1 起)，限�
 }
 
 行为:
-  - 编号自动分配（编号前缀 code + 该前缀内序号，如 J-01），顺序 = 清单顺序
+  - 编号自动分配（编号前缀 code + 两位序号，如 J-01；同前缀超 99 条顺延双字母分段
+    J-99 → JA-01…，序号恒 2 位对齐门禁 LABEL_PAT），顺序 = 清单顺序
   - 定位：rawdict 字符级匹配（容忍空格/换行/数字单位间断字）→ 高亮 + 弹注（hover 查看）
   - 弹注正文 4 行紧凑（纯文本无加粗，行间 \n）：标签行 / 标题行 / 问题描述… / 建议…
   - --pages "5-6"：仅抽取该页范围（演示/节选场景）；缺省保留全文
-  - 输出：<原文名>_批注版.pdf（或 --out）+ <输出>_批注总览.md + <输出>_批注总览.docx
-    （总览双格式交付：MD + Word——2026-09-18 用户裁定）
+  - 输出：<原文名>_批注版.pdf（或 --out）+ <输出>_批注总览.md
+    （总览默认只产 md；如需 Word 版须显式加 --overview-docx）
   - 找不到锚点的条目计入总览「未锚定」，不报错中断
 
 依赖：pymupdf
@@ -52,6 +53,22 @@ def _derive_code(it):
     return "U"
 
 
+def _full_label(code, n):
+    """前缀-序号合成：序号恒 2 位（对齐门禁 LABEL_PAT 的 \\d{2}，位数单一事实源在门禁侧，
+    本函数只适配、不放宽门禁）。同前缀超 99 条顺延双字母分段（J-99 → JA-01…JA-99，
+    单字母前缀容量 26×99）；双字母前缀无顺延空间，超 99 条直接报错提示拆分清单——
+    静默改写显式前缀＝编号漂移，禁。与 annotate_docx.py 同构（两脚本独立运行、互不导入）。"""
+    seg, k = divmod(n - 1, 99)
+    if seg == 0:
+        return f"{code}-{k + 1:02d}"
+    if len(code) >= 2:
+        raise ValueError(f"编号前缀 {code} 为双字母，超 99 条无法分段顺延（第 {n} 条）"
+                         f"——请拆分清单或改用单字母前缀")
+    if seg > 26:
+        raise ValueError(f"编号前缀 {code} 分段容量穷尽（27×99=2673 条）——请拆分清单")
+    return f"{code}{chr(ord('A') + seg - 1)}-{k + 1:02d}"
+
+
 def assign_numbers(issues):
     """编号分配 + 结构校验（方法层只查结构必填，不做内容判断）。
 
@@ -65,7 +82,7 @@ def assign_numbers(issues):
                 raise ValueError(f"条目缺必填字段 {f}: {json.dumps(it, ensure_ascii=False)[:100]}")
         code = _derive_code(it)
         seen[code] = seen.get(code, 0) + 1
-        it["full"] = f"{code}-{seen[code]:02d}"
+        it["full"] = _full_label(code, seen[code])
         it["type"] = it.get("type") or "-"
         it["sev"] = it.get("sev") or "-"
     return issues
@@ -150,6 +167,8 @@ def main():
     ap.add_argument("--pages", help='仅保留页范围，如 "5-6"（节选场景）；缺省保留全文')
     ap.add_argument("--out", help="输出 PDF 路径（默认 <原文名>_批注版.pdf）")
     ap.add_argument("--date", default="", help="ISO8601 批注日期（默认当前 UTC）")
+    ap.add_argument("--overview-docx", action="store_true",
+                    help="总览另产 Word 版（默认只产 md；总览 Word 版须显式要求）")
     args = ap.parse_args()
 
     import pymupdf
@@ -166,7 +185,11 @@ def main():
         for _e in _errs:
             print(f"  - {_e}")
         sys.exit(2)
-    issues = assign_numbers([dict(x) for x in raw])
+    try:
+        issues = assign_numbers([dict(x) for x in raw])
+    except ValueError as exc:
+        print(f"[ERROR] 编号分配失败：{exc}")
+        sys.exit(2)
     date_iso = args.date or _now_iso()
     out_pdf = args.out or os.path.splitext(args.pdf)[0] + "_批注版.pdf"
 
@@ -210,16 +233,19 @@ def main():
         doc.save(out_pdf, garbage=3, deflate=True)
     doc.close()
     overview = write_overview(out_pdf, issues, misses)
-    # 总览双格式交付（2026-09-18 用户裁定）：md 之外同产 Word 版
-    try:
-        from overview_to_docx import convert as _md2docx
-    except ImportError:
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        from overview_to_docx import convert as _md2docx
-    overview_docx = os.path.splitext(overview)[0] + ".docx"
-    _md2docx(overview, overview_docx)
     print("saved:", out_pdf)
-    print("overview:", overview, "+", overview_docx)
+    if args.overview_docx:
+        # 总览 Word 版为显式 opt-in（默认只产 md，2026-09-29 口径；原「双格式默认」已废止）
+        try:
+            from overview_to_docx import convert as _md2docx
+        except ImportError:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            from overview_to_docx import convert as _md2docx
+        overview_docx = os.path.splitext(overview)[0] + ".docx"
+        _md2docx(overview, overview_docx)
+        print("overview:", overview, "+", overview_docx)
+    else:
+        print("overview:", overview)
     print(f"未锚定 {len(misses)} 条（详见总览）" if misses else "全部锚定 ✅")
     return 0
 

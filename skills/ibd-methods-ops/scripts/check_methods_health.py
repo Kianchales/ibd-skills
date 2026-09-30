@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""方法论全库健康护栏（24 项检查 · 防结构漂移）
+"""方法论全库健康护栏（25 项检查 · 防结构漂移）
 
 用法：
     python check_methods_health.py [--methods-root <工作区根>] [--quiet]
@@ -63,6 +63,12 @@
                         ——存量既非机器可补（逐一复验仅约 3% 够格），亦非人可裁 ⇒ 判据**改口径**为
                         「**增量零裸页码**」：存量按设计边界不回溯，增量不得再产生。
                         与 `check_evidence.py` **同一判据**（同两条正则 ＋ 同一别名表），两处读数应一致
+25. skills 消费侧引用    skills 面活文档**禁硬编码库计数/路径**（R-0065）：① 生成物文件名引用
+                        （`GENERATED_BASENAMES`）实测库内存在（SCHEMA.md 例外留库根），
+                        缺失 ⇒ ERROR（引用断链）；② 「两位数字＋窄单位词」（案例/案/条目/条改写/插入点）
+                        与库实况（单案数）同形比对，不等 ⇒ WARN **由人核**（阈值规则/历史叙述为合法同形）。
+                        排除历史面（CHANGELOG/adr/incident-log*/pending-rules/archive 等——
+                        其数字是「发生过什么」，非活口径）。漂移根因在库侧变更 ⇒ **变更即校验**
 
 注：第 12 项（I-CL 条目位置）实现在第 3 项（编号健康）的行业合并版分支内，非独立小节。
 
@@ -81,7 +87,7 @@ import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-_ap = argparse.ArgumentParser(description="方法论全库健康护栏（24 项检查）")
+_ap = argparse.ArgumentParser(description="方法论全库健康护栏（25 项检查）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--quiet", action="store_true", help="只输出异常项")
@@ -1241,6 +1247,75 @@ except OSError as _e:
     UNVERIFIABLE.append("增量裸页码**无法核对**（第 24 项）：%s" % _e)
 
 
+# ---------- 25. skills 消费侧库事实引用（2026-09-29 新增 · R-0065） ----------
+# 判据：skills 面活文档**禁硬编码库计数/路径**——一律指针化（「实况见库索引」）或生成时派生。
+#   （首读面体积硬编码即先例：写 ≈11KB/≈137KB、实测 81KB，1.33.0 批改「生成时派生」根治单点，
+#     本项把该治理从单点升为**系统护栏**。）
+# 漂移根因＝库侧变更（蒸馏/重蒸/重构）⇒ 护栏挂库侧体检（**变更即校验**），
+#   不挂 skilldev 普查（周期性、滞后）。消费面＝本脚本上三级的 skills 根（含 docs/ 体系文档）。
+# 两层（a 硬判 / b 提示；修复＝改引用方文档，属内容面 ⇒ 授权档 B「报数不改」）：
+#   a) **生成物引用断链**：文档引用生成物文件名（`GENERATED_BASENAMES` 单一事实源）任一
+#      ⇒ 实测库内存在（`_generated/` 下；SCHEMA.md 例外留**库根**——「打开库即可见」设计，
+#      同裸页码水位例外）；缺失 ⇒ ERROR——生成物改名/退役时引用方静默断链，
+#      正是「路径漂移」主形态（同族病：gen_schema.py 手写册子路径清单，2026-09-28 已治）。
+#   b) **同形计数漂移**：库实况值（单案数＝第 11 项实测 `_scope_checked`）vs 文档
+#      「两位以上数字＋窄单位词」（案例/案/条目/条改写/插入点）——数字不等于实况值
+#      ⇒ WARN（**不判必错**：阈值规则／历史叙述的同形数字由人裁定，AI 不替作者推断，同第 24 项判据）。
+# 排除面：CHANGELOG（历史留痕惯例）、SKILL_TREE（生成物）、adr/（决策史）、
+#   文件名含 archive（历史档案）、docs/ 下 incident-log*（事故史）与 pending-rules.md（裁定史）
+#   ——数字全是「发生过什么」的当时实况、非活口径（同 CHANGELOG 排除理由）；
+#   _backup/templates 等非活文档目录。
+_SKILLS_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_SKILL_SKIP_DIRS = {".git", "node_modules", "__pycache__", "_backup", "archive", "adr",
+                    "templates", "_generated", ".scratch", "state", "logs"}
+_SKILL_SKIP_FILES = {"CHANGELOG.md", "SKILL_TREE.md", "pending-rules.md"}
+_RX_LIBFACT_NUM = re.compile(r"(\d{2,6})\s*(?:个|份|条)?\s*(案例|案(?!例)|条目|条改写|插入点)")
+_libfact_broken, _libfact_count_hits, _libfact_scanned = [], [], 0
+if os.path.isdir(_SKILLS_ROOT):
+    for _dp, _dns, _fns in os.walk(_SKILLS_ROOT):
+        _dns[:] = [d for d in _dns if d not in _SKILL_SKIP_DIRS]
+        for _fn in _fns:
+            if not _fn.endswith(".md") or _fn in _SKILL_SKIP_FILES \
+                    or "archive" in _fn.lower() or _fn.startswith("incident-log"):
+                continue
+            _fp = os.path.join(_dp, _fn)
+            try:
+                _txt = io.open(_fp, encoding="utf-8", errors="replace").read()
+            except OSError:
+                continue
+            _libfact_scanned += 1
+            _rel = os.path.relpath(_fp, _SKILLS_ROOT)
+            for _gb in GENERATED_BASENAMES:
+                if _gb not in _txt:
+                    continue
+                # 位置例外：SCHEMA.md 按设计留**库根**（「打开库即可见」，同裸页码水位例外）；
+                #   其余生成物在 `_generated/`。两处任一存在即合法。
+                _ok = os.path.isfile(os.path.join(METHODS, GENERATED_NAME, _gb)) or \
+                    (_gb == SCHEMA_BASENAME and os.path.isfile(os.path.join(METHODS, _gb)))
+                if not _ok:
+                    _libfact_broken.append("%s 引用 %s（库内缺失）" % (_rel, _gb))
+            for _m in _RX_LIBFACT_NUM.finditer(_txt):
+                if int(_m.group(1)) != _scope_checked:
+                    _ln = _txt.count("\n", 0, _m.start()) + 1
+                    _libfact_count_hits.append("%s:%d（%d %s）"
+                                               % (_rel, _ln, int(_m.group(1)), _m.group(2)[0:3]))
+else:
+    UNVERIFIABLE.append("skills 消费面**无法定位**（第 25 项）：上三级 %s 不存在" % _SKILLS_ROOT)
+if _libfact_broken:
+    ERRORS.append("skills 活文档**生成物引用断链** %d 处（第 25 项）：生成物已改名/退役而引用方未跟 ⇒ %s；"
+                  "修复＝引用方改指针表述或新名（内容面，授权档 B）"
+                  % (len(_libfact_broken), "；".join(_libfact_broken[:6])))
+if _libfact_count_hits:
+    WARNS.append("skills 活文档出现**与库计量同形**的数字 %d 处（第 25 项），与库实况"
+                 "（单案 %d 案）不一致——是否库事实引用漂移**由人核**（不判必错，可忽略；"
+                 "阈值规则/历史叙述为合法同形）：%s"
+                 % (len(_libfact_count_hits), _scope_checked,
+                    "；".join(_libfact_count_hits[:10])))
+if not _args.quiet and not _args.json:
+    print("skills 消费面扫描（第 25 项）: %d 个活文档｜生成物引用断链 %d ｜同形计数待核 %d"
+          % (_libfact_scanned, len(_libfact_broken), len(_libfact_count_hits)))
+
+
 # ---------- 事件留痕：体检落一行（WO-26 · 2026-09-26） ----------
 # 判据：「N issues found, M auto-fixed」——每次体检落一行事件，
 #   使「新增／已消」的动向可从事件序列 diff 得出（本库无自动修复 ⇒ auto-fixed 恒 0，改记实际四数）。
@@ -1279,7 +1354,7 @@ if not _args.no_log:
         if _dup:
             # 不记 WARN —— 去重是正常行为，记 WARN 会污染巡检基线（WARN 7→8）
             # 只用 stdout 告知（`--quiet` 下静默）。
-            if not _args.quiet:
+            if not _args.quiet and not _args.json:
                 print("· 事件留痕跳过（同日同结果已存在；`--allow-dup` 可强制）")
         else:
             with io.open(_lpath, "a", encoding="utf-8", newline="\n") as _lf:

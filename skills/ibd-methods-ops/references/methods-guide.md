@@ -220,7 +220,7 @@
 
 | 场景 | 脚本 |
 |---|---|
-| 库健康体检（24 项护栏） | check_methods_health.py |
+| 库健康体检（25 项护栏） | check_methods_health.py |
 | 索引刷新（一键四件套） | refresh_index.py |
 | 条目落库（追加 + 超线归档） | update_expert_md.py |
 | 结构修复（frontmatter/结构归一/去重） | add_frontmatter.py / b_fmt_unify.py / c_scale_dedup.py（`add_fm_single.py` 已随「单份细分版」载体 2026-09-23 停用而退役） |
@@ -296,7 +296,7 @@ python scripts/check_entry_contract.py [--json]                # 书写契约自
 python scripts/replay_gate_report.py ...                       # S7 收尾：回写硬门禁四项指标 dry-run 报告（软执行·不阻断）
 
 # —— 维护域 ——
-python scripts/check_methods_health.py ...                    # 24 项护栏体检（0 ERROR 交付）
+python scripts/check_methods_health.py ...                    # 25 项护栏体检（0 ERROR 交付）
 python scripts/add_frontmatter.py ...      [--dry-run]         # 修复：补 frontmatter
 python scripts/add_fm_single.py ...        [--dry-run]         # 修复：单份细分版补 frontmatter（该载体 2026-09-23 停用 ⇒ 脚本已退役）
 python scripts/b_fmt_unify.py ...          [--dry-run|--verify] # 修复：域文件结构归一

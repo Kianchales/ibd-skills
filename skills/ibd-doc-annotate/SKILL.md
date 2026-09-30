@@ -8,17 +8,19 @@ description: >
   ① 批注版（现役）：接收结构化复核问题清单（作者/类型/严重度/锚点/标题/描述/建议）与原文
   docx 或 PDF，自动把每条问题变成一条 Word 审阅批注或 PDF 高亮注释锚定在原文问题句段上，
   并同步生成与批注编号一一对应的精简总览报告（**双轨并存、批注优先**——交付口径见
-  `ibd-doc-review` skill 的 delivery.md；总览**双格式交付 = MD + Word**；
+  `ibd-doc-review` skill 的 delivery.md；总览**默认只产 md**，Word 版须显式要求
+  （`--overview-docx` 开关）；
   总览兼作兜底：无法自动锚定的条目在其中列出
   待人工定位）。脚本自动完成：编号分配（清单 code 字段 + 该前缀序号，脚本不内置任何
-  人名/代号映射）、锚点定位（docx 跨 run 拆分且保留原格式 / PDF 字符级容忍空白）、
-  批注正文 4 行紧凑排版、Word comments 四件套补全、总览生成（md + docx 双格式）。
+  人名/代号映射）、锚点定位（docx 跨 run 拆分且保留原格式 / PDF 字符级容忍空白；段落内
+  非文本内容原位保留，支持在已带批注的文档上二次批注）、
+  批注正文 4 行紧凑排版、Word comments 四件套补全、总览生成（默认只产 md）。
   ② 修订稿（现役）：用户明确「生成修订稿」时，先与用户确认输出形态（Word 修订模式 /
   直接改好 / 双版，**不按措辞自动路由**），按问题清单的 rev 替换文本把改动落到原文，
   输出修订稿 docx + 修改清单（已修订/待人工两区）。
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.10.3
+version: 0.11.0
 agent_created: true
 ---
 
@@ -71,7 +73,7 @@ python scripts/annotate_pdf.py --pdf <原文.pdf> --issues issues.json [--pages 
 python scripts/revise_docx.py --docx <原文.docx> --issues issues.json --mode revise|clean|both
 ```
 
-批注脚本自动完成：**编号分配** → **锚点定位** → **批注注入**（正文 4 行紧凑排版）→ **总览生成**（md + docx 双格式）；修订脚本自动完成：编号分配 → 锚点定位 → 按 rev 落定 → 修改清单生成（缺 rev／复杂 run／重叠／未锚定记「待人工」不硬撑）。
+批注脚本自动完成：**编号分配**（同前缀超 99 条顺延双字母分段，序号恒两位）→ **锚点定位** → **批注注入**（正文 4 行紧凑排版；段落内非文本内容原位保留）→ **总览生成**（默认只产 md，`--overview-docx` 显式另产 Word 版）；修订脚本自动完成：编号分配 → 锚点定位 → 按 rev 落定 → 修改清单生成（缺 rev／复杂 run／重叠／未锚定记「待人工」不硬撑）。
 
 - **批注侧详规**（跨 run 锚定与复杂 run、PDF 页对象持有、同段多批注 range 补插、表格锚点选唯一数值）：[annotate-runbook.md](references/annotate-runbook.md)
 - **修订侧详规**（按 rev 落定、`w:delText`、`w:trackRevisions`、rPr 继承、多锚点倒序）：[revise-runbook.md](references/revise-runbook.md)
@@ -82,7 +84,7 @@ python scripts/revise_docx.py --docx <原文.docx> --issues issues.json --mode r
 
 ### 4. 交付物
 
-**判据**：命名用 `<原文>_<YYYYMMDD>_v<N>_<形态>`（**G3**：同轮重跑覆盖、跨轮必升 N，`--out` 显式传入）；六类产物（批注版／总览双格式／修订稿／clean 版／修改清单）清单见 [delivery-and-gates.md](references/delivery-and-gates.md) §一／§二。
+**判据**：命名用 `<原文>_<YYYYMMDD>_v<N>_<形态>`（**G3**：同轮重跑覆盖、跨轮必升 N，`--out` 显式传入）；六类产物（批注版／总览 md·Word 版仅开关时产／修订稿／clean 版／修改清单）清单见 [delivery-and-gates.md](references/delivery-and-gates.md) §一／§二。
 
 ## 资源索引
 
@@ -93,7 +95,7 @@ python scripts/revise_docx.py --docx <原文.docx> --issues issues.json --mode r
 | 校验门禁（批注 docx+pdf / 修订稿） | `ibd-doc-review` 的 check_annotations.py / check_revisions.py | 🔗 外部依赖 |
 | 问题清单模板（含 rev 字段示例） | [issues.example.json](scripts/issues.example.json) | 📦 本包 |
 | 入口校验器（issues 结构早拦：CLI 独立跑 + 三脚本注入前自动校验） | [validate_issues.py](scripts/validate_issues.py) | 📦 本包 |
-| 总览 Word 转换器（总览 md → docx，双格式交付） | [overview_to_docx.py](scripts/overview_to_docx.py) | 📦 本包 |
+| 总览 Word 转换器（总览 md → docx；`--overview-docx` 开关时调用） | [overview_to_docx.py](scripts/overview_to_docx.py) | 📦 本包 |
 | 批注注入脚本（docx / pdf） | [annotate_docx.py](scripts/annotate_docx.py) / [annotate_pdf.py](scripts/annotate_pdf.py) | 📦 本包 |
 | 修订稿生成脚本（docx，三 mode） | [revise_docx.py](scripts/revise_docx.py) | 📦 本包 |
 | 后处理：补插丢失的批注 range（同段多批注冲突） | [fix_missing_ranges.py](scripts/fix_missing_ranges.py) | 📦 本包 |
@@ -115,14 +117,14 @@ python scripts/revise_docx.py --docx <原文.docx> --issues issues.json --mode r
 
 **高频四条**（分布索引见 [ops-notes.md](references/ops-notes.md) §踩坑全文分布）：
 
-- **同段多批注互相清除 range**（comments.xml 有批注、document.xml 丢 range）→ 补跑 `fix_missing_ranges.py` 后重跑门禁；**门禁只校验 cs/ce/ref 对数**，顺序颠倒曾静默放行
+- **同段多批注互相清除 range**（comments.xml 有批注、document.xml 丢 range）→ 注入器已改为原位保留（2026-09-29 修复版起不再发生）；**旧版产出**仍可补跑 `fix_missing_ranges.py` 后重跑门禁；**门禁只校验 cs/ce/ref 对数**，顺序颠倒曾静默放行
 - **表格型文档锚点选唯一数值**（表标题／合并单元格常含多 run → MISS）：定锚前先做命中计数，**取命中数 = 1 的数值串**
 - **跨载体清单须先按载体拆分再注入**：一份复核批次的问题可能分属不同载体（如附注 docx ＋ 申报报表 xlsx）。把不可锚定条目一并传入时，脚本仍会为它们生成 comments 条目，导致**门禁 FAIL（comments 条数 > cs/ce/ref 对数）**。处置：按载体拆清单，**只把能锚定到该载体原文的条目传入**；其余条目的编号在清单侧另设段号（如附注 J-01~J-53、报表 J-54~J-65），并在清单「编号规则」处写明两段对应关系——编号仍保持一一对应
 - **xlsx 侧批注走 Excel 单元格批注（另一条链路）**：Excel 无 Word 审阅批注等价形态，用 `openpyxl` 单元格 `Comment` 落地。三条硬约束：① **必须 `load_workbook(path)`（不带 `data_only=True`）**，否则保存时公式被替换为缓存值——申报报表底稿基本靠公式串联，这一步错了会静默毁掉整本；② **先扫既有批注**（`c.comment`），只补不改——原表常带审计/复核人已写的批注，覆盖即丢证据；③ **只写副本、绝不写原文件**（`--out` 另存），并在文件名标注「（Excel 副本）」，避免误作申报版本流转。同段多单元格同一条目时逐格写入（如同一问题打在 B22/C22/D22），便于逐期核对
 - **批注编号还原（跨载体/子集交付时）**：脚本编号＝「前缀＋段内序号」，重出一版子集会让同一问题出现两套号（旧 J-02 ↔ 新 J-01），破坏清单↔批注一一对应。若必须保持原号，可**后处理 `word/comments.xml`**：`re.sub(r"J-\d{2}", map, xml)` **一次遍历替换**（勿链式替换，否则 J-01→J-02 会被二次命中），其余 zip 条目原样拷出；总览 md 同步替换后用 `overview_to_docx.py` 重生成 Word，最后重跑门禁确认编号唯一
 - **修订删除文本用 `w:delText` 而非 `w:t`**，且须开 settings `w:trackRevisions`（元素名不是 trackChanges）
 
-> 其余九条（pymupdf 页对象须持有引用／跨 run 锚定／批注内禁空行段／编号一次性分配／复杂 run 为兜底／ins-del 同 id 成对 author 归责／新文本 run 继承 rPr／多锚点倒序／注入丢同段 `w:tab` run）按主题落在 [annotate-runbook.md](references/annotate-runbook.md) 与 [revise-runbook.md](references/revise-runbook.md)；**踩坑全文分布索引**见 [ops-notes.md](references/ops-notes.md) §踩坑全文分布。
+> 其余九条（pymupdf 页对象须持有引用／跨 run 锚定／批注内禁空行段／编号一次性分配／复杂 run 为兜底／ins-del 同 id 成对 author 归责／新文本 run 继承 rPr／多锚点倒序／注入曾丢同段 `w:tab` run·已修但逐段核验纪律仍必做）按主题落在 [annotate-runbook.md](references/annotate-runbook.md) 与 [revise-runbook.md](references/revise-runbook.md)；**踩坑全文分布索引**见 [ops-notes.md](references/ops-notes.md) §踩坑全文分布。
 
 ## 维护
 
