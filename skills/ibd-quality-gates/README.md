@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E8%B4%A8%E9%87%8F%E6%A0%A1%E9%AA%8C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.13.4-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.14.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -80,6 +80,7 @@ ibd-quality-gates/
 
 ## 📌 近期更新
 
+- **2026-10-02 · v0.14.0**：**依赖面接线** —— 🟢 可选层的「方法论库」补**取用通道点名**（建库/蒸馏/维护 → `ibd-methods-ops`；按问题查库 → `ibd-methods-query`）；**层级不变**，仍无需任何外部依赖即可完成校验
 - **2026-09-18 · v0.11.0**：新增 rules.md **§8 改写既有工作簿四条纪律**——改前体检结构（表头/列序/公式引用）、写后读回验证（工具「返回成功」≠ 已落盘）、汇总默认全公式（静态快照须标注取值时点）、构造参照值前先分离「明细」与「合计」行；源自 I-0008~I-0011 四连事故
 - **2026-09-18 · v0.10.0**：Excel 交付物专项——公式写入形态（A 裸写 / B 前缀写 / C 静态写）+ 交付前重算原则；反模式新增 D-8（公式假值/静默截断），清单扩为 23 条
 - **2026-09-15 · v0.8.4**：检查6 门禁追溯——`references/antipatterns.md` 随包资产补记留痕（内容零变更）；

@@ -2,10 +2,10 @@
 name: ibd-methods-query
 slug: ibd-methods-query
 displayName: IBD 方法论检索
-description: 方法论知识库「检索域」skill——把「索引→定向读取→合成」固化为标准检索链路，查方法论时按问题域定位速查表 → 条目编号 → 行号 → 定向读取，避免全文读库的 token 膨胀。触发词「查方法论」「方法论检索」「怎么回复XX问题」「查XX问题怎么写」「查XX案XX问题的写法」；写作/分析/问答消费方法论时走标准检索链路。与 ibd-methods-ops（生产 + 维护）互补，供 ibd-doc-write 可选调用（无本 skill 时按其内嵌流程运行）。
+description: 方法论知识库「检索域」skill——把「索引→定向读取→合成」固化为标准检索链路，查方法论时按问题域定位速查表 → 条目编号 → 行号 → 定向读取，避免全文读库的 token 膨胀。触发词「查方法论」「方法论检索」「怎么回复XX问题」「查XX问题怎么写」「查XX案XX问题的写法」；写作/分析/问答消费方法论时走标准检索链路。与 ibd-methods-ops（生产 + 维护）互补，供 ibd-doc-write 可选调用（无本 skill 时按其 ② 步「索引路 ＋ 全文路」自足执行）。
 summary: 方法论库「检索域」——标准检索链路「问题拆解→索引定位→定向读取→合成」，按需只读命中条目不全文读库，配套速查表 + 条目行号定位资产。
 agent_created: true
-version: 0.6.3
+version: 0.6.4
 ---
 
 # ibd-methods-query
@@ -84,7 +84,7 @@ S4 合成输出  汇总 → 写作素材 / 分析结论 / 引用清单（必带�
 ## 边界与协作
 
 - **与 ibd-methods-ops 互补**：ops 管生产+维护，本 skill 管消费/检索（同一 `{METHODS_ROOT}`）
-- **供 ibd-doc-write 可选调用**：无本 skill 时 write 按内嵌流程运行（功能等价）
+- **供 ibd-doc-write 可选调用**：无本 skill 时 write 按其 ② 步「索引路 ＋ 全文路」自足执行（功能等价）
 - **不承担生产**：缺口只登记待沉淀清单，产出归 ops 蒸馏域
 - 分工详规 retrieval-chain.md §11
 

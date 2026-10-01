@@ -169,7 +169,7 @@
 ## 11. 边界与协作（全文）
 
 - **与 ibd-methods-ops 互补**：ops 管「生产+维护」（蒸馏/体检/修复），本 skill 管「消费/检索」（查库）——同一方法论库（`{METHODS_ROOT}`）
-- **供 ibd-doc-write 可选调用**：write 五步链路的查库环节可走本 skill 标准链路；write 无本 skill 时按其内嵌流程运行（功能等价，仅 token 效率差）
+- **供 ibd-doc-write 可选调用**：write 五步链路的查库环节可走本 skill 标准链路；write 无本 skill 时按其 ② 步「索引路 ＋ 全文路」自足执行（功能等价，仅 token 效率差）
 - **不承担生产**：检索发现方法论缺口只登记待沉淀清单，产出归 ops 蒸馏域
 
 ## 12. 维护（何时需要改本 skill）

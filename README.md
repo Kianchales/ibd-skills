@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/Kianchales/ibd-skills/releases/latest"><img src="https://img.shields.io/github/v/release/Kianchales/ibd-skills?color=blue&label=Latest%20Release" alt="latest release"></a>
   <a href="https://github.com/Kianchales/ibd-skills/stargazers"><img src="https://img.shields.io/github/stars/Kianchales/ibd-skills?style=flat&label=Stars" alt="stars"></a>
-  <img src="https://img.shields.io/badge/skills-7%20%E5%8C%85-4e6b99" alt="7 packages">
+  <img src="https://img.shields.io/badge/skills-8%20%E5%8C%85-4e6b99" alt="8 packages">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT license">
   <img src="https://img.shields.io/badge/Python-3%20%E6%A0%87%E5%87%86%E5%BA%93-3776AB" alt="python stdlib">
 </p>
@@ -14,6 +14,7 @@
   <a href="skills/ibd-doc-write/README.md">写作</a> |
   <a href="skills/ibd-quality-gates/README.md">质量校验</a> |
   <a href="skills/ibd-finance-review/README.md">财务复核</a> |
+  <a href="skills/ibd-legal-review/README.md">法律复核</a> |
   <a href="skills/ibd-doc-review/README.md">格式</a> |
   <a href="skills/ibd-doc-annotate/README.md">批注交付</a> |
   <a href="skills/ibd-methods-ops/README.md">方法论沉淀</a> |
@@ -25,7 +26,7 @@
 
 - 💡 [这是什么？](#-这是什么)
 - ✨ [快速开始（30 秒）](#-快速开始30-秒)
-- 🧩 [集合内 7 个 skill](#-集合内-7-个-skill)
+- 🧩 [集合内 8 个 skill](#-集合内-8-个-skill)
 - 🔗 [工作链路](#-工作链路)
 - 🚀 [典型场景](#-典型场景)
 - 🛡 [设计原则](#-设计原则)
@@ -47,7 +48,7 @@
 
 ## ✨ 快速开始（30 秒）
 
-1. 从 [Releases](https://github.com/Kianchales/ibd-skills/releases/latest) 下载最新 zip（内含全部 7 个 skill）
+1. 从 [Releases](https://github.com/Kianchales/ibd-skills/releases/latest) 下载最新 zip（内含全部 8 个 skill）
 2. 解压后，把需要的 `skills/<包名>/` 目录拷贝到你的 AI 工作台技能目录（各客户端按自身规范放置）
 3. 对你的 AI 说一句触发语，流水线即启动：
 
@@ -56,6 +57,7 @@
 「交稿前做质量校验」                          → ibd-quality-gates 校验
 「按招股书版式套样式并核对格式」              → ibd-doc-review 落地
 「把复核问题全部批注进原文」                  → ibd-doc-annotate 交付
+「查一下这段的法律惯例」                      → ibd-legal-review 对照
 「蒸馏学习这份材料」                          → ibd-methods-ops 沉淀（材料来源与库由你定）
 「查 XX 问题怎么写」                          → ibd-methods-query 定向检索
 ```
@@ -86,17 +88,18 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 > [!NOTE]
 > docx 套样式需一个 docx 处理工具（见「安装与依赖」平台工具行）；**格式核对与批注校验本身零依赖**，装完即可用。
 
-## 🧩 集合内 7 个 skill
+## 🧩 集合内 8 个 skill
 
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
-| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.16.2 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力） |
-| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.13.4 | 零硬依赖（基座之一） |
-| [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.12.0 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.27.2 | 零外部 skill 依赖（基座） |
+| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.18.0 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
+| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.14.0 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
+| [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.14.0 | 🟢 doc-review ≥0.16.2（交付口径单一事实源；缺则只产清单不落地）；🟢 方法论库财务域（同类案例「先库后源」）+ methods-query（缺则直查公开问询件） |
+| [ibd-legal-review](skills/ibd-legal-review/README.md) | **法律惯例对照复核**：把本稿与同类情形的市场惯例并排比，出对照标注；**只对照、不定性**（法律判断归签字人） | 0.3.0 | 🔴 doc-review（复核链清单汇总口，不随包携带）；🟢 方法论库（B 档惯例取例，缺则退 A 档） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.28.0 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.11.0 | 🔴 doc-review ≥0.19.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md；单入口路由） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.34.1 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
-| [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.3 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.34.6 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.4 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]
 > **`ibd-doc-write` 尚不成熟，无法满足「独立撰写整段投行文件」的要求。**
@@ -119,7 +122,7 @@ doc-write 写草稿 → gates 质量校验（数字五要素/反模式/G1-G5 + �
                 → doc-review 套样式 + 格式核对 → 正式稿
 
 ──────────── 复核线 ────────────
-finance-review 16 维复核产出问题清单 → doc-annotate 注入原位批注
+finance-review 16 维复核 ／ legal-review 法律惯例对照 → 产出问题清单 → doc-annotate 注入原位批注
                 → doc-review 门禁校验（批注结构/编号/锚定）→ 批注版原文 + 精简总览
 
 ──────────── 方法论线（沉淀 ⇄ 检索，供写作线消费）────────────
@@ -188,6 +191,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 ```
 
 > 🔴 = 硬依赖（缺则核心功能不可用）；🟢 = 可选依赖（缺则降级）。下限与口径见下方兼容矩阵；接口细节（门禁 CLI / 清单 schema / 词表）见 `skills/ibd-doc-review/references/interface.md`（对外契约单一事实源）。
+> 另：`ibd-legal-review` 与 `ibd-finance-review` 同属**复核线的清单产出侧**，均回指 `ibd-doc-review` 作汇总口（上图为免交叉简化，未单独画其节点）。
 
 ### 依赖版本兼容矩阵（单包安装时对照）
 
@@ -195,12 +199,13 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
-| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.13.4 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.27.2 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.27.2 | ✅ |
-| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.27.2 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.34.1 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.34.1 | ✅ |
+| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.14.0 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.28.0 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.19.0 | 0.28.0 | ✅ |
+| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.16.2 | 0.28.0 | ✅ |
+| ibd-legal-review | ibd-doc-review（汇总口） | 未声明下限 | 0.28.0 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.34.6 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.34.6 | ✅ |
 
 > 下限口径：`ibd-doc-write` 的 ≥0.15.7 = `deliver_gate.py` 引入版；`ibd-doc-annotate` 的 ≥0.19.0 = 批注任务单入口路由版（check_annotations.py 转内部回调，低于此版单入口声明成死引用）；`ibd-finance-review` 的 ≥0.16.2 = 交付口径单一事实源 `references/delivery.md` 引入版（低于此版该指向成死引用）。
 
@@ -213,6 +218,10 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 - 集合 Release：`ibd-skills-vX.Y.Z`，zip 含 `README.md` + `skills/` 全部包
 
 ## 📌 近期更新
+
+- **2026-10-02 · v0.5.1**：**6 包上提（复核线接库 ＋ 蒸馏回环 ＋ 消费侧接线补全）**——① **`ibd-doc-write` 0.16.2 → 0.18.0**（取例口径补 **全文路兜底**（含同义词／别名）＋ **两路皆空才可称库内无内容**——原只走索引路，会静默漏检约三分之一未归类条目；依赖表补点名 `ibd-methods-query` ＋ 库三级指路）；② **`ibd-doc-review` 0.27.2 → 0.28.0**（**D 域回填** 0 → 22 项＝19 现役 ＋ 3 占位；新增 `references/convention-compare.md`「惯例对照四步法」）；③ **`ibd-finance-review` 0.12.0 → 0.14.0**（依据链第 2 顺位升级为 **「先库后源」**——先查已蒸馏的同类案例、再取公开原文核验；建「**蒸馏 → 复核维度**」巡检回环（加维判据＝≥3 案例复现）＋ 检索预算 ＋ 库对账）；④ **`ibd-legal-review` 0.2.1 → 0.3.0**（**族演进回环**（立族判据同为 ≥3 复现）＋ 检索预算 ＋ 库对账）；⑤ **`ibd-quality-gates` 0.13.4 → 0.14.0**（依赖表点名建库／查库通道）；⑥ **`ibd-methods-query` 0.6.3 → 0.6.4**（边界表述订正——不再称写作包按其内嵌流程运行）；⑦ **`ibd-methods-ops` 1.34.1 → 1.34.6**（新增 B 对账锚点生成器 ＋ 蒸馏条目入库 ＋ 体例编号归一）。版本矩阵与依赖兼容矩阵同步。
+
+- **2026-10-01 · v0.5.0**：**新增 `ibd-legal-review`（法律惯例对照复核）**——集合 **7 → 8 包**。新包做的是「**把本稿与同类情形的市场惯例并排比、出对照标注**」，**只对照、不定性**（法律性质判断归签字人）：**19 族查项**（D1–D19）＋ 3 项缺口占位 ＋ **时点匹配**（引条款须为事实发生时的有效版本）＋ 三档判定（明文／惯例／敏感）＋ **四条红线**；依据链三层（法规／惯例／可比），**无法规源可从官方公开源自举**、**无方法论库则 B 档退 A 档**；随包带法规取件器（HTML 取零依赖；**质检不过不落盘**）。版本矩阵与依赖兼容矩阵同步。
 
 - **2026-09-29 · v0.4.0**：**复核线 0.27.0「进门第一档」全量落地 ＋ 写作线 0.16.0 写前分层 ＋ 档位性质轴**——`ibd-doc-review` 0.25.0 → **0.27.0**（**进门第一档＝检查项声明**：新增 [check-scope.md](skills/ibd-doc-review/references/check-scope.md) 五域 52 项单一事实源（A 文字格式 12／B 内容质量 8／C 财务 18〔**C-P 专业判断 16＋C-Q 数值正确性 1＋C-D 执行要求 1**〕／F 交付件核验 10／S 四类前置门＋**D 法律·E 行业预留域**）；**三问小表反问确认制**（每份文档首次委托：检查范围/交付形态/深度档位各附推荐，同文档沿用、换文档重问）；**档位轴＝性质**（L2 装机器能判的：含五类机械勾稽全算＋逐数台账；L3 才装只有人能判的：专业判断 16 维，预留法律/行业）；声明单/表单全量人话化）；`ibd-doc-write` 0.15.4 → **0.16.0**（**写前分层**：文档类型＝项目级（换项目重问）＋动作判定＝委托级（句段标保持/改写/新增/删除）；**骨架不确认直接取用**（问型族匹配，纠偏后置）；**口径制**：数据基准按类型默认（招股书←审计报告／回复←招股书）＋口径与待核清单交付必附＋审改倾向记忆项目级）；`ibd-doc-annotate` 0.10.2 → **0.10.3**（批注链路同步）；`ibd-finance-review` 0.10.0 → **0.12.0**（执行纪律＋敏感议题前置门＋条目清单 schema anyOf）；`ibd-methods-ops` 1.24.4 → **1.33.16**（证据判据路线 1.33.13–16：可判案率 40.2%＋裸页码治理＋号段守卫；蒸馏批次卷扩容）；`ibd-methods-query` 0.5.0 → **0.6.2**（双路并行检索：索引路＋全文路，未分类 34% 存量不再漏检）；`ibd-quality-gates` 0.13.1 → **0.13.3**（勾稽容差 n 倍允差对齐）。版本矩阵与依赖兼容矩阵同步。
 
@@ -243,7 +252,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 - 快速入口 = 各包 `README.md`（能力总览 + 命令附录）
 - 规则明细（批注规范 / 修订规范 / 样式映射 / 反模式清单等）在各包 `references/`
 - **包间分工与依赖**：上方「工作链路」+「依赖关系图」；doc-review 的对外契约（门禁 CLI / 问题清单 schema / 编号词表 / 版本下限）= [skills/ibd-doc-review/references/interface.md](skills/ibd-doc-review/references/interface.md)
-- **上手路径建议**：单包试用 → `ibd-doc-review` 或 `ibd-quality-gates`（零外部 skill 依赖）；写作线全家桶 → doc-write + gates + doc-review + methods-ops；复核线全家桶 → finance-review + doc-annotate + doc-review
+- **上手路径建议**：单包试用 → `ibd-doc-review` 或 `ibd-quality-gates`（零外部 skill 依赖）；写作线全家桶 → doc-write + gates + doc-review + methods-ops；复核线全家桶 → finance-review + legal-review + doc-annotate + doc-review
 
 ## ⚖️ 许可
 

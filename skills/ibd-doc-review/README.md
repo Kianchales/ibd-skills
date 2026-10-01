@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.27.2-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.28.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -86,6 +86,7 @@ ibd-doc-review/
 
 ## 📌 近期更新
 
+- **2026-10-01 · v0.28.0**：**法律域（D）由预留回填为现役 ＋ 新增惯例对照四步法**——`check-scope.md` 原「D／E 预留位（各 0 项）」拆开：**D 域回填 22 项**（19 族现役 D1–D19 ＋ 3 项缺口占位），判据与取例归新包 `ibd-legal-review`，**E 行业域仍为预留**；**A／B／C／F／S 域编号与档位零改动**（旧号引用保持稳定）。新增 `references/convention-compare.md`（**惯例对照四步法**，方法唯一事实源）；`delivery.md` 与 `SKILL.md` 域表述同步
 - **2026-09-29 · v0.27.2**：**总览交付口径同改**——§一配套交付物由「MD + Word 双格式」改「**默认只产 MD 版**，Word 版须显式要求」（执行器 `ibd-doc-annotate` 0.11.0 的 `--overview-docx` 开关）；文末沿革补条目。零脚本改动
 - **2026-09-29 · v0.27.1**：**活文档去内部编号**——本批引入的表述（进门三问反问确认制／档位性质轴／预留域占位纪律／收尾四段式）原带 `R-xxxx` 溯源括注，按「活文档不留内部编号」成法全部改为自包含表述（去编号留说明，规则正文与执行顺序零变更）；触及 SKILL／check-scope／delivery／workflow 四册 8 行。更早批次的历史存量编号不在本版处理（属发布仓 traces 存量清理范畴）
 - **2026-09-28 · v0.27.0**：**「查什么」明细化并上提为进门第一档** —— ①新增 [references/check-scope.md](references/check-scope.md)：把散在各处的检查项穷举成**带固定编号的五域 52 项**明细（**A 文字与格式 12 / B 内容质量 8 / C 财务 18〔C-P 专业判断 16 ＋ C-Q 数值正确性 1 ＋ C-D 执行要求 1〕/ D 法律·预留／E 行业·预留 / F 交付件核验 10 / S 四类前置门**）＋「**性质**」第二轴（格式规范 / 数值正确性 / 表达与事实 / 专业判断 / 执行要求），声明单可按性质勾选；每项含「人话名称 ＋ 具体查什么 ＋ 默认档位 ＋ 前置条件」，附**声明单模板**与三条纪律（未核即声明／首尾一致／档位只是预设）；②`delivery.md` 新增 **§零 进门第一档**——**先声明查什么 → 再谈交付形态 → 深度档位作预设**，深度三档由「第二套独立选择」重定位为**声明单的默认预设**（消除「选了 L3 却漏了某项」的口径裂缝）；③`workflow.md` 决策树新增 **★ 第 0 步（仅复核类委托）**，非复核类跳过；④顺手**实测校正项数口径**（`deliver_gate` 基础九→**十项**、批注/修订追加三→**两项**〔共十一→**十二项**〕、`check_content` 十→**十二项**，落点 12 处；下游 `ibd-doc-write` 三处同步）。**零脚本改动、零行为变更**——131 项自测原样全过；⑤**档位归属校正（同批用户校正）**——**档位轴 ＝ 性质**：**L2 装机器能判的**（含 **C-Q 五类机械勾稽全算 ＋ C-D 逐数台账**）、**L3 才装只有人能判的**（**C-P 专业判断全 16 维**），且 **L3 预留承接法律、行业专业复核**

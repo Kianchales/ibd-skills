@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""方法论全库健康护栏（25 项检查 · 防结构漂移）
+"""方法论全库健康护栏（26 项检查 · 防结构漂移）
 
 用法：
     python check_methods_health.py [--methods-root <工作区根>] [--quiet]
@@ -69,6 +69,11 @@
                         与库实况（单案数）同形比对，不等 ⇒ WARN **由人核**（阈值规则/历史叙述为合法同形）。
                         排除历史面（CHANGELOG/adr/incident-log*/pending-rules/archive 等——
                         其数字是「发生过什么」，非活口径）。漂移根因在库侧变更 ⇒ **变更即校验**
+26. 占位符残留           回写空壳 `—— ……（本案产出文件）` **须 = 0，非 0 即 ERROR**（判 I-0148）。
+                        回写器 `sentence()` 抽不到实证正文时**静默降级写占位符**，21 项门禁全绿未拦、
+                        一次性写出 233 处 ⇒ 本项即「**静默失败（防线存在≠生效）**」的库侧兜底。
+                        扫描面＝受检正文面（同第 1 项）；`60_notes/` 内**描述该形态本身**的文字合法。
+                        修复：`apply_rewrite.py --repair --apply --cases-root <材料根>`；配不到源转人工
 
 注：第 12 项（I-CL 条目位置）实现在第 3 项（编号健康）的行业合并版分支内，非独立小节。
 
@@ -87,7 +92,7 @@ import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-_ap = argparse.ArgumentParser(description="方法论全库健康护栏（25 项检查）")
+_ap = argparse.ArgumentParser(description="方法论全库健康护栏（26 项检查）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--quiet", action="store_true", help="只输出异常项")
@@ -1316,6 +1321,46 @@ if not _args.quiet and not _args.json:
           % (_libfact_scanned, len(_libfact_broken), len(_libfact_count_hits)))
 
 
+# ---------- 26. 占位符残留（回写空壳 · 2026-10-01 新增 · 判 I-0148） ----------
+# 背景（**判 I-0148**）：S7-b 回写器 `apply_rewrite.py` 的 `sentence()` 抽不到「本案实证」正文时
+#   **不报错、静默降级写占位符** —— body 落 `……`、src 回退 `'本案产出文件'` ⇒ 条目实证行变成
+#   `—— ……（本案产出文件）` 空壳。**21 项门禁全绿未拦**（形态检查不看「内容是不是占位」），
+#   实测一次性写出 **233 处**（WO-MF-23 第二批 + 试点批遗留）。
+# 本项**上护栏**：占位符必须 =0，非 0 即 **ERROR**。
+# 理由：本次事故的本质＝**静默失败（防线存在 ≠ 生效）**（见 docs/ENGINEERING.md §4.10 簇五）——
+#   回写器已抛错可拦新犯（2026-10-01 修），但**存量空壳无任何信号**，下一批同型事故照样漏。
+#   故「写侧禁占位」与「库侧扫占位」须**成对**：前者防新增、后者兜存量与任何旁路写入。
+# 判据（两条）：
+#   ① `（本案产出文件）` —— 占位来源代号，**库内出现即 ERROR**（合法来源代号应为件名简称＋页码）；
+#      注：`60_notes/` 等排除目录里**描述该占位符本身**的文字合法（如复盘笔记引用该形态），
+#      故扫描面＝**受检正文面**（`library_files()` 口径），与第 1 项 frontmatter 校验同面。
+#   ② `—— ……` —— 半角／全角省略号紧接破折号的空正文（**无来源代号形态**）。
+# 修复：`python apply_rewrite.py --repair --apply [--cases-root <材料根>]` 回填；
+#   配不到源者（材料缺失/已废弃案）**转人工**，不得留占位（须删行或补实证）。
+# 授权档：**C（判断报告）** —— 回填须回到产出件取正文，属语义面；护栏只报不改。
+_PLACEHOLDER_RX = re.compile(r"（本案产出文件）|——\s*…{1,3}\s*$")
+_ph_hits = []
+try:
+    for _fp in sorted(set(library_files(METHODS))):
+        try:
+            _txt = io.open(_fp, encoding="utf-8", errors="replace").read()
+        except OSError:
+            continue
+        for _i, _ln in enumerate(_txt.split("\n"), 1):
+            if _PLACEHOLDER_RX.search(_ln):
+                _ph_hits.append("%s:%d" % (os.path.relpath(_fp, METHODS).replace("\\", "/"), _i))
+except OSError as _e:
+    UNVERIFIABLE.append("占位符残留**无法扫描**（第 26 项）：%s" % _e)
+if _ph_hits:
+    ERRORS.append("回写**占位符残留** %d 处（第 26 项）：`—— ……（本案产出文件）` 空壳 —— "
+                  "回写器静默降级产物，**违「禁写占位」契约**（判 I-0148；曾一次性写出 233 处而 21 项门禁全绿）。"
+                  "修复：`python apply_rewrite.py --repair --apply --cases-root <材料根>`；"
+                  "配不到源者转人工（删行或补实证），**不得留占位**。示例：%s"
+                  % (len(_ph_hits), "；".join(_ph_hits[:8])))
+if not _args.quiet and not _args.json:
+    print("占位符残留（第 26 项）: %d 处（应 = 0）" % len(_ph_hits))
+
+
 # ---------- 事件留痕：体检落一行（WO-26 · 2026-09-26） ----------
 # 判据：「N issues found, M auto-fixed」——每次体检落一行事件，
 #   使「新增／已消」的动向可从事件序列 diff 得出（本库无自动修复 ⇒ auto-fixed 恒 0，改记实际四数）。
@@ -1338,9 +1383,9 @@ if not _args.no_log:
         os.makedirs(_ld, exist_ok=True)
         _lpath = os.path.join(_ld, "库操作日志.md")
         _today = time.strftime("%Y-%m-%d")
-        _result_line = ("- 结果：ERROR %d ／ UNVERIFIABLE %d ／ WARN %d ｜ 正文 %d ｜ 索引行号抽查 %d/%d ｜ 单案 %d"
+        _result_line = ("- 结果：ERROR %d ／ UNVERIFIABLE %d ／ WARN %d ｜ 正文 %d ｜ 索引行号抽查 %d/%d ｜ 单案 %d ｜ 占位符 %d"
                         % (len(ERRORS), len(UNVERIFIABLE), len(WARNS), fm_checked,
-                           _locator_sampled, _locator_checked, _scope_checked))
+                           _locator_sampled, _locator_checked, _scope_checked, len(_ph_hits)))
         # 去重：扫全文，若同日同结果行已存在同格式条目 ⇒ 跳过
         _dup = False
         if not _args.allow_dup and os.path.exists(_lpath):
@@ -1373,6 +1418,7 @@ _summary = {
     "scanned": fm_checked,
     "locator_pool": _locator_checked, "locator_sampled": _locator_sampled,
     "scope_checked": _scope_checked,
+    "placeholder_hits": len(_ph_hits),
     "issues": ([{"level": "ERROR", "severity": "hard", "msg": m} for m in ERRORS] +
                [{"level": "UNVERIFIABLE", "severity": "unknown", "msg": m} for m in UNVERIFIABLE] +
                [{"level": "WARN", "severity": "soft", "msg": m} for m in WARNS]),

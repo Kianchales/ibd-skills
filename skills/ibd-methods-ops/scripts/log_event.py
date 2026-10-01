@@ -8,7 +8,7 @@
     python log_event.py --stats          # **派生视图**：从事件stream现算计数，不写盘
 
 参数：
-    --action   动作键（**机器可读**）：蒸馏｜回写｜体检｜索引刷新｜治理｜迁移｜升版｜未沉淀案
+    --action   动作键（**机器可读**）：蒸馏｜重蒸馏｜回写｜体检｜索引刷新｜治理｜迁移｜升版｜未沉淀案
     --object   对象（一句话）
     --result   结果（一句话结论 ＋ 关键数字）
     --where    产物路径（可选，多条用「／」分隔）
@@ -42,7 +42,8 @@ import sys as _s
 if hasattr(_s.stdout, "reconfigure"):
     _s.stdout.reconfigure(encoding="utf-8")
 
-ACTIONS = ("蒸馏", "回写", "体检", "索引刷新", "治理", "迁移", "升版", "未沉淀案")
+# 2026-09-30 补「重蒸馏」：WO-MF-23 手册 §五规定 `--action 重蒸馏` 留痕，原 ACTIONS 未收 ⇒ 手册与脚本不一致，按手册对齐。
+ACTIONS = ("蒸馏", "重蒸馏", "回写", "体检", "索引刷新", "治理", "迁移", "升版", "未沉淀案")
 TRIGGER_EVERY = 40          # 维护域体检触发阈值（每累计 40 案一次 · 2026-09-06 用户裁定）
 
 _ap = argparse.ArgumentParser(description="向库操作日志追加一条事件 / 或从操作日志派生计数视图")

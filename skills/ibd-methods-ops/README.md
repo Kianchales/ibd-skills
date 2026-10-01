@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BB%B4%E6%8A%A4-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-1.34.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-1.34.6-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -17,8 +17,8 @@
 > **设计原则 · 双向开放**：资料来源与沉淀去向都由用户自己确定——材料从哪来（对话给文件/文件夹/项目，或已接入的库）、沉淀到哪去（本地/Obsidian/云知识库等），全部由用户定；skill 提供流程、规范与工具，不绑定私有环境。
 
 - **蒸馏域**：S0-S7 全流程——**材料来源由用户定**（单文件/文件夹/项目/已接入的库）→ 材料准备（三阅读包）→ 多专家并行蒸馏 → 综合成文（写作范式）→ 模拟回复演练 → 共通点蒸馏 → 沉淀入库（索引刷新 + 护栏校验）
-- **维护域**：库结构健康——25 项护栏体检 → 修复工具箱（先 dry-run）→ 复验幂等
-- **随包工具链**：31 个脚本（索引体系 / 落库 / 门禁 / 修复 / 拆分 / 迁移），全部支持 `--methods-root` 或 `$METHODS_ROOT`
+- **维护域**：库结构健康——26 项护栏体检 → 修复工具箱（先 dry-run）→ 复验幂等
+- **随包工具链**：32 个脚本（索引体系 / 落库 / 门禁 / 修复 / 拆分 / 迁移），全部支持 `--methods-root` 或 `$METHODS_ROOT`
 - **库规范单一事实源**：[references/methods-guide.md](references/methods-guide.md)（目录结构 / 条目结构 / 索引机制 / 规模化拆分）
 
 ## ✨ 快速开始
@@ -30,7 +30,7 @@
 
 # 库维护（命令示例）
 python scripts/refresh_index.py --methods-root ~/methods        # 索引一键刷新（四件套编排）
-python scripts/check_methods_health.py --methods-root ~/methods # 25 项护栏体检（0 ERROR 交付）
+python scripts/check_methods_health.py --methods-root ~/methods # 26 项护栏体检（0 ERROR 交付）
 python scripts/update_expert_md.py --entries batch.json --methods-root ~/methods  # 条目落库
 ```
 
@@ -67,7 +67,7 @@ python scripts/update_expert_md.py --entries batch.json --methods-root ~/methods
 
 ```
 SKILL.md                 双域流程 SOP（蒸馏域 S0-S7 + 维护域 3 步）
-scripts/                 31 个随包脚本（下表为示例；全量清单见 references/methods-guide.md）
+scripts/                 32 个随包脚本（下表为示例；全量清单见 references/methods-guide.md）
   refresh_index.py         索引一键刷新（parse→gen_index→gen_toc→gen_entry）
   parse_titles.py          条目解析 → parsed_titles.txt
   gen_index.py             生成 _generated/方法论调用索引.md
@@ -75,7 +75,7 @@ scripts/                 31 个随包脚本（下表为示例；全量清单见 
   gen_entry.py             重写入口（路由表 + 摘要保留）
   update_expert_md.py      条目落库（h3/表格双形态 + 超线归档）
   check_expert_output.py   S4.5 产出自检门禁
-  check_methods_health.py  25 项护栏体检
+  check_methods_health.py  26 项护栏体检
   add_frontmatter.py / add_fm_single.py / b_fmt_unify.py / c_scale_dedup.py   结构修复工具箱
   split_domains.py         单体库 → 域文件拆分（配置驱动）
 references/
@@ -88,6 +88,7 @@ CHANGELOG.md             版本记录
 
 ## 📌 近期更新
 
+- **2026-10-01 · v1.34.2**：**D5 回填次生缺陷根治 ＋ 护栏第 26 项**——① 护栏增「占位符残留」（应 = 0，非 0 判 ERROR），封堵「回写器静默降级写占位符」的库侧盲区；② `apply_rewrite.py` 二轮硬化（首句切分追踪**全部括号族**、`src` 抽取取**尾部且须来源词打头**、新增 `--cases-root`、编号闸扩展 `I-CL`）；③ 存量修补 243 处／27 文件（删重复引注 175／删行尾裸页码 17／补来源代号 51）；④ 第 24 项基线下调 1752 → **1725**（据实）
 - **2026-09-30 · v1.34.1**：**库事实引用对账（第 25 项首读确证后修）**——design-boundaries §1 条目规模硬编码改指针化（现值见 `_generated/方法论_条目标题目录.md` 总览合计），落实「禁硬编码库事实」判据
 - **2026-09-29 · v1.34.0**：**护栏第 25 项「skills 消费侧库事实引用」（用户裁定 R-0065）** —— skills 面活文档**禁硬编码库计数/路径**：① 生成物文件名引用 ⟷ 库内实测存在（SCHEMA.md 例外留库根），断链 ERROR；② 「两位数字＋窄单位词」与库实况（单案数）同形比对，不等 WARN 由人核。护栏挂库侧体检**变更即校验**（漂移根因＝库侧变更），首跑实测 248 文档／断链 0／同形待核 33；同步第 20 项元自检抓出并修正 3 处「24 项」漏网声明
 - **2026-09-22 · v1.21.0**：**随包脚本 +2（24 → 26 个）** —— `normalize_pl_s.py`（S5 后 PL/S 编号归一：两遍＋**幂等**、族内连续零撞号、**已入库案自动跳过**防历史批次脱钩）＋ `apply_rewrite.py`（S7-b 回写执行：高→实证区／中高→独立段、幂等跳过、`--repair` 修截断行，判据＝行末括号深度 > 0）；现有库实测「需改号 0／写入 0／修复 0」＋阳性对照全对

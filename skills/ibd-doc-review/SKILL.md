@@ -28,7 +28,7 @@ description: >
   「修订结构对不对」「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」
   「查哪些项」「本轮查什么」「检查项声明」「复核范围」
   「研究下XX节」「帮我看看这段」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
-version: 0.27.2
+version: 0.28.0
 agent_created: true
 ---
 
@@ -63,7 +63,7 @@ agent_created: true
 
 | 事项 | 一句话判据 | 册指针 |
 |---|---|---|
-| **先声明查什么** | 任何复核委托的**第一个动作**——**该文档首次委托先出「动手前三问」小表（范围/形态/档位，各附推荐），确认后**逐项列出「本次查哪些（A/B/C 域编号；D 法律／E 行业为预留域）／不查哪些＋为什么／S1-S4 专项命中／交付前将跑 F 域」；同文档内沿用不重问，换文档重新问 | 明细清单与模板 → [check-scope.md](references/check-scope.md)；动作规范 → [delivery.md](references/delivery.md) §零 |
+| **先声明查什么** | 任何复核委托的**第一个动作**——**该文档首次委托先出「动手前三问」小表（范围/形态/档位，各附推荐），确认后**逐项列出「本次查哪些（A/B/C/D 域编号；E 行业为预留域）／不查哪些＋为什么／S1-S4 专项命中／交付前将跑 F 域」；同文档内沿用不重问，换文档重新问 | 明细清单与模板 → [check-scope.md](references/check-scope.md)；动作规范 → [delivery.md](references/delivery.md) §零 |
 | 再定交付形态 | 批注版／文本定稿／修订稿（三选一，带项目级记忆） | delivery.md §五 |
 | 深度档位作预设 | L1/L2/L3 只预填声明单，**不是另一套独立选择**；**分档轴＝性质——L2 机器能判的（含勾稽全算、逐数台账）／L3 只有人能判的（专业判断）** | check-scope.md §七 ＋ delivery.md §七 |
 
@@ -82,7 +82,8 @@ agent_created: true
 | **场景F** 批注产物校验（只读） | 四件套 / 4 段无空行 / 编号唯一 | `check_annotations.py`（≡ `deliver_gate.py --annotated`） |
 | 场景G | 修订稿产物校验（只读） | ins==del 对 / author·id 成对 / 落定证明 | `check_revisions.py`（≡ `deliver_gate.py --revised`） |
 | **场景H** 交付前综合核验 | 基础十项一次跑完，三态 PASS/FAIL/SKIP | `deliver_gate.py` |
-| **场景I** 检查项声明与范围核对（只读） | 「只核对X」「X 过一遍」「挑一下错别字」——用户**显式圈定范围** | **先进门第一档出声明单**（明细 → [check-scope.md](references/check-scope.md)）；域路由：文字与格式→本 skill `check_content.py --checks <项id>`；内容质量→`ibd-quality-gates`；财务→`ibd-finance-review`（**C-P 专业判断／C-Q 数值正确性／C-D 执行要求可分勾**）。**报告头与声明单首尾一致**（delivery.md §零／§八） |
+| **场景I** 检查项声明与范围核对（只读） | 「只核对X」「X 过一遍」「挑一下错别字」——用户**显式圈定范围** | **先进门第一档出声明单**（明细 → [check-scope.md](references/check-scope.md)）；域路由：文字与格式→本 skill `check_content.py --checks <项id>`；内容质量→`ibd-quality-gates`；财务→`ibd-finance-review`（**C-P 专业判断／C-Q 数值正确性／C-D 执行要求可分勾**）；法律→`ibd-legal-review`。**报告头与声明单首尾一致**（delivery.md §零／§八） |
+| **场景J** 惯例对照（查「同类情形别家怎么写」，只对照不定性） | 情形无明文或属灰色地带，要看**市场惯例**怎么处理（D 法律域 ／ C 财务域 ／ 预留 E 行业域） | **方法 → [convention-compare.md](references/convention-compare.md)**（四步法：取例→对照→标注→S3 兼容；跨域共用）；D 法律域执行 → `ibd-legal-review` |
 
 > 决策树的判定细节、工具调用顺序（五步）、失败降级协议（五类降级场景）→ [workflow.md](references/workflow.md) §零·一。
 
@@ -143,7 +144,8 @@ agent_created: true
 - **执行细则**（S1-S7 / 格式核对模式 / 批注与修订复核交付模式 / **片段模式** / 「脚本 × 场景」命令全表）→ [workflow.md](references/workflow.md)——**动手做之前翻这一份**
 - **读取口径（含修订/批注的 Word）**（三口径 / 提取脚本模板 / 加载时机 / 已知不覆盖）→ [read-docx.md](references/read-docx.md)；执行件 [extract_final_text.py](scripts/extract_final_text.py)（只读，源文件零写操作）
 - **批注复核规范**（交付形态双轨 / 4 行紧凑结构 / 编号体系 / 类型词表 / 字体 / 锚点 / 门禁）→ [annotations.md](references/annotations.md)；**修订稿交付规范**（三模式 / rev 字段 / 落定 / 修改清单 / 门禁）→ [revisions.md](references/revisions.md)；执行器 = `ibd-doc-annotate`
-- **检查项明细清单**（**进门第一档 · 声明单的事实源**）→ [check-scope.md](references/check-scope.md)——A 文字与格式 12 项／B 内容质量 8 项／**C 财务 18 项**（**C-P 专业判断 16 ／ C-Q 数值正确性 1 ／ C-D 执行要求 1**）／**D 法律·预留**／**E 行业·预留**（各 0 项，挂 L3）／F 交付件核验 10 项／S 四类前置门（读取前置 · 片段模式 · 敏感议题 · 数据基准）；**另设「性质」第二轴**（格式规范／数值正确性／表达与事实／专业判断／执行要求／门）；每项带**人话名称 ＋ 具体查什么 ＋ 默认档位 ＋ 前置条件**，附声明单模板与三条纪律；**档位轴＝性质**（L2＝机器能判的：格式／数值／台账；L3＝只有人能判的：专业判断，含预留法律与行业）
+- **检查项明细清单**（**进门第一档 · 声明单的事实源**）→ [check-scope.md](references/check-scope.md)——A 文字与格式 12 项／B 内容质量 8 项／**C 财务 18 项**（**C-P 专业判断 16 ／ C-Q 数值正确性 1 ／ C-D 执行要求 1**）／**D 法律 22 项**（**19 现役 ＋ 3 待蒸馏占位**，挂 L3，由 `ibd-legal-review` 承载）／**E 行业·预留**（0 项，挂 L3）／F 交付件核验 10 项／S 四类前置门（读取前置 · 片段模式 · 敏感议题 · 数据基准）；**另设「性质」第二轴**（格式规范／数值正确性／表达与事实／专业判断／执行要求／门）；每项带**人话名称 ＋ 具体查什么 ＋ 默认档位 ＋ 前置条件**，附声明单模板与三条纪律；**档位轴＝性质**（L2＝机器能判的：格式／数值／台账；L3＝只有人能判的：专业判断，含 D 法律与预留行业）
+- **惯例对照四步法**（**跨域共用件 · 方法的唯一事实源**）→ [convention-compare.md](references/convention-compare.md)——取例→对照→标注→S3 兼容；§2 各域接法（D 法律／C 财务／预留 E 行业）；**各域只引用不复制**（法律域执行 → `ibd-legal-review`）
 - **章节复核交付约定**（**进门第一档：检查项声明** / 默认交付形态 / 执行链路 / 职权划分 / **三形态路由** / **深度三档＝声明预设** / 批注纪律 / 报告头范围声明）→ [delivery.md](references/delivery.md)
 - **对外接口契约**（交付口径 / 门禁 CLI / 问题清单 schema / 编号与词表 / **多 skill 合并清单约定** / 脚本入口 / 版本下限）→ [interface.md](references/interface.md)；机器可执行 schema = [problems.schema.json](references/problems.schema.json)（语义源 = interface.md §3 + annotations.md §4）
 - **工具层级说明 + 踩坑全文** → [toolchain.md](references/toolchain.md)；**典型用例** → [examples.md](references/examples.md)；**敏感词/地理清单** → [sensitive-terms.json](references/sensitive-terms.json)；**禁词红线清单（单一事实源）** → [banned-terms.json](references/banned-terms.json)（behavior 行为禁语〔**文档类型敏感·仅招股书**〕／absolute 绝对化用语〔全场景〕／legacy_ban 宣传语〔全场景〕三层；deliver_gate 按 `--scenario` 装载，MINOR 档只提示不阻断，**新增词条改 json 即可、脚本零改动**）

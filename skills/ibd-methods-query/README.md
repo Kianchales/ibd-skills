@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E6%A3%80%E7%B4%A2-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.6.3-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.6.4-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -44,7 +44,7 @@
 ## 🔗 与生态内其他 skill 的分工
 
 - `ibd-methods-ops`：互补——ops 管生产+维护（写入侧），本 skill 管检索消费（读取侧）
-- `ibd-doc-write`：供其可选调用（写作链路的查库环节）；write 无本 skill 时按内嵌流程运行
+- `ibd-doc-write`：供其可选调用（写作链路的查库环节）；write 无本 skill 时按其 ② 步「索引路 ＋ 全文路」自足执行
 
 ## 📦 安装与依赖
 
@@ -64,6 +64,8 @@ CHANGELOG.md                        版本记录
 ```
 
 ## 📌 近期更新
+
+- **2026-10-01 · v0.6.4**：**消费侧口径同步**——「边界与协作」三处（`SKILL.md`／`README.md`／`retrieval-chain.md` §11）原写「write 无本 skill 时按**内嵌流程**运行」，该词已随 `ibd-doc-write` 0.17.0（取例口径对齐）不再存在；改为「按其 **② 步『索引路 ＋ 全文路』自足执行**」。零规则变更
 
 - **2026-09-30 · v0.6.3**：**单案路由对账**——retrieval-chain §4 无单案文件案读数按对照表订正（旧读 22 → 现 5：AN0054／0055／0056／0074／0075；旧读含已建档/已归集批次）
 - **2026-09-20 · v0.4.0**：**检索层对齐库实况**——① 检索对象三层 → **四层**（拆出「语言专项：W 系列 / P 系列分卷」，P 系列 442 条与体例域批次正文已外置 `分卷/`）② 行业版路径修正（**扁平 `行业方法论_<类名>.md`，无「合并版」子目录**）③ 单案路径补 `单案/` 归拢层，单案索引对照表定位明确到**工作区根 `state/`** ④ 索引资产表去 `编号登记表.md`（该资产 2026-09-01 退役迁 archive，编号唯一性改由调用索引全量映射 ＋ 条目标题目录保障）⑤ 案号形态更正为 **4 位 AN**（下批 AN0076）、「无单案文件案」由 8 案更正为 **22 案** ⑥ 补「案名一律用证券简称」纪律（白名单源＝库内案名规范表）与字段契约对齐（跨案层 `实证`／单案层 `本案实证`）⑦ 新增行号漂移自检（`check_index_locator.py`）

@@ -220,7 +220,7 @@
 
 | 场景 | 脚本 |
 |---|---|
-| 库健康体检（25 项护栏） | check_methods_health.py |
+| 库健康体检（26 项护栏） | check_methods_health.py |
 | 索引刷新（一键四件套） | refresh_index.py |
 | 条目落库（追加 + 超线归档） | update_expert_md.py |
 | 结构修复（frontmatter/结构归一/去重） | add_frontmatter.py / b_fmt_unify.py / c_scale_dedup.py（`add_fm_single.py` 已随「单份细分版」载体 2026-09-23 停用而退役） |
@@ -262,9 +262,9 @@
 
 ---
 
-## 附：随包脚本全量清单（31 个 · 含 `gen_refgraph.py`／`check_index_idempotent.py`／`log_event.py`／`gen_source_map.py`／`gen_schema.py`／`check_evidence.py` · 自 `SKILL.md`「随包脚本」节原样迁入）
+## 附：随包脚本全量清单（32 个 · 含 `gen_refgraph.py`／`check_index_idempotent.py`／`log_event.py`／`gen_source_map.py`／`gen_schema.py`／`check_evidence.py` · 自 `SKILL.md`「随包脚本」节原样迁入）
 
-> **计数定义**：**31 个 ＝ `scripts/*.py`**（不含 `scripts/_lib/` 的 3 个内部模块）；其中 `add_fm_single.py` **已退役** ⇒ **在用 30 个**。⚠️ 本计数**曾四度漂移**（历史 25／26／27／28／29 并存）⇒ 现由**体检第 20 项**（文档计数一致性）机器守着，改计数会当场报错。
+> **计数定义**：**32 个 ＝ `scripts/*.py`**（不含 `scripts/_lib/` 的 3 个内部模块）；其中 `add_fm_single.py` **已退役** ⇒ **在用 31 个**。⚠️ 本计数**曾四度漂移**（历史 25／26／27／28／29 并存）⇒ 现由**体检第 20 项**（文档计数一致性）机器守着，改计数会当场报错。
 
 > 本附是**脚本用途与命令形态**的事实源；`SKILL.md` 只留四类分组摘要 ＋ 指向本节。脚本本体单一事实源仍是 `scripts/`。
 
@@ -291,12 +291,15 @@ python scripts/update_expert_md.py --entries <条目.json> ...   # S7 落库：�
 python scripts/check_expert_output.py --dir <案目录>           # S4.5 产出自检门禁（0 FAIL 才进 S5）
 python scripts/gen_replay_worksheet.py --case <N> [--filter 高] # S7 回写工作表：清单候选 × 单案新条目 × 主库旧条目 三方汇编
 python scripts/normalize_pl_s.py --methods-root <工作区根> [--cases ...] [--apply]  # S5 后 · PL/S 编号归一（族内连续·零撞号·**幂等**；已入库案自动跳过）
+
+# —— 重蒸馏 B 对账 ——
+python scripts/gen_recon_anchors.py --methods-root <工作区根> --cases "AN0028=精创电气,..." --out <json>  # B 对账锚点生成（**R-0068 修正版**）：段界按**标题层级**（1–3 级）切分 ＋ 角色标注（case/source/inter/table）＋ 输出「同编号多案实证挂靠」强信号
 python scripts/apply_rewrite.py --methods-root <工作区根> [--repair] [--apply]     # S7-b · 回写执行（高→实证区／中高→独立段；--repair 修截断行）
 python scripts/check_entry_contract.py [--json]                # 书写契约自检（回写落盘前置：0 ERROR 才允许 --apply）
 python scripts/replay_gate_report.py ...                       # S7 收尾：回写硬门禁四项指标 dry-run 报告（软执行·不阻断）
 
 # —— 维护域 ——
-python scripts/check_methods_health.py ...                    # 25 项护栏体检（0 ERROR 交付）
+python scripts/check_methods_health.py ...                    # 26 项护栏体检（0 ERROR 交付）
 python scripts/add_frontmatter.py ...      [--dry-run]         # 修复：补 frontmatter
 python scripts/add_fm_single.py ...        [--dry-run]         # 修复：单份细分版补 frontmatter（该载体 2026-09-23 停用 ⇒ 脚本已退役）
 python scripts/b_fmt_unify.py ...          [--dry-run|--verify] # 修复：域文件结构归一

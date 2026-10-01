@@ -118,8 +118,8 @@ INDEX_BASENAME = "方法论调用索引.md"            # 28Q 速查＋全量映�
 REFGRAPH_BASENAME = "方法论_引用图谱.md"        # 反向视图：入度/失效/单向（gen_refgraph 生成；WO-21 2026-09-26）
 SOURCE_MAP_BASENAME = "来源代号映射.json"      # 来源代号的**物理指向**单一事实源（gen_source_map 生成；WO-33 2026-09-26 · G1 前置）
 SCHEMA_BASENAME = "SCHEMA.md"                  # 库内 schema 入口（gen_schema 生成）
-BARE_PAGE_BASELINE = 1740                      # 裸页码**存量水位**（2026-09-28 二次下调：有据改注第二批 85 处补代号后实测；第 24 项「增量零裸页码」的对照值）
-#   ↑ 水位沿革：1836（初测）→ 1825（首批有据改注 11 处）→ 1740（本批 85 处）。「验过」池每次补代号后复核下调。
+BARE_PAGE_BASELINE = 1723                      # 裸页码**存量水位**（2026-10-01 五次校准：D1–D6 裁定项落地后实测 1723；本次订正 D3b「整改」计数口径时，顺带把该条 4 处裸 `PAGE` 补上来源代号「招」（如「风险因素章（招 PAGE 24—PAGE 27）」）⇒ 读数自 1725 降至 1723 ⇒ 复核无碍、据实下调。第 24 项「增量零裸页码」的对照值）
+#   ↑ 水位沿革：1836（初测）→ 1825（首批有据改注 11 处）→ 1740（本批 85 处）→ 1752（2026-09-30 三次校准）→ 1725（2026-10-01 D5 二轮修补）→ 1723（2026-10-01 D1–D6 裁定项）。「验过」池每次补代号后复核下调。
 #   ↑ 为什么是「水位」而不是「待办」：存量 1836 处按设计边界**不回溯补注**（机器逐一复验仅 3.1% 够格、
 #     人工亦不可裁）⇒ 判据改为「**不得再上升**」。**下降时应复核后下调本值**（防基线松弛成摆设）。
 #   ↑ **位置例外**：留在**库根**、不入 `_generated/` —— 因「入口」的全部价值在于**打开库即可见**；
@@ -149,7 +149,10 @@ TOP_LEVEL_NON_ENTRY = {
 # 共同面（4 个脚本一致的部分）
 # 2026-09-23（WO-04）：新增 `_generated` —— 生成物三件物理隔离后，条目扫面不再需要
 #   在顶层逐个按文件名排除它们（`TOP_LEVEL_NON_ENTRY` 保留裸名仅作双保险）。
-SKIP_DIRS_BASE = frozenset({ARCHIVE_NAME, NOTES_NAME, BACKUP_NAME, PYCACHE_NAME, GENERATED_NAME})
+SKIP_DIRS_BASE = frozenset({ARCHIVE_NAME, NOTES_NAME, BACKUP_NAME, PYCACHE_NAME, GENERATED_NAME, "cases_md"})
+#   ⚠️ 2026-09-30 补：`cases_md/`＝**产出件归档面**（cases/ 工作区全量产出件的库内镜像；无 frontmatter 契约、
+#   不属「方法论正文本体」）。原缺此排除 ⇒ S7-f 归档同步后护栏 frontmatter 项误报 986 项（归档件按本案
+#   产物形态命名，天然无 --- 头）。排除后检查范围回归「方法论正文本体」立意（见 check_methods_health 第 1 项注释）。
 
 # ⚠️ **四变体定性（2026-09-23 实测，不改行为、只登记结论）**：
 #   ① `check_entry_contract` / `check_methods_health` —— **不含 `分卷`**：

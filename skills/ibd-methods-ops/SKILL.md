@@ -3,9 +3,9 @@ name: ibd-methods-ops
 slug: ibd-methods-ops
 displayName: IBD 方法论学习与维护
 description: 方法论知识库「生产 + 维护」双域全流程。生产域=案例蒸馏沉淀（选材→材料准备→三专家并行蒸馏→写作角色综合成文→共通点蒸馏→沉淀入库→索引刷新→护栏校验），触发词「执行蒸馏学习XX次」「蒸馏学习XX次」；维护域=方法论库结构健康（护栏体检/编号归一/去重/修复工具箱），触发词「方法论体检」「方法论治理」「库结构检查」。方法论库路径可配置（METHODS_ROOT），知识库后端可配（默认本地目录，可选连接器）；支持单用户模式（默认）与团队模式（可选）。
-summary: 方法论知识库「学习（产知识）+ 维护（保健康）」一体化——案例蒸馏沉淀新方法论 + 库结构健康护栏 + 随包脚本工具链（31 个），路径与知识库后端可配置。
+summary: 方法论知识库「学习（产知识）+ 维护（保健康）」一体化——案例蒸馏沉淀新方法论 + 库结构健康护栏 + 随包脚本工具链（32 个），路径与知识库后端可配置。
 agent_created: true
-version: 1.34.1
+version: 1.34.6
 ---
 
 # ibd-methods-ops
@@ -80,28 +80,28 @@ version: 1.34.1
 
 | 步骤 | 动作 | 判据（一句话） | 详规 |
 |------|------|------|------|
-| **1 体检** | `cd {METHODS_ROOT} && python <skill>/scripts/check_methods_health.py` | **25 项护栏 0 ERROR**（frontmatter＋单案必填字段／空 h3／编号连续唯一／路由表计数 vs 实算／parsed TOTAL／回写清单／W 编号唯一／交叉引用／体积警戒／**索引行号定位抽查**／**单案内容范围（四域齐备）**／**I-CL 条目位置**／**候选段残留**／**骨架合规**／**标签形态集一致性**／**撤除载体不得重建**／**编号提取正则左界元自检**／**分卷卷号唯一性＋段号连续性**／**条目契约全库校验**／**文档计数一致性（元自检）**／**入库强制字段·互见（增量水位）**／**登记表完整性对账**／**库内 schema 水位＋导航完整性**／**增量裸页码**／**skills 消费侧库事实引用**） | [govern/health-check.md](references/govern/health-check.md) |
+| **1 体检** | `cd {METHODS_ROOT} && python <skill>/scripts/check_methods_health.py` | **26 项护栏 0 ERROR**（frontmatter＋单案必填字段／空 h3／编号连续唯一／路由表计数 vs 实算／parsed TOTAL／回写清单／W 编号唯一／交叉引用／体积警戒／**索引行号定位抽查**／**单案内容范围（四域齐备）**／**I-CL 条目位置**／**候选段残留**／**骨架合规**／**标签形态集一致性**／**撤除载体不得重建**／**编号提取正则左界元自检**／**分卷卷号唯一性＋段号连续性**／**条目契约全库校验**／**文档计数一致性（元自检）**／**入库强制字段·互见（增量水位）**／**登记表完整性对账**／**库内 schema 水位＋导航完整性**／**增量裸页码**／**skills 消费侧库事实引用**／**占位符残留**） | [govern/health-check.md](references/govern/health-check.md) |
 | **2 修复** | 按体检 ERROR 类型选修复脚本（add_frontmatter／b_fmt_unify／c_scale_dedup；`add_fm_single` 已随「单份细分版」载体停用而退役） | **先 dry-run 后执行**；工具箱索引与三个单一事实源边界 | [govern/fix-tools.md](references/govern/fix-tools.md) |
 | **3 复验** | 重跑 [refresh_index.py](scripts/refresh_index.py)（刷新生成物）＋ 复跑护栏 | **0 ERROR 且幂等** | [govern/health-check.md](references/govern/health-check.md) 附 §3 复验 |
 
 > **全库编号迁移踩坑实录**（案号 2→4 位化实证 · 4 条：正则 `\b` 汉字漏匹配／迁移脚本幂等／表行国标码误伤／四门复验）——[govern/fix-tools.md](references/govern/fix-tools.md) 附：全库编号迁移踩坑实录。
 
-## 随包脚本（31 个 · 全部支持 `--methods-root`（传**工作区根**）/ `$METHODS_ROOT`）
+## 随包脚本（32 个 · 全部支持 `--methods-root`（传**工作区根**）/ `$METHODS_ROOT`）
 
-> **计数定义**：**31 个 ＝ `scripts/*.py`**（用户面可执行；**不含** `scripts/_lib/` 的 3 个内部模块）。其中 **`add_fm_single.py` 已退役**（随「单份细分版」载体 2026-09-23 停用）⇒ **在用 30 个**。新增 6 个：`gen_refgraph.py`（反向视图）／`check_index_idempotent.py`（重跑校验（旧称：幂等自证）＋条目数对账（旧称：守恒对账））／`log_event.py`（操作日志（旧称：事件流）追加＋`--stats` 派生视图）／**`gen_source_map.py`**（来源代号映射 · G1 前置）／**`gen_schema.py`**（**库内 schema 入口** `SCHEMA.md` · 库自描述 ＋ 版本水位 · **已并入一键链**）／**`check_evidence.py`**（**溯源校验** · 门禁外工具 · 只报不改）。
+> **计数定义**：**32 个 ＝ `scripts/*.py`**（用户面可执行；**不含** `scripts/_lib/` 的 3 个内部模块）。其中 **`add_fm_single.py` 已退役**（随「单份细分版」载体 2026-09-23 停用）⇒ **在用 31 个**。新增 7 个：`gen_refgraph.py`（反向视图）／`check_index_idempotent.py`（重跑校验（旧称：幂等自证）＋条目数对账（旧称：守恒对账））／`log_event.py`（操作日志（旧称：事件流）追加＋`--stats` 派生视图）／**`gen_source_map.py`**（来源代号映射 · G1 前置）／**`gen_schema.py`**（**库内 schema 入口** `SCHEMA.md` · 库自描述 ＋ 版本水位 · **已并入一键链**）／**`check_evidence.py`**（**溯源校验** · 门禁外工具 · 只报不改）／**`gen_recon_anchors.py`**（**B 对账锚点生成器** · 段界按标题层级修正 ＋ 实证/互见分角色标注 · 判 R-0068）。
 > ⚠️ **本计数已三度漂移**（历史值 25／26／27 三种口径并存）⇒ 人工维护不可靠；**「文档计数一致性」护栏项**已登记为下批待办（见 `tasks/20260926_方法论库治理工单总表.md` §四）。
 
 > **适用范围**：脚本面向 **A 档（文件型）库**（索引体系与体检均基于文件，Obsidian 等 Markdown 载体同构适用）；**B 档（检索型）**下索引类脚本不适用（检索与结构由连接器管理，见 methods-guide §二分派表）。
 
 - **四类分组**：① **索引体系**（`refresh_index.py` 一键编排 parse_titles→gen_index→gen_toc→gen_entry→**gen_refgraph**（反向视图 · **非阻断**诊断件）；另有 **`check_index_idempotent.py`**（重跑校验＋条目数对账 · 只读）／**`gen_source_map.py`**（来源代号映射 → `_generated/来源代号映射.json` · **材料变更后跑，不入一键链**）／**`gen_schema.py`**（**库内 schema 入口** `SCHEMA.md` · **已并入一键链**））② **落库与门禁**（`update_expert_md`／`check_expert_output`／`gen_replay_worksheet`（含 **`--echo` 回响检查** · 级联）/ `check_entry_contract`／`replay_gate_report`／**`check_evidence.py`**（**溯源校验 · 门禁外** · 只报不改））③ **维护域**（`check_methods_health` ＋ add_frontmatter／b_fmt_unify／c_scale_dedup（`add_fm_single` 已随「单份细分版」载体 2026-09-23 停用而退役）＋ `normalize_case_names`／`apply_case_no`／`backfill_volume_refs`／`fix_volume_case_by_segment`／`sync_cases_md`／**`log_event.py`**（操作日志追加））④ **库演进**（`split_domains`／`split_domain_by_family`（**新增·按族外置**）／`normalize_pl_s`；**编号迁移两脚本已 2026-09-23 退役**，见 [govern/fix-tools.md](references/govern/fix-tools.md) 附）
-- **全量清单与命令形态（31 个逐条用途）**：[methods-guide.md](references/methods-guide.md) 附：随包脚本全量清单
+- **全量清单与命令形态（32 个逐条用途）**：[methods-guide.md](references/methods-guide.md) 附：随包脚本全量清单
 - **书写契约**：条目实证项字段模型／三种排布／来源标注／标签禁用四条 → [entry-contract.md](references/entry-contract.md)（v1.0 · 用户裁定 D1–D5）；自检门禁 [check_entry_contract.py](scripts/check_entry_contract.py)
 
 ## 依赖与工具
 
 > 依赖来源标注：⬛=随包/本地自建；🟢=可选；🟦=内置。
 
-- **Python 3**〔🟦内置运行时〕：31 个随包脚本（零第三方依赖）
+- **Python 3**〔🟦内置运行时〕：32 个随包脚本（零第三方依赖）
 - **方法论库 `{METHODS_ROOT}`**〔⬛随包/本地自建〕：库规范见 [methods-guide.md](references/methods-guide.md)
 - **KB 后端**〔🟢可选〕：默认为本地目录；可接入 MCP 知识库/云文档等连接器（见「库配置」四问引导）
 - **团队协作工具**〔🟢可选〕：团队模式使用 TeamCreate/Agent 消息机制；单用户模式无需（本人串跑）
@@ -112,10 +112,10 @@ version: 1.34.1
 
 > 依赖来源标注：⬛=随包/本地自建；🔵=连接器（可选）；🟦=内置；🟨=官方市场。
 
-- **[methods-guide.md](references/methods-guide.md)**〔⬛随包〕：**方法论库规范单一事实源**（目录/条目/建立与演进）；**附**：随包脚本全量清单（31 个）／首次接入引导流程（四问）
+- **[methods-guide.md](references/methods-guide.md)**〔⬛随包〕：**方法论库规范单一事实源**（目录/条目/建立与演进）；**附**：随包脚本全量清单（32 个）／首次接入引导流程（四问）
 - **[distill-methods.md](references/distill-methods.md)**〔⬛随包〕：蒸馏「提炼方法」单一事实源（S4 三段式/S5 写作范式/S5.5 演练/S6 共通点判定）；**附 A**：S0–S7 步骤执行卡片；**附 B**：关键要点（蒸馏域）
 - **[entry-contract.md](references/entry-contract.md)**〔⬛随包〕：条目与回写书写契约（四字段模型／三种排布／来源标注／标签禁用）；**附**：S7 回写执行纪律（12 条）
-- **[references/govern/health-check.md](references/govern/health-check.md)**〔⬛随包〕：护栏体检 25 项 + 脚本用法 + 排除目录；**附**：维护域三步详规／关键要点（护栏与解析口径）
+- **[references/govern/health-check.md](references/govern/health-check.md)**〔⬛随包〕：护栏体检 26 项 + 脚本用法 + 排除目录；**附**：维护域三步详规／关键要点（护栏与解析口径）
 - **[references/govern/fix-tools.md](references/govern/fix-tools.md)**〔⬛随包〕：修复工具箱索引 + 三个单一事实源边界 + 修复后验证清单；**附**：编号迁移踩坑实录／关键要点（库演进安全）
 - **[references/govern/adversarial-review.md](references/govern/adversarial-review.md)**〔⬛随包〕：**对抗性复核判据**（过度宣称三判据／阈值 **1**／排除项／**为何不落脚本的实测依据**）——落 **S7 复盘**环节（AI 判读＋人裁定，只标不改）
 - **[references/govern/design-boundaries.md](references/govern/design-boundaries.md)**〔⬛随包〕：**设计边界 · 本库明确「不做」的事**（15 条：引用模型／读取检索／校验台账／变更节奏）——凡「反向结论」一律追加至此，**防膨胀页**
