@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%96%87%E6%A1%A3%E5%86%99%E4%BD%9C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.18.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.18.1-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -97,6 +97,8 @@ ibd-doc-write/
 ```
 
 ## 📌 近期更新
+
+- **2026-10-02 · v0.18.1**：**缺口登记口径归一**——原写「加入**待积累清单**」（**无路径**），与 `ibd-methods-ops` 的回收账（`state/待补学清单.md`）对不上；现统一为「**登记至 `<工作区根>/state/待补学清单.md`**」并补「写完后销项」，把闭环两端写明。零规则变更
 
 - **2026-10-01 · v0.18.0**：**依赖面接线 ＋ 补「库从哪来」指路**——**依赖表补 `ibd-methods-query`**（检索通道；无则按其 ② 步自足执行）——此前流程说「有检索工具就调」但**依赖表未列该包**，接收者按表装包永远装不到它；按「**流程说能力、依赖表点名包**」两全口径接上。「方法论库」行补三级去向：起步＝本包 `methods-guide.md`（自足）／完整规范与工具链＝`ibd-methods-ops`／查库＝`ibd-methods-query`
 - **2026-10-01 · v0.17.0**：**取例口径对齐（补全文路）＋ 副本收敛为指针**——② 步原只走索引路、且把「索引未命中」当作「库内无对应条目」，会**静默漏检**约 34% 未归类条目；现补**全文路兜底（含同义词／别名）** ＋ **两路皆空才可称无内容**（声明 `已检索（索引 n ＋ 全文 m）`），并把「内嵌流程」对检索机制的复述收敛为**指针**（按「检索能力共享面在规程层」既定判据对齐，零新增依赖边）。触及 `response-chain.md`／`SKILL.md`／`methods-guide.md`／`writing-style.md` 四文件；写作流程步骤数与 G4 契约不动

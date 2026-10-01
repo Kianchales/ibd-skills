@@ -11,7 +11,7 @@ description: >
   ④ 逐段协作模式（人机协作载体核心流程：写作状态双文件 + 口径漂移检测 + 敏感识别即停 + 交付四件套，references/paragraph-collab.md）
   模板触发映射见 references/templates-map.md；上下文管理/降级见 references/context-rules.md。
   触发词：「写XX的反馈回复」「起草问询回复」「写XX问询回复」「XX反馈回复怎么写」「写招股书章节」「写尽调报告」「写备忘录」「逐段写」「逐段协作」「帮我改这段」「这段怎么改」
-version: 0.18.0
+version: 0.18.1
 agent_created: true
 ---
 
@@ -91,7 +91,7 @@ A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（逐段�
 - 交付必须附「问询问题类型→方法论条目编号（`域-族号2位-族内4位`，如 F-010001 / WL-010001）→使用位置」对照表
 - **未引用任何方法论（对照表为空）即打回补引**；引用条目须实际用于正文论证，不得空挂编号
 - 交付物末尾附质量自评报告（含 G1-G4 状态 + AP-W 命中/修复清单）
-- **降级与待沉淀**（无库 / 有库但**索引路与全文路皆空**两场景、「暂无对应条目」声明须附的两项、库须持续更新）→ [response-chain.md](references/response-chain.md) §G4 引用自检·降级两场景与库更新 ／ [methods-guide.md](references/methods-guide.md) §库缺失/缺条目时的降级
+- **降级与缺口登记**（无库 / 有库但**索引路与全文路皆空**两场景、「暂无对应条目」声明须附的两项、缺口须**登记至 `<工作区根>/state/待补学清单.md`**、库须持续更新）→ [response-chain.md](references/response-chain.md) §G4 引用自检·降级两场景与库更新 ／ [methods-guide.md](references/methods-guide.md) §库缺失/缺条目时的降级
 ## 资源索引
 
 ### 本 skill 内部 references

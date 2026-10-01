@@ -5,7 +5,7 @@ displayName: IBD 方法论学习与维护
 description: 方法论知识库「生产 + 维护」双域全流程。生产域=案例蒸馏沉淀（选材→材料准备→三专家并行蒸馏→写作角色综合成文→共通点蒸馏→沉淀入库→索引刷新→护栏校验），触发词「执行蒸馏学习XX次」「蒸馏学习XX次」；维护域=方法论库结构健康（护栏体检/编号归一/去重/修复工具箱），触发词「方法论体检」「方法论治理」「库结构检查」。方法论库路径可配置（METHODS_ROOT），知识库后端可配（默认本地目录，可选连接器）；支持单用户模式（默认）与团队模式（可选）。
 summary: 方法论知识库「学习（产知识）+ 维护（保健康）」一体化——案例蒸馏沉淀新方法论 + 库结构健康护栏 + 随包脚本工具链（32 个），路径与知识库后端可配置。
 agent_created: true
-version: 1.34.7
+version: 1.35.0
 ---
 
 # ibd-methods-ops
@@ -41,6 +41,7 @@ version: 1.34.7
 **首次接入**：检查本 skill 安装目录下 `library.config.json`（模板 [library.config.template.json](references/library.config.template.json)）——存在且字段完整 → 直接进流程；缺失 → 按「四问引导」接入（库在哪／怎么读写／自带检索吗／已有库还是从零建）→ 定能力档位（A 文件型 / B 检索型）→ 生成配置 → **连通性验证**（读写成功 / 可检索）。
 
 **四问逐条原文与按档位分派表**：[methods-guide.md](references/methods-guide.md) 附：首次接入引导流程（四问）。
+**从零建库 → 就绪验证 → 沉淀 → 检索 的串联示例（首次上手先看这里）** → [examples.md](references/examples.md)。
 
 ## 执行目录约定（违反即报错）
 
@@ -121,6 +122,7 @@ version: 1.34.7
 - **[references/govern/design-boundaries.md](references/govern/design-boundaries.md)**〔⬛随包〕：**设计边界 · 本库明确「不做」的事**（15 条：引用模型／读取检索／校验台账／变更节奏）——凡「反向结论」一律追加至此，**防膨胀页**
 - **[references/templates/](references/templates/README.md)**〔⬛随包〕：**骨架模板单一事实源**（4 份可复制骨架：单案范式文件／行业合并版／跨案域条目块／蒸馏笔记）——规则在册、**骨架在此**，新建文件一律从这里复制
 - **[library-rules.md](references/library-rules.md)**〔⬛随包〕：方法论库规则总览（四层地图 · 冲突裁决顺序 · 12 条易误解点）——只做导航，细则事实源在各册
+- **[examples.md](references/examples.md)**〔⬛随包〕：**首次上手串联示例**（建库 → 就绪验证 → 沉淀 → 检索 → 缺口登记）＋ 三个新用户易踩坑（**空库不该跑全库体检**／配置为**本机文件**／缺口登记勿另起名目）——规则本体在各册，本册只给串联
 - **方法论库（`{METHODS_ROOT}`）**〔使用者自建〕：核心文件 = `_generated/通用方法论_最终版.md`（路由入口）+ `通用方法论_<域>域.md`（各域正文）+ `_generated/方法论调用索引.md` + `_generated/方法论_条目标题目录.md` + `_generated/方法论_引用图谱.md`（**反向视图**：入度/无引用条目/失效/单向 ＋ **材料-产出对账**，只报不建议）+ `_generated/来源代号映射.json`（**来源代号的物理指向**：代号 → cases 文件 ＋ 页码可解析性；后五者由脚本生成；**脚本生成物统一隔离于 `methods/_generated/`**，C2）
 - **KB 后端**〔🟢 可选〕：蒸馏笔记落库目的地——默认本地 `{METHODS_ROOT}/60_notes/`；可选外部知识库连接器（MCP 知识库/云文档等任选，使用者自配）
 
@@ -151,7 +153,7 @@ version: 1.34.7
 ## 边界与协作
 
 - **与 ibd-methods-query 互补**：本 skill 管生产+维护（写入侧），query 管检索消费（读取侧）——查询方法论走 query 的标准检索链路，不经本 skill
-- **冷启动分工**：首次使用无库时，query 的**冷启动引导档**可就地建空库骨架（4 文件 + 最小 `library.config.json`，纯结构零内容）——建库骨架属「检索前置条件自举」，不属蒸馏生产；方法论内容生产仍归本 skill，用户随后的蒸馏/四问引导均按既有流程接管该库
+- **冷启动分工**：首次使用无库时，query 的**冷启动引导档**可就地建空库骨架（按 [methods-guide.md](references/methods-guide.md) §三「起步结构」的生成物 ＋ 最小 `library.config.json`，纯结构零内容）——建库骨架属「检索前置条件自举」，不属蒸馏生产；方法论内容生产仍归本 skill，用户随后的蒸馏/四问引导均按既有流程接管该库
 - **被依赖声明**：`ibd-doc-write` / `ibd-methods-query` 可选依赖本 skill（≥1.5.0：库规范 + 脚本工具链 + 库接入配置）
 - **库结构规范单一事实源**：本 skill 的 [methods-guide.md](references/methods-guide.md)；`ibd-doc-write` 的库指引为其消费侧精简版（无库降级），二者同源
 - **高频句法反哺 doc-write**（可选依赖，未装则跳过）：蒸馏产出的通用高频句式同步至 ibd-doc-write 的「高频句法库」（该包 references 下；本包只存通用高频，案例级条目留 `{METHODS_ROOT}/`，双轨不混）
