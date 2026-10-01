@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BB%B4%E6%8A%A4-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-1.34.6-green" alt="version">
+  <img src="https://img.shields.io/badge/version-1.34.7-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -88,6 +88,7 @@ CHANGELOG.md             版本记录
 
 ## 📌 近期更新
 
+- **2026-10-02 · v1.34.7**：**发布面整改**——① `apply_rewrite.py` 两处帮助文本的**私人目录名示例**改中性占位；② 包内 3 处**活文档内部编号**移除（去编号留说明）。两项均系上提后复扫发现，**零逻辑改动**
 - **2026-10-01 · v1.34.2**：**D5 回填次生缺陷根治 ＋ 护栏第 26 项**——① 护栏增「占位符残留」（应 = 0，非 0 判 ERROR），封堵「回写器静默降级写占位符」的库侧盲区；② `apply_rewrite.py` 二轮硬化（首句切分追踪**全部括号族**、`src` 抽取取**尾部且须来源词打头**、新增 `--cases-root`、编号闸扩展 `I-CL`）；③ 存量修补 243 处／27 文件（删重复引注 175／删行尾裸页码 17／补来源代号 51）；④ 第 24 项基线下调 1752 → **1725**（据实）
 - **2026-09-30 · v1.34.1**：**库事实引用对账（第 25 项首读确证后修）**——design-boundaries §1 条目规模硬编码改指针化（现值见 `_generated/方法论_条目标题目录.md` 总览合计），落实「禁硬编码库事实」判据
 - **2026-09-29 · v1.34.0**：**护栏第 25 项「skills 消费侧库事实引用」（用户裁定 R-0065）** —— skills 面活文档**禁硬编码库计数/路径**：① 生成物文件名引用 ⟷ 库内实测存在（SCHEMA.md 例外留库根），断链 ERROR；② 「两位数字＋窄单位词」与库实况（单案数）同形比对，不等 WARN 由人核。护栏挂库侧体检**变更即校验**（漂移根因＝库侧变更），首跑实测 248 文档／断链 0／同形待核 33；同步第 20 项元自检抓出并修正 3 处「24 项」漏网声明

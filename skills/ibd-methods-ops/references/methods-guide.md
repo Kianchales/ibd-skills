@@ -293,7 +293,7 @@ python scripts/gen_replay_worksheet.py --case <N> [--filter 高] # S7 回写工�
 python scripts/normalize_pl_s.py --methods-root <工作区根> [--cases ...] [--apply]  # S5 后 · PL/S 编号归一（族内连续·零撞号·**幂等**；已入库案自动跳过）
 
 # —— 重蒸馏 B 对账 ——
-python scripts/gen_recon_anchors.py --methods-root <工作区根> --cases "AN0028=精创电气,..." --out <json>  # B 对账锚点生成（**R-0068 修正版**）：段界按**标题层级**（1–3 级）切分 ＋ 角色标注（case/source/inter/table）＋ 输出「同编号多案实证挂靠」强信号
+python scripts/gen_recon_anchors.py --methods-root <工作区根> --cases "AN0028=精创电气,..." --out <json>  # B 对账锚点生成（**修正版**）：段界按**标题层级**（1–3 级）切分 ＋ 角色标注（case/source/inter/table）＋ 输出「同编号多案实证挂靠」强信号
 python scripts/apply_rewrite.py --methods-root <工作区根> [--repair] [--apply]     # S7-b · 回写执行（高→实证区／中高→独立段；--repair 修截断行）
 python scripts/check_entry_contract.py [--json]                # 书写契约自检（回写落盘前置：0 ERROR 才允许 --apply）
 python scripts/replay_gate_report.py ...                       # S7 收尾：回写硬门禁四项指标 dry-run 报告（软执行·不阻断）

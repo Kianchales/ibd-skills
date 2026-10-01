@@ -448,7 +448,7 @@ def main():
     ap.add_argument('--methods-root', default=os.getcwd(), help='工作区根（其下含 methods/ 与 cases/）')
     ap.add_argument('--cases-root', default=None,
                     help='材料根（含各案目录；缺省＝<工作区根>/cases）。'
-                         '库与 cases 分置时必传（如 daily_learning/cases）')
+                         '库与 cases 分置时必传（如「工作区根/cases」）')
     ap.add_argument('--repair', action='store_true', help='只跑「回写行修复」模式')
     ap.add_argument('--apply', action='store_true', help='实际写盘（缺省 dry-run）')
     a = ap.parse_args()
@@ -461,7 +461,7 @@ def main():
         if not os.path.isdir(cr):
             print('[ENV-ERROR] --repair 需可读的材料根（案目录所在）: %s' % cr, file=sys.stderr)
             print('  提示：库与 cases 分置时传 --cases-root，如 '
-                  '--cases-root /path/to/daily_learning/cases', file=sys.stderr)
+                  '--cases-root /path/to/cases', file=sys.stderr)
             return 2
         do_repair(root, a.apply, cr)
     else:

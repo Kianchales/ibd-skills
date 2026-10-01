@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [1.34.7] - 2026-10-02
+
+### 发布面整改：私有目录名脱敏 ＋ 活文档去内部编号（打包演练 ＋ 上提后复扫抓出）
+
+- **背景 A（私有目录名）**：发布前打包演练（`publish_collection.py --dry-run`）的 zip 复扫报警——`apply_rewrite.py` 两处 `--cases-root` 帮助文本以**私人工作区目录名**举例，属**发布面禁用词**。**旧版发布包 0 命中 ⇒ 随本包 1.34.x 上提首次进入公开面**。
+- **修法 A**：两处示例改为**中性占位**（`「工作区根/cases」` 与 `/path/to/cases`）——**语义不变、零逻辑改动**（仅 `argparse` help 字符串）。
+- **背景 B（活文档内部编号）**：上提后按「活文档留过程痕迹」复扫，包内 3 处**内部编号**随本次上提首次进入公开面（旧版发布包 0 命中）——`SKILL.md`（脚本清单尾注）／`references/methods-guide.md`（命令示例括注）／`references/govern/health-check.md`（护栏项括注）。
+- **修法 B**：**去编号留说明**——三处括注中的内部编号与立项日期移除，说明性文字保留（判据本体零变更）。
+- **为何不能靠"排除文件"绕过**：A 的命中在 **`scripts/` 内**（脚本随包分发、不在排除面），只能改词；B 的命中在**随包活文档**内，同理。
+- **验收**：单包 `scan_privacy.py` **BLOCK 0**（`library.config.json` 属"本地实例配置"豁免面，随包模板为 `library.config.template.json`）；`check_refs --traces` **0**；打包 zip 复扫 **BLOCK 0**。
+
 ## [1.34.6] - 2026-10-01
 
 ### `apply_rewrite.py` 扩域 ＋ `sentence()` 来源归一与拦截（WO-MF-23 A 案批 S7 暴露）
