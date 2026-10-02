@@ -109,10 +109,10 @@ def conservation():
     scan = (sorted(glob.glob(os.path.join(METHODS, DOMAIN_GLOB))) +
             sorted(glob.glob(os.path.join(METHODS, LANG_GLOB))) +
             sorted(glob.glob(os.path.join(METHODS, VOLUME_NAME, "*.md"))))
-    RX_H3 = re.compile(r"^### [FLIWS]-\d{6}|^### （\d+）", re.M)
-    RX_W = re.compile(r"^\*\*((?:WL|W|PL)-[A-Za-z0-9\-·~]+)", re.M)
-    RX_WL = re.compile(r"^-\s*\*\*((?:WL|W|PL)-[A-Za-z0-9\-·~]+)\*\*", re.M)
-    RX_WH = re.compile(r"^### ((?:WL|W|PL)-\d{6})", re.M)
+    RX_H3 = re.compile(r"^### [FLIS]-\d{6}|^### （\d+）", re.M)
+    RX_W = re.compile(r"^\*\*((?:WL|PL)-[A-Za-z0-9\-·~]+)", re.M)
+    RX_WL = re.compile(r"^-\s*\*\*((?:WL|PL)-[A-Za-z0-9\-·~]+)\*\*", re.M)
+    RX_WH = re.compile(r"^### ((?:WL|PL)-\d{6})", re.M)
     for f in scan:
         txt = io.open(f, encoding="utf-8", errors="replace").read()
         if os.path.basename(f).startswith("投行语言专项"):

@@ -38,8 +38,8 @@ KNOW_HEAD_SPACE = re.compile(r"^### [FIL]-AN\d{4}-\d{2} ")
 PARA_HEAD_SPACE = re.compile(r"^### W-AN\d{4}-[FILABCD]\d{2} ")
 KNOW_HEAD_1DIG = re.compile(r"^### [FIL]-AN\d{4}-\d(?:[^0-9]|$)")
 PARA_HEAD_1DIG = re.compile(r"^### W-AN\d{4}-[FILABCD]\d(?:[^0-9]|$)")
-LEGACY_C2 = re.compile(r"^### [FIL]-C\d{1,2}-\d{1,2}(?:[｜ ]|$)")
-LEGACY_CODE = re.compile(r"^### (?:[FIL]|W|P)-[A-Z]{2,3}-\d{2}(?:[｜ ]|$)|^### [FIL]-[A-Z]{2,3}-\d(?:[｜ ]|$)")
+
+
 BOLD_ENTRY = re.compile(r"^\*\*[FILW]-[A-Z]{2,3}-\d|^\*\*[FIL]-AN\d{4}-\d")
 H4_ENTRY = re.compile(r"^#### ")
 SEC1 = re.compile(r"^## 一、知识蒸馏（(\d+) 条）")
@@ -99,10 +99,6 @@ def check_file(path):
                 WARN.append(f"{tag} C7 第 {i} 行编号与标题间用空格（规范应 `｜`）：「{ln[:50]}」")
             elif KNOW_HEAD_1DIG.match(ln) or PARA_HEAD_1DIG.match(ln):
                 FAIL.append(f"{tag} C7 第 {i} 行序号未 2 位补零：「{ln[:50]}」")
-            elif LEGACY_C2.match(ln):
-                WARN.append(f"{tag} C7 第 {i} 行案号 2 位（历史遗留形态 C01-C41，迁移至 C0001-C0041 前不回改）：「{ln[:50]}」")
-            elif LEGACY_CODE.match(ln):
-                WARN.append(f"{tag} C7 第 {i} 行案代号字母形态（v1 规范/历史遗留，新产出应 `C{{案号4位}}`）：「{ln[:50]}」")
             elif H4_ENTRY.match(ln):
                 FAIL.append(f"{tag} C7 第 {i} 行出现四级标题条目（S4 产出应用 h3）：「{ln[:50]}」")
 

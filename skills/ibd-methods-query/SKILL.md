@@ -5,7 +5,7 @@ displayName: IBD 方法论检索
 description: 方法论知识库「检索域」skill——把「索引→定向读取→合成」固化为标准检索链路，查方法论时按问题域定位速查表 → 条目编号 → 行号 → 定向读取，避免全文读库的 token 膨胀。触发词「查方法论」「方法论检索」「怎么回复XX问题」「查XX问题怎么写」「查XX案XX问题的写法」；写作/分析/问答消费方法论时走标准检索链路。与 ibd-methods-ops（生产 + 维护）互补，供 ibd-doc-write 可选调用（无本 skill 时按其 ② 步「索引路 ＋ 全文路」自足执行）。
 summary: 方法论库「检索域」——标准检索链路「问题拆解→索引定位→定向读取→合成」，按需只读命中条目不全文读库，配套速查表 + 条目行号定位资产。
 agent_created: true
-version: 0.6.5
+version: 0.6.6
 ---
 
 # ibd-methods-query
@@ -56,6 +56,10 @@ S4 合成输出  汇总 → 写作素材 / 分析结论 / 引用清单（必带�
 - **工具**：`Read` 定向读（offset/limit）+ `Grep` 关键词搜索——内置、零脚本
 - **索引资产**：使用者自建，ops ≥1.5.0 的 `refresh_index.py` 刷新
 - **缺失降级三态**：① 索引过期→照常（提示刷新）② 索引缺失→**Grep 全库兜底** ③ 库未建/配置缺失→**冷启动引导档**；详规 [library-backend.md](references/library-backend.md) §2
+- **依赖外部件清单（可移植性自查 · 2026-10-02 补）**：本包**零自有代码**，检索全靠内置 `Read`/`Grep` ＋ 库内资产；以下三件在**包外**、缺一即降级（不中断）：
+  - **① 库侧脚本**（属 `ibd-methods-ops`，不在本包内）——重建索引时须调它：`parse_titles.py` → `gen_toc.py` → `gen_index.py` → `gen_entry.py`（由 `refresh_index.py` 串接一次跑完）
+  - **② 工作区前提**——`{METHODS_ROOT}/` 下须有 `methods/`（正文根）与 `scripts/`（库内薄壳）；`state/` 位于**工作区根层**、与 `methods/` 平级
+  - **③ 生成物位置**——`methods/_generated/` 下：`方法论调用索引.md`／`方法论_条目标题目录.md`／`通用方法论_最终版.md`／`方法论_引用图谱.md`／`来源代号映射.json`；另 `methods/SCHEMA.md` 在**库根**（不在 `_generated/`）
 
 ## 索引资产（定向读取定位）
 

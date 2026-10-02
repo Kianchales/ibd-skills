@@ -54,14 +54,14 @@ DOMAIN_FILES = _layout_domain_files(METHODS)
 #  投行语言专项文件走 pat_wd/pat_wd_list，二者不交叉）
 pat_cn = re.compile(r"^### （(\d+)）(.*)$")                          # ### （N）条目（v36 旧格式，兼容）
 pat_cn2 = re.compile(r"^### (财务|法律|行业|写作)（(\d+)）(.*)$")      # ### 财务（103）条目（v35 域前缀格式，兼容）
-pat_new = re.compile(r"^### ([FLIWS])-(\d{6})(.*)$")   # 2026-09-19 补 S-（体例域批次卷）                  # ### F-010001 标题（v37 身份编号）
-pat_wd = re.compile(r"^\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\s*[｜|:：]?\s*(.*?)\*\*")  # **WL-xxxxxx 标题**（W 系列条目）
-pat_wd_list = re.compile(r"^-\s*\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\*\*[｜|:：]?\s*(.*)$")  # - **WL-010001**｜...（族归组列表条目）
+pat_new = re.compile(r"^### ([FLIS])-(\d{6})(.*)$")   # 2026-09-19 补 S-（体例域批次卷）                  # ### F-010001 标题（v37 身份编号）
+pat_wd = re.compile(r"^\*\*((?:WL)-[A-Za-z0-9\-·~]+)\s*[｜|:：]?\s*(.*?)\*\*")  # **WL-xxxxxx 标题**（W 系列条目）
+pat_wd_list = re.compile(r"^-\s*\*\*((?:WL)-[A-Za-z0-9\-·~]+)\*\*[｜|:：]?\s*(.*)$")  # - **WL-010001**｜...（族归组列表条目）
 # 2026-09-19 补：h3 形态 WL 条目 ### WL-150022（原 WL-150022）——2026-09-10「原写作域」并入批次的
 # 书写形态（带「（原 XX）」留痕后缀，71/74 条正文直接起于 **方法论要点**、无标题文字）。
 # 编号进 eid、kind 复用 "WD"，下游（gen_index/gen_toc/gen_entry）零改动。
 # 注意：h3 归组章节头（### （1）遣词维度 / ### 族 1｜…）不以 WL- 开头，故此规则不会误收章节头。
-pat_wd_h3 = re.compile(r"^### ((?:WL|W|PL)-\d{6})\s*(.*)$")   # 2026-09-19 补 PL-（P 系列分卷）
+pat_wd_h3 = re.compile(r"^### ((?:WL|PL)-\d{6})\s*(.*)$")   # 2026-09-19 补 PL-（P 系列分卷）
 
 
 def _fallback_title(lines, i):

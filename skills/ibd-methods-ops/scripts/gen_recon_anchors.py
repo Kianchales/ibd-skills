@@ -27,6 +27,13 @@ import os
 import re
 import sys
 
+# 控制台编码（Windows 默认 GBK ⇒ 中文输出乱码或抛 UnicodeEncodeError）。
+# 2026-10-02 代码体检补：本脚本是全包**唯一**既未 import `_lib`、又未处理编码者（conformance A8 命中）。
+# 与包内 31 个脚本的 `sys.stdout.reconfigure` 同款，并**一并处理 stderr**（本脚本 L172 有 stderr 输出）。
+for _s in (sys.stdout, sys.stderr):
+    if hasattr(_s, "reconfigure"):
+        _s.reconfigure(encoding="utf-8")
+
 SCAN_DIRS_DEFAULT = ["50_分卷", "10_跨案域", "20_语言专项", "30_行业版"]
 
 HEAD_ANY = re.compile(r"^#{1,3}\s")                                   # 段界：1–3 级标题（条目为 3 级，段界＝同级或更高级）

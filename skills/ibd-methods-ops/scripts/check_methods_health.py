@@ -111,7 +111,7 @@ from _lib.layout import (resolve as _layout_resolve, ENTRY_FILE, PARSED_FILE, TO
                          DOMAIN_SIZE_WARN_BYTES, SKIP_DIRS, GENERATED_BASENAMES,
                          MERGED_MAP, VOLUME_NAME, LANG_W_FILE, DOMAIN_GLOB, LANG_GLOB,
                          MERGED_GLOB, SINGLE_NAME, DIR_INDUSTRY_MERGED, library_files,
-                         RX_ID_FAMILY, COUNT_DOCS, COUNT_DOCS_WORKSPACE, COUNT_SCAN_STOP_HEADING,
+                         RX_ID_FAMILY, count_docs, COUNT_DOCS_WORKSPACE, COUNT_SCAN_STOP_HEADING,
                          SKILL_DIR, RX_DECLARED_HIST, CANON_TABLE, CASE_INDEX_TABLE,
                          SCHEMA_BASENAME, BARE_PAGE_BASELINE, GENERATED_NAME,
                          DIR_DOMAIN, DIR_LANG, DIR_VOLUME, domain_files as _layout_domain_files)
@@ -126,12 +126,12 @@ RX_ID_ANY   = RX_ID_FAMILY      # ← 全族引用正则**单一事实源＝`_li
 #     ⇒ 全库 53.6% 的条目族**整体漏在交叉引用受检面外**（实测「域/语言/分卷」面 2,585 处引用，
 #     原正则只可见 783 处、**漏检 1,802 处 ＝ 69.7%**）。另补 `I-CL{类号}-{序}`（行业合并版条目）。
 #     ⚠️ 与 `RX_ID_HEAD` **必须同改**——只放宽引用正则而不放宽「定义收集」正则，会把整族 S- 误判为失效。
-RX_ID_LANG  = r"(?<![A-Za-z])(?:WL|W)-[A-Za-z0-9\-·~]+"  # W 系列编号
+RX_ID_LANG  = r"(?<![A-Za-z])WL-[A-Za-z0-9\-·~]+"  # W 系列编号
 RX_ID_REGT  = r"(?<![A-Za-z])[FLI]-\d{6}"       # 登记表主库编号（F/L/I）
 RX_ID_REGTW = r"(?<![A-Za-z])WL-\d{6}"          # 登记表语言专项编号
-RX_ID_HEAD  = r"^### ([FLIWS])-(\d{6})"         # 标题编号（行首锚定）
+RX_ID_HEAD  = r"^### ([FLIS])-(\d{6})"         # 标题编号（行首锚定）
 #   ↑ 2026-09-26 补 `S`（原 `[FLIW]` ⇒ 体例域 S 族**从不进入 all_ids**，登记面无 S ⇒ 引用校验无从命中）
-RX_ID_H3CNT = r"^### [FLIWS]-\d{6}|^### （\d+）"  # h3 条目计数（行首锚定）
+RX_ID_H3CNT = r"^### [FLIS]-\d{6}|^### （\d+）"  # h3 条目计数（行首锚定）
 _ID_RX = [("任意编号", RX_ID_ANY), ("W 系列编号", RX_ID_LANG), ("登记表主库编号", RX_ID_REGT),
           ("登记表语言专项编号", RX_ID_REGTW), ("标题编号", RX_ID_HEAD), ("h3 条目计数", RX_ID_H3CNT)]
 
@@ -173,9 +173,9 @@ ERRORS, WARNS, UNVERIFIABLE = [], [], []
 def count_entries(fname, content):
     """与 parse_titles.py / gen_entry.py 同口径：域文件=(N) 或 v37 身份编号条目；W 系列=WD+WD_LIST+h3。"""
     if fname.startswith("投行语言专项"):
-        n_wd = len(re.findall(r"^\*\*((?:WL|W|PL)-[A-Za-z0-9\-·~]+)", content, re.M))
-        n_wdl = len(re.findall(r"^-\s*\*\*((?:WL|W|PL)-[A-Za-z0-9\-·~]+)\*\*", content, re.M))
-        n_h3 = len(re.findall(r"^### ((?:WL|W|PL)-\d{6})", content, re.M))   # h3 形态（2026-09-19 补 PL-）
+        n_wd = len(re.findall(r"^\*\*((?:WL|PL)-[A-Za-z0-9\-·~]+)", content, re.M))
+        n_wdl = len(re.findall(r"^-\s*\*\*((?:WL|PL)-[A-Za-z0-9\-·~]+)\*\*", content, re.M))
+        n_h3 = len(re.findall(r"^### ((?:WL|PL)-\d{6})", content, re.M))   # h3 形态（2026-09-19 补 PL-）
         return n_wd + n_wdl + n_h3
     # 2026-09-19 补 S-（体例域批次卷）
     return len(re.findall(RX_ID_H3CNT, content, re.M))
@@ -295,9 +295,9 @@ for p in md_files:
         # W 系列：粗体 + 列表条目 + h3 形态（### WL-xxxxxx）编号进唯一性集合
         # （族内不要求连续——主题族框架跳号天然免疫；h3 归组章节头不以 WL- 开头，不会误收；2026-09-19 补）
         content = "\n".join(lines)
-        wids = list(re.finditer(r"^\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)", content, re.M)) + \
-               list(re.finditer(r"^-\s*\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\*\*", content, re.M)) + \
-               list(re.finditer(r"^### ((?:WL|W)-\d{6})", content, re.M)) + \
+        wids = list(re.finditer(r"^\*\*((?:WL)-[A-Za-z0-9\-·~]+)", content, re.M)) + \
+               list(re.finditer(r"^-\s*\*\*((?:WL)-[A-Za-z0-9\-·~]+)\*\*", content, re.M)) + \
+               list(re.finditer(r"^### ((?:WL)-\d{6})", content, re.M)) + \
                list(re.finditer(r"^### ((?:PL)-\d{6})", content, re.M))   # 2026-09-23 补 PL-（按族外置后 PL 族卷）
         for _mm in re.finditer(r"^### (PL-\d{6})", content, re.M):
             _full = _mm.group(1)[3:]
@@ -439,9 +439,9 @@ if os.path.exists(CL):
 for df in sorted(glob.glob(os.path.join(METHODS, LANG_GLOB))):
     with io.open(df, encoding="utf-8") as f:
         content = f.read()
-    ids = re.findall(r"^\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)", content, re.M) + \
-          re.findall(r"^-\s*\*\*((?:WL|W)-[A-Za-z0-9\-·~]+)\*\*", content, re.M) + \
-          re.findall(r"^### ((?:WL|W)-\d{6})", content, re.M)   # 2026-09-19 补 h3 形态
+    ids = re.findall(r"^\*\*((?:WL)-[A-Za-z0-9\-·~]+)", content, re.M) + \
+          re.findall(r"^-\s*\*\*((?:WL)-[A-Za-z0-9\-·~]+)\*\*", content, re.M) + \
+          re.findall(r"^### ((?:WL)-\d{6})", content, re.M)   # 2026-09-19 补 h3 形态
     from collections import Counter
     dups = {k: v for k, v in Counter(ids).items() if v > 1}
     if dups:
@@ -457,7 +457,6 @@ for df in sorted(glob.glob(os.path.join(METHODS, LANG_GLOB))):
 #   ── 存量**不改内容**（改属 ③ 内容回写面），故登记为**已知欠账**：命中基线者报 **WARN**
 #      （**可见但不阻断**），**新增**失效才报 ERROR。
 #   ── 基线变动（消解或新增）须**同步本表与 `references/govern/health-check.md` 第 8 项**。
-DANGLE_BASELINE = set()   # 2026-09-26 清零（见下注③）
 # ── PL 族缺号基线（2026-09-26 · PL 序号纳入第 3 项「族内连续」受检面当日冻结）────────
 #   实测缺号呈「段状」且五族形态一致（01/02/03 族缺 4-10、14-20；04 族缺 3-10、13-20；05 族缺 4-5、9-10）
 #   ⇒ 指向历史改号/落号事件（悬空两批订正已考古证实），非孤立笔误 ⇒ 一次性登记为**历史欠账基线**：
@@ -480,7 +479,6 @@ DANGLE_BASELINE = set()   # 2026-09-26 清零（见下注③）
 #      `PL-040003` → 删半句（保留 PL-040023；候选 PL-040035 时序不符——引用者胜业电气 08-29 早于其 09-12 落号）
 #      `I-100005 → I-030003`（同句括注「比例测算法＋口径显式」与 I-030003 标题两项逐字命中）
 #   **baseline 从此为空**：**新增失效即 ERROR，无豁免**；本表保留为机制占位（后续如需豁免须经裁定并落此表）。
-_base_hits = set()
 _decl_hist = set()
 # 「**已声明的历史引用**」＝引用处**自带注记**说明该编号在主库无对应，如
 #   「`W-070008`（历史编号·主库无对应·待核）」——这是 **A6 降级留痕的合法形态**（显式声明、机器可识别），
@@ -508,18 +506,11 @@ for df in _SURF8:
         #   （`WL-180035` 与错位起的 `L-180035`）⇒ 同一引用重复报错。加左界 `(?<![A-Za-z])`。
         for m in re.finditer("(" + RX_ID_ANY + ")", s):
             ref = m.group(1)
-            if re.match(r"^W-00", ref):  # 旧 W 系列编号（历史注记/索引保留）
-                continue
             if ref not in all_ids:
                 if _RX_DECL_HIST.search(s):
                     _decl_hist.add(ref)      # 已声明的历史引用（A6 降级留痕）⇒ 不算失效
-                elif ref in DANGLE_BASELINE:
-                    _base_hits.add(ref)      # 存量欠账：报 WARN（可见、不阻断）
                 else:
                     ERRORS.append("交叉引用无效 %s L%d: %s（目标编号不存在，需核对登记表/迁移）" % (rel, i + 1, ref))
-if _base_hits:
-    WARNS.append("存量失效引用（历史欠账清单（旧称：基线豁免） **%d 个编号** · 属 ③ 内容回写面，本次**不改内容**）：%s —— **新增**失效才报 ERROR；基线表见脚本 `DANGLE_BASELINE` 与 `health-check.md` 第 8 项"
-                 % (len(_base_hits), "、".join(sorted(_base_hits))))
 if _decl_hist:
     # **不计欠账**：这些是「引用了确实不在库内的历史编号，且引用处已告知读者」——降级留痕的合法形态。
     # 单列出来只为**可见**（免与真失效混淆），不入退出码、不入 baseline。
@@ -792,7 +783,7 @@ for _rd in RETIRED_DIRS:
 #   `([FLIW]L?-\d{6})` 无左界 ⇒ `WL-180035` 被匹配**两次**（同引用重复报错）。
 # 本项是**元自检**：对 `_ID_RX` 登记表逐个跑**写入式探针** —— 探针串内**不含独立 `L-`／`I-` 编号**，
 #   故「任一正则产出 `[LI]-\d{6}` 形态」即证明其缺左界（假阳性）。
-_PROBE_IDS = "WL-010020 PL-170104 S-040008 F-010001 W-010001"
+_PROBE_IDS = "WL-010020 PL-170104 S-040008 F-010001"   # 2026-10-02：去 `W-` 旧族样本（该族已退役）
 for _nm, _rx in _ID_RX:
     _hits = [h for h in re.findall(_rx, _PROBE_IDS) if isinstance(h, str)]
     _bad = sorted({h for h in _hits if re.match(r"^[LI]-\d{6}$", h)})
@@ -808,7 +799,7 @@ for _nm, _rx in _ID_RX:
 #   登记面都没进）；「域/语言/分卷」面 2,585 处引用中**漏检 1,802 处 ＝ 69.7%**。
 # 判据：对**每个在用编号族**各取一枚样本，要求「**至少一个登记正则能完整命中它**」；
 #   任一族无覆盖 ⇒ ERROR（须在 `_ID_RX` 增补，或说明该族已停用）。
-_PROBE_FAM = {"F": "F-010001", "L": "L-010001", "I": "I-010001", "W": "W-010001",
+_PROBE_FAM = {"F": "F-010001", "L": "L-010001", "I": "I-010001",   # 2026-10-02：去 `W`（该族已退役）
               "WL": "WL-010020", "PL": "PL-010001", "S": "S-010001", "I-CL": "I-CL01-01"}
 for _fam, _sample in sorted(_PROBE_FAM.items()):
     _covered = any(any(_m.group(0) == _sample for _m in re.finditer(_rx, _sample))
@@ -893,7 +884,7 @@ else:
 # 单一事实源：
 #   ① 护栏项数 ← **本文件 docstring 的项号清单**（须为连续 1..N；docstring 即登记表，不另设副本）
 #   ② 脚本数   ← `scripts/*.py` 实测（用户面可执行；**不含** `scripts/_lib/` 内部模块）
-# 扫描面：`_lib.layout.COUNT_DOCS`（skill 侧）＋ `COUNT_DOCS_WORKSPACE`（工作区侧）**白名单**——
+# 扫描面：`_lib.layout.count_docs()`（skill 侧）＋ `COUNT_DOCS_WORKSPACE`（工作区侧）**白名单**——
 #   **只扫活文档**；CHANGELOG／logs（操作日志 append-only）／tasks／docs（执行记录）／archive／
 #   methods/**（条目正文里的「护栏第 N 项」是**项号引用**）**一律不扫**，历史记录保留原值。
 #   活文档内遇「近期更新／版本历史」类小节**停止扫描**。
@@ -925,7 +916,7 @@ _RX_STOP = re.compile(COUNT_SCAN_STOP_HEADING)
 # ⚠️ 不能用 `os.path.dirname(SCRIPTS)` —— `resolve()` 返回的 `SCRIPTS` 是**工作区**的 `scripts/`，
 #    其上溯即工作区根（曾因此把 skill 侧白名单整批跳过 = 静默失效）。skill 根取 `layout.SKILL_DIR`。
 _SKILL_DIR = str(SKILL_DIR)
-for _base, _rel in ([( _SKILL_DIR, _d) for _d in COUNT_DOCS]
+for _base, _rel in ([( _SKILL_DIR, _d) for _d in count_docs()]
                     + [(_ROOT, _d) for _d in COUNT_DOCS_WORKSPACE]):
     _p = os.path.join(_base, _rel)
     _is_pack_doc = _base == _SKILL_DIR
@@ -994,7 +985,7 @@ HUXIAN_WATERMARK = {   # 2026-09-26 冻结（族 → 族内 max 序号）
     "WL-13": 10, "WL-14": 32, "WL-15": 40, "WL-16": 28, "WL-17": 22, "WL-18": 36,
     "WL-19": 6,
 }
-_RX_H3ID = re.compile(r"^((?:WL|PL|[FLIWS])-\d{6})")
+_RX_H3ID = re.compile(r"^((?:WL|PL|[FLIS])-\d{6})")
 _hx_miss, _hx_new = [], 0
 for _f in (sorted(glob.glob(os.path.join(METHODS, DOMAIN_GLOB)))
            + sorted(glob.glob(os.path.join(METHODS, LANG_GLOB)))
@@ -1360,6 +1351,39 @@ if _ph_hits:
 if not _args.quiet and not _args.json:
     print("占位符残留（第 26 项）: %d 处（应 = 0）" % len(_ph_hits))
 
+# ---------- 27. 案例层条目「层级失控」（2026-10-02 新增 · 判 I-0153） ----------
+# 缘由：案例层条目（`{F|L|I}-AN…` ／ `W-AN…`）在单案文件中的承载层级 **＝ 所在分组层级 ＋ 1**：
+#   ① 直接挂 `## 章` 下（**无分组层**）⇒ 条目 `###`（实测知识条目 5,087 ＋ 范式条目 424 处）
+#   ② 挂 `### 分组` 下（**有分组层**）⇒ 条目 `####`（实测范式条目 2,033 处）
+#   ⇒ **两形态并存合法**（2026-10-02 更正：§2.2c 原写「知识 `###`／范式 `####` 写死」，
+#     实为把「有分组层」当成了唯一情形；`check_expert_output` 的 `H4_ENTRY` 是 **S4 产出件
+#     的 FAIL 判据**（过程层产出要求全 `###`），**不能反推落库形态**，此前引作规范依据属误读）。
+# **硬约束**：出现 `#####` 及更深 ⇒ 层级失控 ⇒ 该条目**不进任何索引面**（等于静默消失）。
+#   实测曾积累 **51 处**（昂瑞微 15／科建股份 21／菊乐股份 15，全为编号条目位）而**无人报警**
+#   —— 因 26 项门禁**无一项**看守「案例层条目层级」（第 7 项只管主库 `###`），此为**覆盖面缺口**。
+# 授权档：**A（可直接改）** —— 纯层级降级（条目 `#####`→`####` 并将上层组标题上提 `###`），不改内容。
+_CASE_LV_RX = re.compile(r"^(#{5,6})\s+.*(?:[FLIW]-AN\d{4}-[A-Z]?\d{2}|I-CL\d{2}-?\d{2})", re.M)
+_clv_hits = []
+try:
+    for _fp in sorted(set(library_files(METHODS))):
+        try:
+            _txt = io.open(_fp, encoding="utf-8", errors="replace").read()
+        except OSError:
+            continue
+        for _i, _ln in enumerate(_txt.split("\n"), 1):
+            if _CASE_LV_RX.match(_ln):
+                _clv_hits.append("%s:%d" % (os.path.relpath(_fp, METHODS).replace("\\", "/"), _i))
+except OSError as _e:
+    UNVERIFIABLE.append("案例层条目层级**无法扫描**（第 27 项）：%s" % _e)
+if _clv_hits:
+    ERRORS.append("案例层条目**层级失控** %d 处（第 27 项）：出现 `#####` 及更深 —— "
+                  "案例层条目层级＝所在分组层级＋1（无分组用 `###`／有分组用 `####`），"
+                  "五级及更深会使条目**不进任何索引面**（静默消失，§2.2c）；"
+                  "修法＝条目降一级 ＋ 其上层组标题上提一级。示例：%s"
+                  % (len(_clv_hits), "；".join(_clv_hits[:8])))
+if not _args.quiet and not _args.json:
+    print("案例层条目层级（第 27 项）: %d 处（应 = 0）" % len(_clv_hits))
+
 
 # ---------- 事件留痕：体检落一行（WO-26 · 2026-09-26） ----------
 # 判据：「N issues found, M auto-fixed」——每次体检落一行事件，
@@ -1383,9 +1407,10 @@ if not _args.no_log:
         os.makedirs(_ld, exist_ok=True)
         _lpath = os.path.join(_ld, "库操作日志.md")
         _today = time.strftime("%Y-%m-%d")
-        _result_line = ("- 结果：ERROR %d ／ UNVERIFIABLE %d ／ WARN %d ｜ 正文 %d ｜ 索引行号抽查 %d/%d ｜ 单案 %d ｜ 占位符 %d"
+        _result_line = ("- 结果：ERROR %d ／ UNVERIFIABLE %d ／ WARN %d ｜ 正文 %d ｜ 索引行号抽查 %d/%d ｜ 单案 %d ｜ 占位符 %d ｜ 案例层层级 %d"
                         % (len(ERRORS), len(UNVERIFIABLE), len(WARNS), fm_checked,
-                           _locator_sampled, _locator_checked, _scope_checked, len(_ph_hits)))
+                           _locator_sampled, _locator_checked, _scope_checked, len(_ph_hits),
+                           len(_clv_hits)))
         # 去重：扫全文，若同日同结果行已存在同格式条目 ⇒ 跳过
         _dup = False
         if not _args.allow_dup and os.path.exists(_lpath):

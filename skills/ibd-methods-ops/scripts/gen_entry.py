@@ -52,8 +52,8 @@ def _current_entry_version():
                 m = re.match(r"version:\s*(\S+)", ln)
                 if m:
                     return m.group(1)
-    except Exception:
-        pass
+    except OSError:
+        pass          # 入口文件缺失/不可读 ⇒ 降级 "v1"（首跑即此情形，非异常）
     return "v1"
 
 
@@ -67,12 +67,12 @@ DOMAIN_FILES = _layout_domain_files(METHODS)
 def count_entries(fname, content):
     """计数口径与 parse_titles.py 一致：域文件=(N) 或 v37 身份编号条目；W 系列=WD 加粗 + WD_LIST 列表 + h3 形态。"""
     if fname.startswith("投行语言专项"):
-        n_wd = len(re.findall(r"^\*\*((?:WL|W|PL)-[A-Za-z0-9\-·~]+)", content, re.M))
-        n_wdl = len(re.findall(r"^-\s*\*\*((?:WL|W|PL)-[A-Za-z0-9\-·~]+)\*\*", content, re.M))
-        n_h3 = len(re.findall(r"^### ((?:WL|W|PL)-\d{6})", content, re.M))   # h3 形态（2026-09-19 补；章节头不以 WL- 开头，不会误计）
+        n_wd = len(re.findall(r"^\*\*((?:WL|PL)-[A-Za-z0-9\-·~]+)", content, re.M))
+        n_wdl = len(re.findall(r"^-\s*\*\*((?:WL|PL)-[A-Za-z0-9\-·~]+)\*\*", content, re.M))
+        n_h3 = len(re.findall(r"^### ((?:WL|PL)-\d{6})", content, re.M))   # h3 形态（2026-09-19 补；章节头不以 WL- 开头，不会误计）
         return n_wd + n_wdl + n_h3
     # v37 身份编号 ### F-010001 + 兼容 v36 旧格式 ### （N）
-    return len(re.findall(r"^### [FLIWS]-\d{6}|^### （\d+）", content, re.M))
+    return len(re.findall(r"^### [FLIS]-\d{6}|^### （\d+）", content, re.M))
 
 
 def max_updated(files):

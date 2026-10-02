@@ -32,11 +32,13 @@ _ROOT, METHODS, SCRIPTS = _layout_resolve(_args.methods_root)
 
 ## 硬约束
 
-- 本模块**只放常量与纯函数**，不做 IO、不读库。
+- 本模块**加载时零副作用**（无模块级 IO）；**函数内** IO 仅限 `count_docs_refs()`（由调用方按需触发）。
 - 脚本**不得**再自行拼写库内目录名／文件名；新增路径一律先在此登记。
 - `resolve()` 的默认根语义必须与历史一致：`--methods-root` 缺省 → **skill 包根**（＝`scripts/` 的上一级）。
 """
+import glob
 import os
+import sys
 from pathlib import Path
 
 # ── 目录名 ────────────────────────────────────────────────────────────────
@@ -179,7 +181,7 @@ SKIP_DIRS_CASE_NO = SKIP_DIRS_DEEP | SKIP_EXTRA_CASE_NO              # apply_cas
 #   根因之一是**同一枚举被复制到多个脚本**、各自漂移 ⇒ 收为本常量，**各脚本一律引用、禁再复制**。
 # 硬约束：左界 `(?<![A-Za-z])` 必需（编号族存在「短前缀 ⊂ 长前缀」：`L-` ⊂ `WL-`／`PL-`）。
 # 新增编号族时**只改本常量**（同时须进 `check_methods_health.py` 的 `_ID_RX` 登记表以受元自检）。
-RX_ID_FAMILY = r"(?<![A-Za-z])(?:WL|PL|[FLIWS])-\d{6}|(?<![A-Za-z])I-CL\d{2}-\d{2}"
+RX_ID_FAMILY = r"(?<![A-Za-z])(?:WL|PL|[FLIS])-\d{6}|(?<![A-Za-z])I-CL\d{2}-\d{2}"
 
 # ── 「已声明的历史引用」（**单一事实源** · 2026-09-26 WO-33）────────────────────
 # 引用处**自带注记**说明该编号在主库无对应（如「`W-070008`（历史编号·主库无对应·待核）」）。
@@ -253,12 +255,24 @@ _COUNT_DOCS_FIXED = (                    # 相对 **skill 根**：根级三件
 #     派生的失败方向是**多扫**，而多扫只产生**可见**的报告项、可由人裁定。
 #     ⇒ **把失败方向从静默翻转为可见**，是本节采用派生的唯一理由。
 #     `CHANGELOG.md` 属历史记录、不进面内；各册的「近期更新／版本历史」小节亦停止扫描。
-_COUNT_DOCS_REFS = tuple(sorted(
-    os.path.relpath(os.path.join(_r, _f), str(SKILL_DIR)).replace(os.sep, "/")
-    for _r, _dirs, _fs in os.walk(str(SKILL_DIR / "references"))
-    for _f in _fs if _f.endswith(".md")
-))
-COUNT_DOCS = _COUNT_DOCS_FIXED + _COUNT_DOCS_REFS   # 相对 **skill 根**
+def count_docs_refs(skill_dir=None):
+    """`references/**/*.md` 派生面（相对 skill 根）——**惰性函数**。
+
+    2026-10-02 代码体检：原为**模块级** `os.walk` ⇒ **import 本模块即扫盘**，
+    与本模块「加载时零副作用」自述矛盾，且全包只有 `check_methods_health` 第 20 项
+    一个调用方需要它 ⇒ 改为按需调用（`skill_dir` 缺省＝本包根）。
+    """
+    base = Path(skill_dir) if skill_dir else SKILL_DIR
+    return tuple(sorted(
+        os.path.relpath(os.path.join(_r, _f), str(base)).replace(os.sep, "/")
+        for _r, _dirs, _fs in os.walk(str(base / "references"))
+        for _f in _fs if _f.endswith(".md")
+    ))
+
+
+def count_docs(skill_dir=None):
+    """活文档白名单（skill 侧）＝ **固定三件** ＋ `references` 派生面（相对 skill 根）。"""
+    return _COUNT_DOCS_FIXED + count_docs_refs(skill_dir)
 COUNT_DOCS_WORKSPACE = (            # 相对 **工作区根**
     "state/README.md",
     "state/维护体检计数.md",
@@ -282,7 +296,6 @@ def ensure_utf8():
     既无 `reconfigure` 也无 `ensure_utf8` ⇒ 报 WARN）⇒ **保留**。删它须**同批改 A8 判据**
     （改动面两处、收益为零），且会连带删掉「编码已处理」的判定依据。**勿再作为死代码项重议。**
     """
-    import sys
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8")
@@ -292,7 +305,6 @@ def ensure_utf8():
 
 def domain_files(methods_dir):
     """返回域文件清单（跨案域正文 ＋ 语言专项 ＋ 分卷），顺序与历史实现逐字一致。"""
-    import glob
     out = sorted(glob.glob(os.path.join(methods_dir, DOMAIN_GLOBS[0])))
     out += sorted(glob.glob(os.path.join(methods_dir, DOMAIN_GLOBS[1])))
     out += sorted(glob.glob(os.path.join(methods_dir, VOLUME_NAME, VOLUME_GLOB)))
@@ -307,7 +319,6 @@ def library_files(methods_dir):
     C3b 前旧写法为「`methods/*.md` ＋ `methods/分卷/*.md`」——搬迁后 `methods/` 根级只剩
     元文件，故必须改为按目录枚举（否则兜底判定会静默漏掉全部正文）。
     """
-    import glob
     return domain_files(methods_dir) + sorted(glob.glob(os.path.join(methods_dir, MERGED_GLOB)))
 
 
