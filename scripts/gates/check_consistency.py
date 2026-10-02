@@ -49,12 +49,45 @@ def load_matrix_versions(readme_path):
     return matrix
 
 
+def load_compat_matrix(readme_path):
+    """从集合 README **依赖版本兼容矩阵**提取 [(依赖方, 依赖包, 当前集合版本)]。
+
+    2026-10-02 新增（检查 7 的输入）。表头判据 ＝ 含「当前集合版本」的表格行。
+    跳过规则：② 列剥括注后**非包名**（如「平台 docx 工具」）⇒ 跳过；
+              ④ 列**非 `X.Y.Z`**（如 `—`）⇒ 跳过。
+    """
+    rows = []
+    if not os.path.exists(readme_path):
+        return rows
+    in_tbl = False
+    for line in open(readme_path, encoding='utf-8'):
+        if not in_tbl:
+            if line.lstrip().startswith('|') and '当前集合版本' in line:
+                in_tbl = True
+            continue
+        if not line.lstrip().startswith('|'):
+            break                      # 表格结束
+        cells = [c.strip() for c in line.strip().strip('|').split('|')]
+        if len(cells) < 4 or set(cells[0]) <= set('-: '):
+            continue                   # 分隔行 / 列数不足
+        dep = re.sub(r'[（(].*?[)）]', '', cells[1])       # 剥「（可选）」「（汇总口）」
+        dep = re.sub(r'[〔\[].*', '', dep).strip(' *`')
+        if not re.match(r'^[a-z0-9-]+$', dep):
+            continue                   # 非包名 ⇒ 无版本可比
+        if not re.match(r'^\d+\.\d+\.\d+$', cells[3]):
+            continue                   # `—` 等
+        rows.append((cells[0], dep, cells[3]))
+    return rows
+
+
 def main():
     ap = argparse.ArgumentParser(description="集合一致性门禁（版本/README 矩阵/发布渠道/变更留痕）")
     ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     args = ap.parse_args()
     fails = []
+    pkg_ver = {}
     matrix = load_matrix_versions(os.path.join(ROOT, 'README.md'))
+    compat = load_compat_matrix(os.path.join(ROOT, 'README.md'))
     # 治理范围过滤（2026-09-15）：平铺布局（真身仓）下根目录混有第三方/私有 skill
     # （anysearch、github、obsidian 等），不属 ibd-skills 集合治理域，不应被集合门禁扫描。
     # 治理域 = ibd-* 全系 + skill-publish-pipeline / skills-constitution（发布治理自身）。
@@ -74,6 +107,8 @@ def main():
         ver = m.group(1).strip() if m else None
         if not ver:
             fails.append(f'{pkg}: SKILL.md frontmatter 无 version')
+        else:
+            pkg_ver[pkg] = ver
         cl = os.path.join(d, 'CHANGELOG.md')
         if os.path.exists(cl):
             head = open(cl, encoding='utf-8').read()
@@ -123,6 +158,16 @@ def main():
                     stem = os.path.splitext(fn)[0]
                     if (fn in sk_text or stem in sk_text) and (fn not in cl_text and stem not in cl_text):
                         fails.append(f'{pkg}: {sub}/{fn} 被 SKILL.md 引用但 CHANGELOG 无任何记录（变更留痕缺失）')
+    # 7. 依赖版本兼容矩阵「当前集合版本」列 == 被依赖包 SKILL.md version（2026-10-02 新增）
+    #    为什么要加：检查 5 的正则**只认带包链接的「包清单表」**，而依赖兼容矩阵的行无链接
+    #    ⇒ 该矩阵的版本列**长期无人校验**。先例 = 本次发布 methods-ops 1.35.8 上提后矩阵仍记
+    #    1.35.0，是靠 P0.8 详规的**人工提醒**才发现（详规另载有一次「~24 次 CI 连红」的
+    #    同型事故：包清单表停在旧值而无人发现）。
+    for who, dep, cur in compat:
+        if dep in pkg_ver and pkg_ver[dep] != cur:
+            fails.append(f'依赖兼容矩阵（{who} → {dep}）记 {cur} != 该包实际 version {pkg_ver[dep]}')
+        elif dep not in pkg_ver:
+            fails.append(f'依赖兼容矩阵（{who} → {dep}）所指包**不在集合内**（矩阵引用了不存在的包名）')
     n_pkgs = len([x for x in os.listdir(SKILLS) if os.path.isdir(os.path.join(SKILLS, x))])
     if args.json:
         print(json.dumps({
