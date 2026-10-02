@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%B3%95%E5%BE%8B%E4%BE%8B%E5%AF%B9%E7%85%A7-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.3.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.3.1-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -81,6 +81,8 @@ ibd-legal-review/
 
 ## 🕒 近期更新
 
+- **v0.3.1 · 修订**：出件补齐下游指向——清单结构与字段以 `ibd-doc-review/references/interface.md` §3 为准，**落地交 `ibd-doc-annotate`**（原仅写「交复核包汇总」，与 finance 侧链路声明不对称）。详见 [CHANGELOG.md](CHANGELOG.md)。
+- **v0.3.0 · 接库**：库调用治理——判据来源上提同一事实源、新增检索预算与库对账巡检（零脚本）、与 `ibd-finance-review` 回环标「同构件·改动须同批」。详见 [CHANGELOG.md](CHANGELOG.md)。
 - **v0.2.0 · 接库**：新增**族演进回环**——19 族的更新源＝方法论库的蒸馏产物（`蒸馏 → 库法律域新增条目/族卷 → 本包巡检 → 更新族内快照 或 登记新族候选`）；三个占位项（明股实债／无真实交易背景票据·信用证／虚开发票）登记为**新族候选**，立族判据＝**≥3 案例复现**。**不新增依赖边**（库缺时按族卷自足路径运行）。
 - **v0.1.1 · 修订**：取例表述收掉一处**方法概念副本**（原复述了检索侧的方法名目），改为「**指针 ＋ 自足降级**」——**不新增建包依赖**，未装检索能力时退化为按族卷定向读。详见 [CHANGELOG.md](CHANGELOG.md)。
 

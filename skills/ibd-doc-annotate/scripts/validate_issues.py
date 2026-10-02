@@ -17,7 +17,10 @@ issues.json 入口校验器（G1 · 复核链数据入口早拦）
     - 顶层非数组 / 空数组
     - 条目非 dict
     - 缺必填字段：anchor（定位核心）/ type（类型标签）/ sev（严重度）/
-      title（标题行）/ desc（问题描述）/ advice（修改建议，批注正文 4 行结构必需）
+      title（标题行）/ desc（问题描述）
+    - advice 与 rev **二者皆空**（**anyOf 条件必填**，契约见 ibd-doc-review
+      references/interface.md §3 与 problems.schema.json）：批注形态给 advice
+      （修改建议，批注正文 4 行结构必需）；文本定稿/修订形态给 rev（可粘贴替换文本）
     - sev 不在 {高, 中, 低}（严重度三档为格式层固定枚举，见 ibd-doc-review
       references/annotations.md；非内容判断）
   WARNING（提示不拦截）：
@@ -27,7 +30,8 @@ issues.json 入口校验器（G1 · 复核链数据入口早拦）
     - code 重复：多条同前缀，编号序号仍会区分，但建议人工确认
   不校验（内容层职责，分别归下游）：
     - type 取值：类型词表外放行（方法层不做内容判断；词表合规由 check_annotations 门禁把关）
-    - rev 字段：缺 rev 按 revise 链路「待人工」处理，属修订规范（ibd-doc-review references/revisions.md）
+    - advice / rev 的**取值质量**（建议是否得当、替换文本能否直接粘贴）归批注与修订规范
+      （ibd-doc-review references/annotations.md / revisions.md）；本层只校验「二者至少其一」
 
 退出码：0 = 通过（仅 warnings）；2 = 存在 ERROR。
 """
@@ -39,7 +43,12 @@ import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-REQUIRED = ("anchor", "type", "sev", "title", "desc", "advice")
+REQUIRED = ("anchor", "type", "sev", "title", "desc")
+# advice / rev —— **anyOf 条件必填**（二者至少其一）。契约单一事实源：
+# ibd-doc-review references/interface.md §3 ＋ references/problems.schema.json。
+# 批注形态用 advice（指令式建议）；文本定稿/修订形态用 rev（可直接粘贴的替换文本），
+# 此时 advice 可省。二者皆空即 ERROR——否则「文本定稿/修订」形态的清单会被自己判死。
+EITHER = ("advice", "rev")
 SEV_ALLOWED = ("高", "中", "低")
 
 # 数量卫生阈值（细则 9：本地舒适 ≤200；云端协同红线前 400 触发拆分提示）
@@ -74,6 +83,12 @@ def validate_issues(data):
             v = it.get(k)
             if v is None or (isinstance(v, str) and not v.strip()):
                 errors.append(f"第{i}条缺必填字段 `{k}`")
+        # advice / rev —— anyOf 条件必填：二者至少其一非空
+        if not any(it.get(k) is not None and str(it.get(k)).strip() for k in EITHER):
+            errors.append(
+                f"第{i}条缺 `advice` 或 `rev`（二者至少其一：批注形态给 advice，"
+                "文本定稿/修订形态给 rev）"
+            )
         sev = it.get("sev")
         if sev is not None and sev not in SEV_ALLOWED:
             errors.append(f"第{i}条 sev={sev!r} 不在严重度枚举 {{高,中,低}}")

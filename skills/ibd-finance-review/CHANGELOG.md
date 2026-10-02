@@ -2,6 +2,14 @@
 
 本 skill 遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 与语义化版本。集合分发包（ibd-skills）随 zip 携带本文件；单包独立分发可自行剔除（历史说明不随包，版本记录由发布门禁在打包前校验）。
 
+## [0.15.0] - 2026-10-02
+
+### 清单字段名对齐契约（`severity`→`sev` ／ `description`→`desc` ／ `suggestion`→`advice`）＋ 补 `rev` ＋ 去自称号
+
+- **缺陷**：`references/issue-list-format.md` §1 字段表用 `severity`／`description`／`suggestion`，而契约（`ibd-doc-review/references/interface.md` §3 ＋ `problems.schema.json`）用 `sev`／`desc`／`advice`。因 schema 为 `additionalProperties:false`，**按本册字段名产出的清单会被下游两处校验器双拦**（实测：`validate_issues.py` 报缺 `sev`、`validate_schema.py` 报「不允许的额外字段 `severity`」）。本册原自称「**本 skill 单一事实源**」，与契约成了**两个事实源**——字段名分歧正是漂移产物。
+- **修法**：① 字段名逐一对齐契约（`sev`／`desc`／`advice`），并补 `rev` 行（`advice`／`rev` **二者至少其一**，`anyOf`；文本定稿/修订形态可只给 `rev`）；② 去掉「本 skill 单一事实源」自称，**回指** `ibd-doc-review/references/interface.md` §3 为字段名与语义源；③ 连带同步 `SKILL.md` §⑤、`references/examples.md`（清单样例 JSON）、`references/integration-and-fallbacks.md`（对接协议字段表）、`references/execution-discipline.md`、`references/articulation-checks.md`（正文内的 `description` 字段名用法）。
+- **定位不变**：零硬依赖、纯规范 md；本次仅改**字段名与指向**，判据、维度与流程零变更。
+
 ## [0.14.0] - 2026-10-02
 
 ### 库调用治理：判据来源上提 ＋ 检索预算 ＋ 库对账 ＋ 同构件互指

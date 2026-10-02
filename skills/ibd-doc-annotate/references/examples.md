@@ -16,7 +16,7 @@ python scripts/validate_issues.py --input scripts/issues.example.json
 ✅ 入口校验通过：3 条，0 ERROR
 ```
 
-清单格式（code/type/severity/anchor/title/desc/suggestion 字段）见本包 SKILL.md「准备输入」与 doc-review references/annotations.md。
+清单格式（code/type/sev/anchor/title/desc/advice|rev 字段）见本包 SKILL.md「准备输入」与 doc-review references/annotations.md。
 
 ## 示例 2：批注版注入全链路（docx）
 

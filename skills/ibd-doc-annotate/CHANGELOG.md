@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.11.1] - 2026-10-02
+
+### 入口校验对齐契约：`advice` / `rev` 改 anyOf 条件必填 ＋ 双校验器同输入同结论回归
+
+- **缺陷**：`validate_issues.py` 的 `REQUIRED` **无条件要求 `advice`**，而同集合契约（`ibd-doc-review/references/interface.md` §3 ＋ `problems.schema.json`）规定 `advice`／`rev` **二者至少其一**（`anyOf`）。后果：「**文本定稿/修订**」形态清单（只给 `rev`、省 `advice`）**被自己的入口校验判死**；而 `annotate_docx`/`annotate_pdf`/**`revise_docx`** 三处都调 `validate_issues()` ⇒ 修订链路不可用。实测同一份 rev-only 清单：`validate_schema.py` **PASS**、`validate_issues.py` **ERROR**——两个校验器给出**相反结论**。
+- **修法**：`REQUIRED` 去掉 `advice`（保留 `anchor`/`type`/`sev`/`title`/`desc`）；新增 `EITHER = ("advice","rev")` 判定——**二者皆空才 ERROR**，非空判定与必填同口径（空串不算「有」）。`docstring` 与 `references/issues-schema.md` 同步。
+- **回归自测**：新增 `scripts/tests/test_validate_issues.py`（**10 项**）——含 **rev-only 通过**（上述缺陷回归）、advice/rev 皆空拦截、必填仍拦；另两类为**契约一致性**（`REQUIRED` == schema.required、`EITHER` == schema.anyOf 键集）与**双校验器同输入同结论**（同一清单过两校验器结论必须一致），需同集合内 doc-review，单包安装自动 SKIP。
+- **下游字段名同步**：`README.md` 与 `references/examples.md` 里由 finance 侧串入的旧字段名（`severity`/`suggestion`）改为契约名 `sev`/`advice`（`|rev`）。
+- **对外契约零变化**：CLI 用法、ERROR/WARN 分级、退出码不变；仅「原先误判为 ERROR 的合法 rev-only 清单」恢复放行。
+
 ## [0.11.0] - 2026-09-29
 
 ### 修复 ＋ 变更（批注链修复：注入器原位保留 / 编号分段 / 总览只产 md）

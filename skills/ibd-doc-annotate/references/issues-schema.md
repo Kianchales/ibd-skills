@@ -24,11 +24,11 @@
 - `type` / `sev`：类型词表与严重度档位由 `ibd-doc-review` 的 annotations.md（§4）定义。**入口校验拦 `sev` 不在 {高,中,低}**（三档为结构枚举）；**`type` 词表不校验**（复核分类属上游内容，方法层不做内容判断、外放行，词表合规由 review 门禁把关）
 - `anchor` = 原文问题句段（**精确子串**，docx 取正文/表格内段落文本；PDF 自动容忍空格/换行）
 - **清单单元 = 根因问题（同源已合并）**：上游产出清单时同源连锁错误已合成一条（desc 内联全部衍生位置），本执行器**按条注入、不拆分也不合并**；一条批注 = 一个根因，覆盖语义与数量卫生（≤200 条/超 400 拆分）由上游纪律约束（见 ibd-finance-review execution-discipline 细则 9），本执行器通过 validate_issues 的 WARN 兜底提示
-- **修订稿额外字段 `rev`** = 替换后新文本（anchor 同时是替换范围，须精确覆盖要改的文本）；**缺 rev → 该条列入修改清单「待人工」**，批注链路不需要 rev
+- **`advice` 与 `rev` 二者至少其一（`anyOf`）**——契约单一事实源 `ibd-doc-review/references/interface.md` §3 ＋ `problems.schema.json`。`advice` = 指令式修改建议（批注形态用）；`rev` = 替换后新文本（anchor 同时是替换范围，须精确覆盖要改的文本）；**文本定稿/修订形态**下 `rev` 为主交付物、`advice` 可省。**二者皆空 → 入口 ERROR 拦截**；批注形态缺 `rev` 不拦（该条按修订链路「待人工」处理）
 - 可选 `"page": 5`（PDF 限定搜索页，1 起）
 
 ## 三、入口校验两级判据
 
-**ERROR 级**（顶层非数组/空、条目缺 `anchor`/`type`/`sev`/`title`/`desc`/`advice` 任一、`sev` 不在 {高,中,低}）**拦截退出（exit 2）不注入**。
+**ERROR 级**（顶层非数组/空、条目缺 `anchor`/`type`/`sev`/`title`/`desc` 任一、**`advice` 与 `rev` 二者皆空**、`sev` 不在 {高,中,低}）**拦截退出（exit 2）不注入**。
 
 **WARN 级**（缺 code 回退 U、code 非 1-2 位大写、缺 author、code 重复、**title 归一后重复疑似同源未合并、批注数 >200/>400 数量越级**）仅提示不拦。

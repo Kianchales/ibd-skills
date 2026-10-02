@@ -10,7 +10,7 @@
 
 | 协议点 | 约定（详见 issue-list-format.md） | 对接方动作 |
 |---|---|---|
-| 字段 | code / type / severity / anchor / title / description / suggestion | 按字段消费；锚点最小可定位句段 |
+| 字段 | code / type / sev / anchor / title / desc / advice（或 `rev`） | 按字段消费；锚点最小可定位句段 |
 | 复核人代号 | J=财务、L=法律、I=行业、Z=综合（前缀进 code） | 多专业复核时按代号分流汇总 |
 | 交付形态 | 批注版原文 + 精简总览（编号一一对应）；**只加批注，不改原文** | 支持 Word 审阅批注或 PDF 高亮的批注工具均可落地 |
 
