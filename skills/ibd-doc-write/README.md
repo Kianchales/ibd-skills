@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%96%87%E6%A1%A3%E5%86%99%E4%BD%9C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.18.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.19.0-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -97,6 +97,8 @@ ibd-doc-write/
 ```
 
 ## 📌 近期更新
+
+- **2026-10-05 · v0.19.0**：**遣词规范反向反哺**——`writing-style.md` 新增「**遣词规范**」节 5 条（提炼自方法论库 WL 遣词类、**剥离案名**）：称谓分域纪律／时点锚四轨分工／绝对化表述自我限定收敛／不利事实「承认—量化—隔离」／归因三要素铁律；并新增「**主观辩护转客观陈述**」条。文件头补「**与库的关系（非强关联）**」声明——明确不随库实时同步，同步时机／纪律／失败回退三节。零规则变更
 
 - **2026-10-02 · v0.18.1**：**缺口登记口径归一**——原写「加入**待积累清单**」（**无路径**），与 `ibd-methods-ops` 的回收账（`state/待补学清单.md`）对不上；现统一为「**登记至 `<工作区根>/state/待补学清单.md`**」并补「写完后销项」，把闭环两端写明。零规则变更
 

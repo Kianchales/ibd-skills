@@ -288,11 +288,28 @@ def check_anchors(docx_text, md_text, anchors):
     return "关键锚点", ok, detail, fails
 
 
+def _scan_hits(text, w, maxhits=2, span=14):
+    """一次扫描：返回 (命中数, 上下文片段列表)。
+
+    上下文供人工核对「描述对象」——同一绝对化词用于发行人自身（红线）与用于
+    第三方/事实陈述（合规）判然不同（方法论库 WL-150040），纯字符匹配无法区分，
+    故把原文片段一并带出，由复核者一眼判定。
+    """
+    n, ctxs = 0, []
+    for m in re.finditer(re.escape(w), text):
+        n += 1
+        if len(ctxs) < maxhits:
+            s, e = max(0, m.start() - span), min(len(text), m.end() + span)
+            ctxs.append(re.sub(r"\s+", " ", text[s:e]))
+    return n, ctxs
+
+
 def check_ban(docx_text, rules):
     """禁用词红线（档位感知）。
 
     rules：[("词", "档位", "说明", "建议")]，由 load_ban_rules(scenario) 按文档类型装载。
     阻断档（CRITICAL/IMPORTANT）命中 ⇒ FAIL；提示档（MINOR）命中 ⇒ 只提示不阻断。
+    命中附**上下文片段**（供人工核对描述对象：自身 / 第三方 / 事实陈述）。
     """
     if not rules:
         return None
@@ -303,19 +320,22 @@ def check_ban(docx_text, rules):
             note = entry[2] if len(entry) > 2 else ""
         else:
             w, level, note = str(entry), "IMPORTANT", ""
-        n = docx_text.count(w) if w else 0
+        n, ctxs = _scan_hits(docx_text, w) if w else (0, [])
         if not n:
             continue
         line = f"{w}: {n} 处"
         if note:
             line += f" — {note}"
+        if ctxs:
+            line += "｜" + " ／ ".join(f"…{c}…" for c in ctxs)
         (advisory if level in ADVISORY_LEVELS else blocking).append((line, w, n))
     if blocking:
         detail = f"命中 {sum(x[2] for x in blocking)} 处" + \
                  (f"（另有提示 {len(advisory)} 项）" if advisory else "")
         fails = [x[0] for x in blocking] + [f"（提示·不阻断）{x[0]}" for x in advisory]
         return "禁用词红线", False, detail, fails
-    detail = "0 处命中" if not advisory else f"0 处硬禁；提示 {len(advisory)} 项（不阻断）"
+    detail = "0 处命中" if not advisory else \
+        f"0 处硬禁；提示 {len(advisory)} 项（不阻断）——核对描述对象：自身→整改，第三方/事实陈述→放行"
     fails = [f"（提示·不阻断）{x[0]}" for x in advisory]
     return "禁用词红线", True, detail, fails
 

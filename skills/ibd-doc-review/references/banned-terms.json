@@ -1,7 +1,9 @@
 {
   "_说明": "投行文档禁词红线清单（单一事实源 · 2026-09-28 立）。三层结构：①behavior（行为禁语·**文档类型敏感**——applies_to 声明适用场景）②absolute（绝对化用语·**全场景**）③legacy_ban（宣传语/承诺语·**全场景**）。装载方：deliver_gate.py（load_ban_rules(scenario)，json 缺失时兜底内置）与 check_content.py --geo-file 同构格式。新增词条直接改本文件，脚本零改动。",
+  "_职责边界": "本表只收**合规红线**（可能构成虚假陈述/误导性陈述的表述），**不收纯文风词**——文风/AI 味检查归写作侧 `ibd-doc-write` 的 `writing-style.md`「反 AI 痕迹」（2026-10-05 裁定：「大力」「赋能」由 legacy_ban 降为 MINOR 并注记职责归属）。判据：同一词即使描述发行人自身也仅属文风问题（不涉合规）⇒ 不入阻断档。",
   "_口径_作用域": "文档类型敏感是硬要求，不是优化项：『经核查，保荐机构认为……』是**反馈回复的规范句式**，却是**招股书正文的零容忍禁区**（PL-05 卷）。同一词表若不区分文档类型，会在回复件上大面积假阳性——2026-09-28 回归事故（0.26.0 把行为禁语摊平到全场景）即由此而来。判据：词条的合法性随文档类型变化 ⇒ 入 behavior 并声明 applies_to；与文档类型无关的红线 ⇒ 入 absolute / legacy_ban。",
   "_口径_档位": "CRITICAL / IMPORTANT = 阻断档（门禁 FAIL）；MINOR = 提示档（门禁不阻断，仅提示上下文核查）。提示档用于『本身合规但常与违规表述伴生』的词，不得因它拉红门禁。",
+  "_与库关系": "本词表为独立维护的拦截规则，不随方法论库实时同步（拦截口径与写作范式不同构：库侧是句式范式，本表是正则拦截）。新增词条时可参考库 WL-/PL- 遣词类条目，但以本表为准。新增/修改触发时机由维护者按需判断，不设自动同步。",
   "behavior": {
     "applies_to": ["招股书"],
     "strong": [
@@ -19,7 +21,7 @@
     ]
   },
   "absolute": [
-    {"pattern": "全球第一", "level": "CRITICAL", "note": "绝对化用语", "suggestion": "改为可溯源的排名表述并注出处，或删除"},
+    {"pattern": "全球第一", "level": "MINOR", "note": "绝对化用语——须核对对象：用于发行人自身为红线；用于第三方或事实陈述（如「全球第一个××标准」）时属正常表述", "suggestion": "描述自身改可溯源排名并注出处；描述第三方则核对后放行"},
     {"pattern": "世界第一", "level": "CRITICAL", "note": "绝对化用语", "suggestion": "同上"},
     {"pattern": "国内首创", "level": "CRITICAL", "note": "绝对化用语", "suggestion": "同上"},
     {"pattern": "填补空白", "level": "CRITICAL", "note": "绝对化用语", "suggestion": "同上"},
@@ -28,18 +30,21 @@
     {"pattern": "断层领先", "level": "CRITICAL", "note": "绝对化用语", "suggestion": "同上"},
     {"pattern": "行业最优", "level": "CRITICAL", "note": "绝对化用语", "suggestion": "同上"},
     {"pattern": "稳居第一", "level": "CRITICAL", "note": "绝对化用语", "suggestion": "同上"},
-    {"pattern": "唯一", "level": "IMPORTANT", "note": "绝对化用语——须有权威出处（如专利/认证的『唯一』须注证明机构）", "suggestion": "注出处或改『少数…之一』"},
+    {"pattern": "唯一", "level": "MINOR", "note": "绝对化用语——须有权威出处（如专利/认证的『唯一』须注证明机构）；用于标准属性等客观事实（如「唯一满足××等级的标准」）时核对后放行", "suggestion": "注出处或改『少数…之一』"},
     {"pattern": "国内领先", "level": "IMPORTANT", "note": "绝对化用语——须注可溯源出处", "suggestion": "注出处（行业报告/排名）或软化"},
     {"pattern": "国际领先", "level": "IMPORTANT", "note": "绝对化用语——同上", "suggestion": "同上"},
-    {"pattern": "全球领先", "level": "IMPORTANT", "note": "绝对化用语——同上", "suggestion": "同上"},
+    {"pattern": "全球领先", "level": "MINOR", "note": "绝对化用语——须核对对象：用于发行人自身为红线；用于同业对比表中的第三方属正常表述（方法论库 WL-150040）", "suggestion": "描述自身注出处或降级为「……之一」；描述第三方则核对后放行"},
     {"pattern": "行业领先地位", "level": "IMPORTANT", "note": "绝对化用语——同上", "suggestion": "同上"},
     {"pattern": "排名第一", "level": "IMPORTANT", "note": "绝对化用语——须注出处与口径", "suggestion": "注出处、年份与口径"},
     {"pattern": "市占率第一", "level": "IMPORTANT", "note": "绝对化用语", "suggestion": "同上"},
     {"pattern": "市场份额第一", "level": "IMPORTANT", "note": "绝对化用语", "suggestion": "同上"},
-    {"pattern": "国内第一", "level": "IMPORTANT", "note": "绝对化用语", "suggestion": "同上"}
+    {"pattern": "国内第一", "level": "IMPORTANT", "note": "绝对化用语", "suggestion": "同上"},
+    {"pattern": "不存在法律风险", "level": "IMPORTANT", "note": "过度绝对的法律结论（源自方法论库 WL-150040 ④）", "suggestion": "不得作无风险断言；改为按事实限缩，如『存在被行政处罚的风险较小』并附依据"},
+    {"pattern": "大力", "level": "MINOR", "note": "文风类（原 legacy_ban）——政策/行业引文高频，非合规红线（文风检查归写作侧 writing-style.md「反 AI 痕迹」）；命中须核对是否发行人自述", "suggestion": "如系发行人自述，改为事实陈述（如『支持』→ 具体动作与规模）"},
+    {"pattern": "赋能", "level": "MINOR", "note": "文风类（原 legacy_ban）——政策原文高频，非合规红线（文风检查归写作侧）；命中须核对是否发行人自述", "suggestion": "如系发行人自述，改为事实陈述"}
   ],
   "legacy_ban": [
     "颠覆", "革命性", "领先全球", "世界第一", "国内首创", "填补空白",
-    "唯一", "最先进", "必将", "确保上市", "大力", "赋能", "护城河"
+    "唯一", "最先进", "必将", "确保上市", "护城河"
   ]
 }

@@ -95,13 +95,13 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
-| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.18.1 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
+| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.19.0 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
 | [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.14.0 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
-| [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.15.0 | 🟢 doc-review ≥0.26.2（交付口径单一事实源 + 三形态路由/深度三档/类型词表 12 类/清单 anyOf；缺则只产清单不落地）；🟢 方法论库财务域（同类案例「先库后源」）+ methods-query（缺则直查公开问询件） |
+| [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.15.1 | 🟢 doc-review ≥0.26.2（交付口径单一事实源 + 三形态路由/深度三档/类型词表 12 类/清单 anyOf；缺则只产清单不落地）；🟢 方法论库财务域（同类案例「先库后源」）+ methods-query（缺则直查公开问询件） |
 | [ibd-legal-review](skills/ibd-legal-review/README.md) | **法律惯例对照复核**：把本稿与同类情形的市场惯例并排比，出对照标注；**只对照、不定性**（法律判断归签字人） | 0.3.1 | 🔴 doc-review（复核链清单汇总口，不随包携带）；🟢 方法论库（B 档惯例取例，缺则退 A 档） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.28.0 | 零外部 skill 依赖（基座） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.30.0 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.11.1 | 🔴 doc-review ≥0.26.2（规范 + 校验门禁内部回调 + 交付口径 delivery.md + 清单 anyOf；单入口路由） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.35.8 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.35.14 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.6 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]
@@ -203,12 +203,12 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
 | ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.14.0 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.28.0 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.26.2 | 0.28.0 | ✅ |
-| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.26.2 | 0.28.0 | ✅ |
-| ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.28.0 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.35.8 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.35.8 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.30.0 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.26.2 | 0.30.0 | ✅ |
+| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.26.2 | 0.30.0 | ✅ |
+| ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.30.0 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.35.14 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.35.14 | ✅ |
 | ibd-doc-review（样式套用/新建 docx） | **平台 docx 工具**〔`tencent-docx`／`minimax-docx`／本地 Office 任选其一〕 | 无版本约束 | — | 🔴 必备 |
 
 > **下限口径（＝契约完整版，非「最低可跑版」）**：本表下限取「**依赖方用到的全部契约能力的最大引入版本**」，故可能高于任一单项能力的引入版。
@@ -226,6 +226,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 - 集合 Release：`ibd-skills-vX.Y.Z`，zip 含 `README.md` + `skills/` 全部包
 
 ## 📌 近期更新
+
+- **2026-10-05 · v0.5.2**：**4 包上提（复核链语体规则反哺 ＋ 门禁误报止血 ＋ 财务复核文号更正 ＋ 方法库修订累积）**——① **`ibd-doc-review` 0.28.0 → 0.30.0**（**遣词规范反哺**：新增「遣词规范」节、「主观辩护转客观陈述」条、「与库的关系（非强关联）」声明；**禁词表误报止血**：「大力」「赋能」降提示档并作**职责归位**——文风词非合规红线、归写作侧，新增 `_职责边界` 字段；**禁词命中携带上下文**：`deliver_gate.py` 新增 `_scan_hits`，命中附原文片段供人工核对描述对象（自身／第三方），「全球第一」「全球领先」「唯一」降提示档；实测招股书禁用词项 **35 处 → 0 阻断 ＋ 29 提示**、由 FAIL 转 PASS）；② **`ibd-doc-write` 0.18.1 → 0.19.0**（同步反哺：新增「遣词规范」5 条（提炼自方法论库 WL 遣词类、**剥离案名**）＋「主观辩护转客观陈述」＋「与库的关系」声明）；③ **`ibd-finance-review` 0.15.0 → 0.15.1**（**修正两处准则解释文号**——「解释 17 号」财会〔2023〕25号 → **21号**、「解释 18 号」财会〔2024〕33号 → **24号**，经财政部官网 ＋ 交易所公告双向核验；判据零变更）；④ **`ibd-methods-ops` 1.35.8 → 1.35.14**（六个修订版累积：**活文档过程痕迹清理**（`references/` 内 3 处日期戳／裁定词，判据句全保留）＋ 体例与流程修订）。版本矩阵与依赖兼容矩阵同步。
 
 - **2026-10-02 · v0.5.1**：**6 包上提（复核线接库 ＋ 蒸馏回环 ＋ 消费侧接线补全）**——① **`ibd-doc-write` 0.16.2 → 0.18.1**（取例口径补 **全文路兜底**（含同义词／别名）＋ **两路皆空才可称库内无内容**——原只走索引路，会静默漏检约三分之一未归类条目；依赖表补点名 `ibd-methods-query` ＋ 库三级指路；**0.18.1 缺口登记口径归一**——统一落 `state/待补学清单.md`）；② **`ibd-doc-review` 0.27.2 → 0.28.0**（**D 域回填** 0 → 22 项＝19 现役 ＋ 3 占位；新增 `references/convention-compare.md`「惯例对照四步法」）；③ **`ibd-finance-review` 0.12.0 → 0.14.0**（依据链第 2 顺位升级为 **「先库后源」**——先查已蒸馏的同类案例、再取公开原文核验；建「**蒸馏 → 复核维度**」巡检回环（加维判据＝≥3 案例复现）＋ 检索预算 ＋ 库对账）；④ **`ibd-legal-review` 0.2.1 → 0.3.0**（**族演进回环**（立族判据同为 ≥3 复现）＋ 检索预算 ＋ 库对账）；⑤ **`ibd-quality-gates` 0.13.4 → 0.14.0**（依赖表点名建库／查库通道）；⑥ **`ibd-methods-query` 0.6.3 → 0.6.5**（0.6.4 边界表述订正——不再称写作包按其内嵌流程运行；**0.6.5 缺口登记口径归一 ＋ 冷启动配置落点限定**）；⑦ **`ibd-methods-ops` 1.34.1 → 1.35.0**（新增 B 对账锚点生成器 ＋ 蒸馏条目入库 ＋ 体例编号归一；**发布面整改**：脚本帮助文本脱私人目录名 ＋ 3 处活文档去内部编号；**1.35.0 新增 `references/examples.md`「首次上手串联示例」**）。**另新增 [QUICKSTART.md](QUICKSTART.md)**（**依赖安装引导**：做事 → 装包对照表 ＋ 装完自检 ＋ 四类「非技能包」依赖清单 ＋ **第一次建库三步／接入已有库／「没有库也能用吗」**）＋ 首段「七个技能」计数订正为「八个」。⑧ **契约↔实现对齐整备**（**`ibd-doc-annotate` 0.11.0 → 0.11.1**：清单 `advice`·`rev` 改 **anyOf 条件必填**——原先无条件要 `advice`，把「文本定稿/修订」形态清单判死、且与 schema 校验器结论相反，并补 10 项回归自测；**`ibd-finance-review` 0.14.0 → 0.15.0**：清单字段名 `severity`/`description`/`suggestion` 归一为契约名 `sev`/`desc`/`advice`、补 `rev`、去「本 skill 单一事实源」自称并回指 `interface.md` §3；**`ibd-legal-review` 0.3.0 → 0.3.1**：出件补下游指向）。版本矩阵与依赖兼容矩阵同步（annotate/finance/legal 下限上收至**契约完整版 ≥0.26.2**，矩阵增设**「平台工具」🔴 行**）。⑨ **代码体检整改（两包）**：**`ibd-methods-ops` 1.35.0 → 1.35.8**（生产包代码体检整改 —— 路径常量模块改惰性函数、消除 **import 期扫盘副作用**；新增「**CLI 退出码契约**」收敛全包三套并存的退出码约定 ＋ 「**写盘前备份契约**」统一改写型脚本的备份落点；更正案例层条目承载层级的规则表述（原把「有分组层」当唯一情形）＋ 补一处控制台编码处理）；**`ibd-methods-query` 0.6.5 → 0.6.6**（检索包代码体检整改 —— 补「**依赖外部件清单**」（库侧脚本／工作区前提／生成物位置三件包外依赖）＋ 修正示例中 3 处已迁移或已失效的路径）。版本矩阵与依赖兼容矩阵同步。
 

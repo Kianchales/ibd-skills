@@ -28,7 +28,7 @@ description: >
   「修订结构对不对」「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」
   「查哪些项」「本轮查什么」「检查项声明」「复核范围」
   「研究下XX节」「帮我看看这段」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
-version: 0.28.0
+version: 0.30.0
 agent_created: true
 ---
 

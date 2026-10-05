@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.28.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.30.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -86,6 +86,9 @@ ibd-doc-review/
 
 ## 📌 近期更新
 
+- **2026-10-05 · v0.30.0**：**禁词命中携带上下文**——`deliver_gate.py` 新增 `_scan_hits`，`check_ban` 命中行附原文片段（前后 14 字、最多 2 例），供人工核对**描述对象**（自身＝红线／第三方·事实陈述＝合规，引 WL-150040）；「全球第一」「全球领先」「唯一」降为 **MINOR**（提示档不阻断）。效果：招股书禁用词项 35 处 → **0 阻断 ＋ 29 提示**，转 **PASS**。回归：CRITICAL 档仍拦、幂等一致
+- **2026-10-05 · v0.29.1**：**禁词表误报止血**——实测招股书 35 处命中几乎全误报。改法（零脚本改动）：「大力」「赋能」由 `legacy_ban` 移入 `absolute` 降为 **MINOR**（职责归位：属文风词非合规红线，文风检查归写作侧）；「全球第一」「全球领先」「唯一」保留档位但 `note` 补「**须核对对象**」指引（描述第三方／事实陈述时放行，引 WL-150040）。效果：35 → **13 阻断 ＋ 22 提示**。新增 `_职责边界` 字段
+- **2026-10-05 · v0.29.0**：**语体层事实源外置**——`rules.md` 新增第 9 条「表述诊断（语体层 · 事实源在写作侧）」，本包**不重复维护语体词表**（防两处分叉）；`banned-terms.json` 补 `_与库关系` 字段（声明不随库实时同步），`absolute` 新增 `不存在法律风险`（IMPORTANT，源方法论库 WL-150040 ④）。其余降级词属应用词非禁词，不入表
 - **2026-10-01 · v0.28.0**：**法律域（D）由预留回填为现役 ＋ 新增惯例对照四步法**——`check-scope.md` 原「D／E 预留位（各 0 项）」拆开：**D 域回填 22 项**（19 族现役 D1–D19 ＋ 3 项缺口占位），判据与取例归新包 `ibd-legal-review`，**E 行业域仍为预留**；**A／B／C／F／S 域编号与档位零改动**（旧号引用保持稳定）。新增 `references/convention-compare.md`（**惯例对照四步法**，方法唯一事实源）；`delivery.md` 与 `SKILL.md` 域表述同步
 - **2026-09-29 · v0.27.2**：**总览交付口径同改**——§一配套交付物由「MD + Word 双格式」改「**默认只产 MD 版**，Word 版须显式要求」（执行器 `ibd-doc-annotate` 0.11.0 的 `--overview-docx` 开关）；文末沿革补条目。零脚本改动
 - **2026-09-29 · v0.27.1**：**活文档去内部编号**——本批引入的表述（进门三问反问确认制／档位性质轴／预留域占位纪律／收尾四段式）原带 `R-xxxx` 溯源括注，按「活文档不留内部编号」成法全部改为自包含表述（去编号留说明，规则正文与执行顺序零变更）；触及 SKILL／check-scope／delivery／workflow 四册 8 行。更早批次的历史存量编号不在本版处理（属发布仓 traces 存量清理范畴）

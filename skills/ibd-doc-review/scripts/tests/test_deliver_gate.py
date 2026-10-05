@@ -325,10 +325,18 @@ class TestBanScope(TmpDirMixin, unittest.TestCase):
         self.assertEqual(rc, 1, out)
 
     def test_03_absolute_banned_in_all_scenarios(self):
-        """绝对化用语与文档类型无关 → 回复场景同样 FAIL"""
-        rc, out = self._gate("公司为全球第一的供应商。", "反馈回复")
+        """绝对化用语与文档类型无关 → 回复场景同样 FAIL（用仍为阻断档的词）"""
+        rc, out = self._gate("公司为世界第一的供应商。", "反馈回复")
         self.assertEqual(line_of(out, "禁用词红线").group(1), "FAIL", out)
         self.assertEqual(rc, 1, out)
+
+    def test_03c_downgraded_absolute_is_advisory(self):
+        """「全球第一」已降提示档（2026-10-05 误报止血）→ 全场景不阻断，但提示须可见且带上下文"""
+        rc, out = self._gate("公司为全球第一的供应商。", "反馈回复")
+        self.assertEqual(line_of(out, "禁用词红线").group(1), "PASS", out)
+        self.assertIn("全球第一", out)          # 提示不得静默丢弃
+        self.assertIn("…", out)                 # 须带上下文片段（供核对描述对象）
+        self.assertEqual(rc, 0, out)
 
     def test_03b_legacy_ban_banned_in_all_scenarios(self):
         """legacy 宣传语红线同为全场景 → 回复场景 FAIL"""

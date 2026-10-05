@@ -9,7 +9,7 @@
 口径
     · 源：`--src`（**默认取当前工作目录下的 `cases/`**；亦可用环境变量 `CASES_SRC` 指定——
       **不在脚本内写死任何本机私有路径**，公开分发包零私有绑定）
-    · 镜像：`--mirror`（默认**由环境变量 `CASES_MIRROR` 或当前 git 仓根推导** `AgentAssets/workflow/cases_md`；
+    · 镜像：`--mirror`（默认**由环境变量 `CASES_MIRROR` 或当前 git 仓根推导** `AgentAssets/workflow/methods/cases_md`；
       **不写死绝对路径**——工程范式 A9「零私有绑定」）
     · **只同步 .md**（排除 pdf/txt/pkl/临时文件）；镜像保持与源相同的相对路径
     · 幂等：内容一致则跳过；源已删除的镜像文件**默认保留**（`--prune` 才删除并列出清单）
@@ -33,7 +33,10 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 DEF_SRC = os.path.join(os.getcwd(), "cases")       # 默认当前工作目录下的 cases/（不写死本机路径）
-MIRROR_SUBPATH = os.path.join("AgentAssets", "workflow", "cases_md")
+# 2026-10-03 订正：库重构后镜像落点已迁至 `methods/` 下（＝库内归档面）。
+#   原值 `workflow/cases_md` 为**重构前旧落点**，与 references/library-rules.md（「methods/cases_md/＝
+#   sync_cases_md.py 维护的过程件镜像」）及 _lib/layout.py（2026-09-30 补注「库内镜像」）不一致 ⇒ 改指库内。
+MIRROR_SUBPATH = os.path.join("AgentAssets", "workflow", "methods", "cases_md")
 
 
 def default_mirror(src):

@@ -77,13 +77,16 @@
 
 注：第 12 项（I-CL 条目位置）实现在第 3 项（编号健康）的行业合并版分支内，非独立小节。
 
-三栏信号（2026-09-26 WO-33）：
+四栏信号（2026-09-26 WO-33 立三栏；2026-10-03 增 NOTES 成四栏）：
   ERROR         **验了发现不符**（有界结论）
   UNVERIFIABLE  **根本验不了**（本应受检却缺输入/脚本/文件）—— **计入 ERROR 与退出码**，不得当通过
   WARN(soft)    只进报告与日志，不影响退出码
+  NOTES         **判据已认定合法**的形态（基线内历史缺号／已声明的历史引用／已核水位内的文档同形数字）
+                —— 同样打印、留可见性，但**不计入 WARN**：WARN 应表示「需关注」，长占会稀释其分辨力。
+                **超基线/超水位的新增仍走 ERROR/WARN**（哨兵不撤）。
 
-退出码：0 = 无 ERROR 且无 UNVERIFIABLE（可有 WARN）；1 = 有 ERROR 或 UNVERIFIABLE；
-        2 = 前置失败（未找到库）；3 = `--strict` 下 WARN > 0
+退出码：0 = 无 ERROR 且无 UNVERIFIABLE（可有 WARN／NOTES）；1 = 有 ERROR 或 UNVERIFIABLE；
+        2 = 前置失败（未找到库）；3 = `--strict` 下 WARN > 0（NOTES 不影响）
 """
 import argparse, io, json, os, re, glob, random, sys, time
 from pathlib import Path
@@ -162,10 +165,20 @@ WHITELIST = {
     MERGED_MAP,
 } | set(GENERATED_BASENAMES)
 
-ERRORS, WARNS, UNVERIFIABLE = [], [], []
+ERRORS, WARNS, UNVERIFIABLE, NOTES = [], [], [], []
+# `NOTES`（2026-10-03 新增）＝ **判据自身已认定合法**的形态（如基线内历史缺号、已声明的历史引用、
+#   已核水位内的文档同形数字）——降为**信息行**：仍打印（留可见性），但**不计入 WARN 计数**。
+#   理由：WARN 应表示「需关注」，而这些项的判据已明确其合法；长期占位会稀释 WARN 的分辨力。
+#   **超基线/超水位的新增仍走 ERROR/WARN**（哨兵不撤）。
 # `UNVERIFIABLE`（2026-09-26 WO-33）＝ **本应受检、但因缺输入/脚本/文件
 #   而根本判不了**的情形，**与「验了发现不符（ERROR）」分栏**。判据原文：「**验了疑似不符**」与
 #   「**根本验不了**」分两栏；后者 **always need a decision**，不得默默当通过。
+
+SKILL_NUM_BASELINE = 35             # 第 25 项 b「文档同形数字」**已核水位**（2026-10-03 逐条核实：
+                                    #   9999＝号段容量说明／~40 案例＝阈值规则／75 案＝历史叙述／
+                                    #   0001-0033＝ADR 编号被误匹配；**+1（2026-10-03 补核）**：
+                                    #   library-rules.md「108 案目录」＝cases_md 归档镜像的案目录实测 ⇒ 合法）。
+                                    #   水位内降信息行；**超水位报 WARN**（疑新增漂移）。沿革同 BARE_PAGE_BASELINE。
 #   本栏**计入 ERROR 与退出码**（FAIL）—— 理由同第 19 项立项目的「**没有出口，就不会有人修**」：
 #   把「判不了」降级成 WARN 或静默跳过，等于让有界检查的缺口永久隐形（本库两次「门禁假绿」同源）。
 
@@ -249,13 +262,12 @@ for p in md_files:
 # 3a. 全局唯一性（跨文件）+ 3b. 族内连续（每域每族 seq 1..N）
 # 3c. 登记表一致（登记表编号必须存在于域文件/W系列标题；文件可多于登记表=蒸馏新增）
 all_ids = {}   # "F-010001" -> rel 文件（含域文件 ### 标题 + W 系列 ** 条目）
-GAP_BASELINE = {
-    "PL-01": [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 19, 20],
-    "PL-02": [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 19, 20],
-    "PL-03": [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 19, 20],
-    "PL-04": [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 20],
-    "PL-05": [4, 5, 9, 10],
-}
+GAP_BASELINE = {}
+# 2026-10-03 **清空**：PL-01~05 五族已**全族编号重排**（填平「分批写入留下的段界空洞」——
+#   762 条定义 ＋ 3,125 处引用同步换号、涉 108 文件；行数守恒、零悬空引用）⇒ 各族编号 0001-N 连续。
+#   **此后 PL 族任何新增缺号即 ERROR**（无豁免、不再走 NOTES）。
+#   沿革：原基线记 PL-01 [4-10,14-20]／PL-02 同／PL-03 同／PL-04 [3-10,13-20]／PL-05 [4,5,9,10]，
+#   系「每批预留 10 号」的历史形态（非漏抄条目）；本日按用户裁定「填上」执行重排、基线随之清空。
 
 fam_seqs = {}  # (prefix, fam) -> [(seq, rel)]  （2026-09-26：按「族」聚合，不按文件）
 for p in md_files:
@@ -354,7 +366,11 @@ for (prefix, fam), items in sorted(fam_seqs.items()):
         if _gap_new:
             ERRORS.append("族内编号不连续 %s-%02d: %d 条，缺 %s" % (prefix, fam, len(seqs_sorted), _gap_new[:10]))
         elif missing:
-            WARNS.append("族内缺号（历史欠账基线内 %s-%02d 缺 %s）—— 基线外新增缺号才 ERROR" % (prefix, fam, missing[:8]))
+            # 2026-10-03 改栏：基线内缺号＝**已接受的历史形态**（非待办）⇒ 降为信息行（NOTES）。
+            #   实测 PL-01~05 的缺号为**编号分段写入留下的间隙**（如 010001-003 → 010011-013 → 010021-…），
+            #   并非「漏抄条目」；补号须造假条目、重排违「编号冻结」⇒ 只能接受，故不再计入 WARN。
+            #   **超基线新增缺号仍走 ERROR**（上行 `_gap_new` 分支），哨兵不撤。
+            NOTES.append("族内缺号（历史欠账基线内 %s-%02d 缺 %s）" % (prefix, fam, missing[:8]))
 
 # 3c. 登记表一致（自动发现库根 tasks/ 下的编号登记表；兼容历史命名）
 _tasks_dir = os.path.join(os.path.dirname(os.path.dirname(SCRIPTS)), "tasks")
@@ -513,8 +529,9 @@ for df in _SURF8:
                     ERRORS.append("交叉引用无效 %s L%d: %s（目标编号不存在，需核对登记表/迁移）" % (rel, i + 1, ref))
 if _decl_hist:
     # **不计欠账**：这些是「引用了确实不在库内的历史编号，且引用处已告知读者」——降级留痕的合法形态。
-    # 单列出来只为**可见**（免与真失效混淆），不入退出码、不入 baseline。
-    WARNS.append("已声明的历史引用 **%d 个编号**（**不计欠账** · A6 降级留痕合法形态）：%s —— 引用处自带「历史编号·主库无对应·待核」注记"
+    # 2026-10-03 改栏：判据自身已认定「合法形态、不计欠账」⇒ 降为信息行（NOTES），不再计入 WARN。
+    #   **真失效（无该注记者）仍走 ERROR**（上方分支），哨兵不撤。
+    NOTES.append("已声明的历史引用 %d 个编号（合法形态 · 不计欠账）：%s"
                  % (len(_decl_hist), "、".join(sorted(_decl_hist))))
 
 # ---------- 9. 域文件体积警戒线（2026-09-03 新增） ----------
@@ -1302,11 +1319,16 @@ if _libfact_broken:
                   "修复＝引用方改指针表述或新名（内容面，授权档 B）"
                   % (len(_libfact_broken), "；".join(_libfact_broken[:6])))
 if _libfact_count_hits:
-    WARNS.append("skills 活文档出现**与库计量同形**的数字 %d 处（第 25 项），与库实况"
-                 "（单案 %d 案）不一致——是否库事实引用漂移**由人核**（不判必错，可忽略；"
-                 "阈值规则/历史叙述为合法同形）：%s"
-                 % (len(_libfact_count_hits), _scope_checked,
-                    "；".join(_libfact_count_hits[:10])))
+    # 2026-10-03 加水位：33 处已逐条核为**合法同形**（9999＝号段容量／~40 案例＝阈值规则／
+    #   75 案＝历史叙述／0001-0033＝ADR 编号误匹配）⇒ 水位内降为信息行；**超水位报 WARN**（哨兵不撤）。
+    if len(_libfact_count_hits) > SKILL_NUM_BASELINE:
+        WARNS.append("skills 活文档同形数字 **%d 处 > 已核水位 %d**（第 25 项）⇒ 疑新增漂移，"
+                     "与库实况（单案 %d 案）不一致——由人核：%s"
+                     % (len(_libfact_count_hits), SKILL_NUM_BASELINE, _scope_checked,
+                        "；".join(_libfact_count_hits[:10])))
+    else:
+        NOTES.append("skills 活文档同形数字 %d 处（已核水位 %d 内，均为号段容量/阈值规则/历史叙述类合法同形）"
+                     % (len(_libfact_count_hits), SKILL_NUM_BASELINE))
 if not _args.quiet and not _args.json:
     print("skills 消费面扫描（第 25 项）: %d 个活文档｜生成物引用断链 %d ｜同形计数待核 %d"
           % (_libfact_scanned, len(_libfact_broken), len(_libfact_count_hits)))
@@ -1467,4 +1489,8 @@ else:
         print("WARN %d 项（一律 soft：只记日志，不影响退出码；需阻断者应升格为 ERROR 项）" % len(WARNS))
         for w in WARNS:
             print("  [WARN·soft] %s" % w)
+    if NOTES:
+        print("NOTES %d 项（**判据已认定合法**的形态，**不计入 WARN**——留可见性用）" % len(NOTES))
+        for _n in NOTES:
+            print("  [·信息] %s" % _n)
 sys.exit(1 if (ERRORS or UNVERIFIABLE) else (3 if (_args.strict and WARNS) else 0))
