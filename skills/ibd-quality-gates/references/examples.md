@@ -56,5 +56,5 @@ python scripts/check_data.py --input demo.md
 ## 示例 3：自测（回归）
 
 ```bash
-python scripts/tests/test_check_gates.py   # 5/5 通过
+python scripts/tests/test_check_gates.py   # 9/9 通过（扫描 5 例 ＋ 输出契约 4 例）
 ```

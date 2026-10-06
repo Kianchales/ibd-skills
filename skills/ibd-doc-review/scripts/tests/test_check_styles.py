@@ -8,6 +8,7 @@ test_check_styles.py — ibd-doc-review 校验脚本自测（标准流程强化�
   4. 模板/样式库模式（反馈回复 15 样式 / 报告 13 样式）→ 通过（PASS）
 运行：python scripts/tests/test_check_styles.py
 """
+import json
 import os
 import re
 import subprocess
@@ -62,8 +63,9 @@ def make_mini_docx(path, paras):
         z.writestr("word/settings.xml", settings)
 
 
-def run_check(path, scenario="反馈回复", mode="document"):
+def run_check(path, scenario="反馈回复", mode="document", extra=None):
     cmd = [sys.executable, SCRIPT, "--input", path, "--scenario", scenario, "--mode", mode]
+    cmd += list(extra or [])
     proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
     return proc.returncode, proc.stdout
 
@@ -110,9 +112,21 @@ def run_revise(styled_path, orig_path, output_path):
     return proc.returncode, proc.stdout
 
 
-def run_numbering(path):
-    """序号段落核对（双维度算法辅助）。"""
+def run_json(path, out_path=None):
+    """--json 契约探针：返回 {'lines': 非空行, 'raw': 原始 stdout, 'json': 解析结果}。"""
+    cmd = [sys.executable, SCRIPT, "--input", path, "--json"]
+    if out_path:
+        cmd += ["--out", out_path]
+    proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    lines = [l for l in proc.stdout.split("\n") if l.strip()]
+    return {"lines": lines, "raw": proc.stdout, "rc": proc.returncode,
+            "json": json.loads(lines[0]) if lines else {}}
+
+
+def run_numbering(path, extra=None):
+    """序号段落核对（双维度算法辅助）。默认明细落盘，故取明细须加 --detail/--verbose。"""
     cmd = [sys.executable, SCRIPT, "--input", path, "--check-numbering"]
+    cmd += list(extra or [])
     proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
     return proc.returncode, proc.stdout
 
@@ -230,7 +244,8 @@ class TestCheckStyles(unittest.TestCase):
         ]
         path = os.path.join(self.tmp, "numbering.docx")
         make_mini_docx(path, body_paras)
-        code, out = run_numbering(path)
+        # 序号清单属「明细行」，默认落盘；取清单须显式内联（P10 输出分层）
+        code, out = run_numbering(path, extra=["--verbose"])
         self.assertEqual(code, 0, f"序号核对应正常，输出:\n{out}")
         self.assertIn("情况1:标题+展开", out, "（一）短标题+后段展开应为情况1")
         self.assertIn("情况2:列举正文", out, "1、2、3 长句连续序号应为情况2")
@@ -412,6 +427,82 @@ class TestCheckStyles(unittest.TestCase):
         self.assertNotIn("误用全角", rep_bad)
         for banned in ["中文语境使用半角标点", "误用全角"]:
             self.assertNotIn(banned, rep_good, f"规范写法不应报「{banned}」")
+
+
+class TestOutputLayering(unittest.TestCase):
+    """P10 输出分层（上下文卫生 · docs/ENGINEERING.md §1 P10 ＋ §4.4 三则③）。
+
+    指标行进上下文；明细行**默认落盘给路径**。三档样本：
+      阴性＝默认不出明细（但文件里读得到）；阳性＝--verbose 全内联；边界＝--detail N 恰 N 行。
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp(prefix="ipo_layer_test_")
+        # 必备样式齐全 + 3 个裸段落（裸段落清单＝典型「明细行」）
+        cls.doc = os.path.join(cls.tmp, "layer.docx")
+        make_mini_docx(cls.doc, [
+            ("0011", "问题1.关于主营业务收入确认准确性的核查"),
+            ("001", "请发行人说明收入确认政策与合同条款约定的一致性。"),
+            ("000", "【回复】"),
+            (None, "裸段落甲"),
+            (None, "裸段落乙"),
+            (None, "裸段落丙"),
+        ])
+        # 无任何 pStyle ⇒ 缺必备样式 ⇒ FAIL（用于 json 的失败分支）
+        cls.bad = os.path.join(cls.tmp, "layer_bad.docx")
+        make_mini_docx(cls.bad, [(None, "裸段落丁")])
+
+    def _run(self, doc=None, *extra):
+        """跑一次并回读落盘报告，返回 (code, stdout, report_body, report_path)。"""
+        rp = os.path.join(self.tmp, "layer_report.log")
+        if os.path.exists(rp):
+            os.remove(rp)
+        code, out = run_check(doc or self.doc, extra=list(extra) + ["--out", rp])
+        body = ""
+        if os.path.exists(rp):
+            with open(rp, encoding="utf-8") as f:
+                body = f.read()
+        return code, out, body, rp
+
+    def test_negative_default_hides_detail(self):
+        """阴性：默认 stdout 不含明细项，但给落盘路径；文件里必须读得到（未内联 ≠ 丢弃）。"""
+        _, out, body, rp = self._run()
+        self.assertIn("[明细]", out, f"应给出明细落盘路径，输出:\n{out}")
+        self.assertNotIn("裸段落甲", out, "默认不得把明细项堆进上下文")
+        self.assertNotIn("pStyle 分布", out, "pStyle 分布属明细，默认走落盘")
+        self.assertIn("裸段落甲", body, "明细必须可在落盘文件读到")
+        self.assertIn("pStyle 分布", body)
+        self.assertIn("[PASS] 必备样式齐全", out, "指标行仍须进上下文")
+
+    def test_positive_verbose_inlines_all_detail(self):
+        """阳性：--verbose 全量内联（向后兼容改造前行为）。"""
+        _, out, _, _ = self._run(None, "--verbose")
+        for t in ("裸段落甲", "裸段落乙", "裸段落丙", "pStyle 分布"):
+            self.assertIn(t, out, f"--verbose 应内联明细「{t}」，输出:\n{out}")
+
+    def test_boundary_detail_budget_exact(self):
+        """边界：--detail N 恰好多出 N 行明细（既非 0、也非全量）。"""
+        outs = {}
+        for n in (0, 1, 3):
+            extra = [] if n == 0 else ["--detail", str(n)]
+            _, out, _, _ = self._run(None, *extra)
+            outs[n] = len([l for l in out.split("\n") if l.strip()])
+        self.assertEqual(outs[1] - outs[0], 1, f"--detail 1 应恰多 1 行（{outs[0]}→{outs[1]}）")
+        self.assertEqual(outs[3] - outs[0], 3, f"--detail 3 应恰多 3 行（{outs[0]}→{outs[3]}）")
+
+    def test_json_contract_carries_detail_log(self):
+        """--json：单行结构化、含 detail_log 指针、无人类输出混入；失败分支也给 json。"""
+        for fixture, verdict, err in ((self.doc, "PASS", 0), (self.bad, "FAIL", 1)):
+            rp = os.path.join(self.tmp, "json_report.log")
+            judge = run_json(fixture, rp)
+            self.assertEqual(len(judge["lines"]), 1, f"--json 应只输出一行：{judge['raw']}")
+            self.assertEqual(judge["json"]["verdict"], verdict)
+            self.assertEqual(judge["json"]["error"], err)
+            for k in ("tool", "target", "verdict", "error", "warn", "issues", "detail_log"):
+                self.assertIn(k, judge["json"], f"json 契约缺字段 {k}")
+            self.assertEqual(judge["json"]["detail_log"], rp)
+            self.assertTrue(os.path.exists(rp), "detail_log 指向的文件应已落盘")
 
 
 if __name__ == "__main__":

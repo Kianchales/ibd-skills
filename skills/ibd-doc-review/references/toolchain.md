@@ -16,7 +16,8 @@
 - 为什么必须：本 skill 的所有 Word 操作都建立在 Word 处理工具之上；**没有它无法读/写 Word 文档**，只能输出 Markdown + 样式说明
 
 **🔴 必须 · 内置脚本（`check_styles.py` / `check_content.py` / `check_annotations.py` / `check_revisions.py` / `deliver_gate.py`）**
-- 用途：样式校验（必备样式/裸段落/空段落/跳级/内容一致）+ 格式核对 12 项（只读）+ 批注产物校验（4 段结构/加粗分布/编号/四件套，只读）+ 修订稿产物校验（ins/del 对/author/id/trackRevisions/落定证明，只读）+ **交付前综合核验十项（一次跑完 · 极简输出，PASS 不展开、FAIL 才给明细）**
+- 用途：样式校验（必备样式/裸段落/空段落/跳级/内容一致）+ 格式核对 12 项（只读）+ 批注产物校验（4 段结构/加粗分布/编号/四件套，只读）+ 修订稿产物校验（ins/del 对/author/id/trackRevisions/落定证明，只读）+ **交付前综合核验十项（一次跑完 · 极简输出，PASS 不展开、FAIL 才给明细；全量明细落盘并回路径，`--json` 供上层消费）**
+- **输出分层（上下文卫生）**：`check_styles.py` stdout 只出「一行一指标」，**明细默认落盘**（`--detail N`／`--verbose` 内联、`--out` 指定路径）；`deliver_gate.py` 全量明细（不截断）落盘。判据是「明细有没有可定向读的落盘位置」，不是「输出行数」
 - **`check_content.py` 是拆组后的 CLI 入口**：内部按业务域分为 `content_common.py`（共享基础层：Issue / docx 解析 / 中文序号基元 / 标点基元）+ `content_text.py`（文字类 8 项）+ `content_table.py`（表格类 4 项），**三模块须与入口同目录随包分发**（入口内为绝对 import）；对外契约（参数/报告文件名/退出码）与拆组前完全一致
 - 为什么必须：随包自带零依赖，校验与核对是本 skill 的核心能力
 - 缺了会怎样：不会缺——随包分发，无需额外安装

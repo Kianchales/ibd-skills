@@ -2,10 +2,12 @@
 """ibd-quality-gates 自动化扫描器（G1 裸数字粗筛 + G2 绝对化/AI 痕迹扫描）
 
 用法:
-    python check_gates.py <文档.md|文档.txt> [--wordlist-dir 目录]
+    python check_gates.py <文档.md|文档.txt> [--wordlist-dir 目录] [--json] [--out 报告路径]
 
 输出:
     终端报告（HIGH=须改 / WARN=带来源标注需人工确认 / INFO=粗筛提示）
+    报告全文**落盘**（默认 <%TEMP%>/<文件名>.check_gates.log），末尾回路径；
+    `--json` 走单一结构化出口，含 detail_log 指针（契约见 docs/ENGINEERING.md §4.4）
     退出码: 0=无 HIGH 命中, 1=存在 HIGH 命中, 2=文件/参数错误
 
 边界说明:
@@ -17,6 +19,7 @@ import json
 import os
 import re
 import sys
+import tempfile
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -88,6 +91,8 @@ def main():
     ap.add_argument("file", help="待扫描的 .md / .txt 文件")
     ap.add_argument("--wordlist-dir", default=DEFAULT_WORDLIST_DIR, help="黑名单目录")
     ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
+    ap.add_argument("--out", default=None,
+                    help="报告落盘路径（默认 <%%TEMP%%>/<文件名>.check_gates.log）")
     args = ap.parse_args()
 
     if not os.path.exists(args.file):
@@ -108,28 +113,48 @@ def main():
     order = {"HIGH": 0, "WARN": 1, "INFO": 2}
     hits.sort(key=lambda h: order[h["severity"]])
 
-    if args.json:
-        print(json.dumps({
-            "tool": "check_gates", "target": args.file,
-            "verdict": "FAIL" if any(h["severity"] == "HIGH" for h in hits) else "PASS",
-            "error": sum(1 for h in hits if h["severity"] == "HIGH"),
-            "warn": sum(1 for h in hits if h["severity"] == "WARN"),
-            "info": sum(1 for h in hits if h["severity"] == "INFO"),
-            "scanned": len(lines),
-            "issues": [{"level": h["severity"], "gate": h["gate"],
-                        "where": "L%d" % h["line"], "word": h["word"], "msg": h["text"]}
-                       for h in hits],
-        }, ensure_ascii=False))
-        sys.exit(1 if any(h["severity"] == "HIGH" for h in hits) else 0)
-    print(f"=== ibd-quality-gates 扫描报告：{os.path.basename(args.file)} ===")
-    print(f"扫描行数：{len(lines)}；命中：{len(hits)}（HIGH {sum(1 for h in hits if h['severity']=='HIGH')} / WARN {sum(1 for h in hits if h['severity']=='WARN')} / INFO {sum(1 for h in hits if h['severity']=='INFO')}）")
-    for h in hits:
-        print(f"[{h['severity']}] {h['gate']} | L{h['line']} | 词:「{h['word']}」| {h['text']}")
+    has_high = any(h["severity"] == "HIGH" for h in hits)
+    payload = {
+        "tool": "check_gates", "target": args.file,
+        "verdict": "FAIL" if has_high else "PASS",
+        "error": sum(1 for h in hits if h["severity"] == "HIGH"),
+        "warn": sum(1 for h in hits if h["severity"] == "WARN"),
+        "info": sum(1 for h in hits if h["severity"] == "INFO"),
+        "scanned": len(lines),
+        "issues": [{"level": h["severity"], "gate": h["gate"],
+                    "where": "L%d" % h["line"], "word": h["word"], "msg": h["text"]}
+                   for h in hits],
+    }
+
+    # 报告落盘（明细的落盘面）：报告全文 → 文件，stdout 末行回路径（§4.4 三则 ③）
+    rp = args.out or os.path.join(
+        tempfile.gettempdir(),
+        (os.path.splitext(os.path.basename(args.file))[0] or "check_gates") + ".check_gates.log")
+    report = [f"=== ibd-quality-gates 扫描报告：{os.path.basename(args.file)} ===",
+              f"扫描行数：{len(lines)}；命中：{len(hits)}"
+              f"（HIGH {payload['error']} / WARN {payload['warn']} / INFO {payload['info']}）"]
+    report += [f"[{h['severity']}] {h['gate']} | L{h['line']} | 词:「{h['word']}」| {h['text']}"
+               for h in hits]
     if not hits:
-        print("无命中。注意：脚本只查机械项，语义项（来源/口径/论证）仍需人工按 antipatterns.md 核对。")
-    print("---")
-    print("提醒：HIGH=须改；WARN=带来源标注，人工确认；INFO=裸数字粗筛，多数为正常序号，请人工复核。")
-    sys.exit(1 if any(h["severity"] == "HIGH" for h in hits) else 0)
+        report.append("无命中。注意：脚本只查机械项，语义项（来源/口径/论证）仍需人工按 antipatterns.md 核对。")
+    report += ["---",
+               "提醒：HIGH=须改；WARN=带来源标注，人工确认；INFO=裸数字粗筛，多数为正常序号，请人工复核。"]
+    body = json.dumps(payload, ensure_ascii=False, indent=2) if args.json else "\n".join(report)
+    try:
+        with open(rp, "w", encoding="utf-8") as f:
+            f.write(body + "\n")
+    except OSError:
+        rp = None
+    payload["detail_log"] = rp
+
+    if args.json:
+        print(json.dumps(payload, ensure_ascii=False))
+    else:
+        for ln in report:
+            print(ln)
+        if rp:
+            print(f"[结果] 报告全文 → {rp}")
+    sys.exit(1 if has_high else 0)
 
 
 if __name__ == "__main__":

@@ -684,5 +684,85 @@ class RelsSemanticsTest(TmpDirMixin, unittest.TestCase):
                             "正文36,507.55万元与底稿36,507.50万元不符。", "请与财务底稿核对后统一。")]
 
 
+# ========================================= F. 输出契约（--out 落盘 / --json）
+
+class TestOutputContract(TmpDirMixin, unittest.TestCase):
+    """P10 上下文卫生的落盘面 ＋ §4.4 `--json` 契约。
+
+    契约：默认文本输出**不变**；新增「全量明细落盘（不截断）」与 `--json` 单一出口。
+    三档样本：阴性＝文本默认行为不变；阳性＝全量落盘可读；边界＝`--detail` 截断 vs 落盘全量。
+    """
+
+    def _ok_docx_md(self):
+        docx, md = self.p("c.docx"), self.p("c.md")
+        make_docx(docx, good_body())
+        with open(md, "w", encoding="utf-8") as f:
+            f.write(MD_SOURCE)
+        return docx, md
+
+    def test_20_text_output_unchanged_and_report_written(self):
+        """阴性：默认文本行为不变（10/10 PASS），且全量报告已落盘、stdout 给出路径。"""
+        docx, md = self._ok_docx_md()
+        rp = self.p("report.log")
+        rc, out = run_gate(["--docx", docx, "--md", md, "--anchors", "36,507.55", "--out", rp])
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(out.count("[PASS]"), 10, "默认文本输出不得改变")
+        self.assertIn("10/10 PASS", out)
+        self.assertIn(rp, out, "stdout 须给出落盘路径")
+        self.assertTrue(os.path.exists(rp))
+        with open(rp, encoding="utf-8") as f:
+            body = f.read()
+        self.assertIn("10/10 PASS", body, "落盘报告应含结论")
+
+    def test_21_report_holds_full_detail_beyond_stdout_limit(self):
+        """边界：--detail 0 时 stdout 不展开任何明细，但**落盘报告不截断**（全量可定向读）。"""
+        docx = self.p("many.docx")
+        make_docx(docx, good_body(('甲方应于 "2026" 年完成 (交割)，颠覆行业。',)))
+        rp = self.p("full.log")
+        rc, out = run_gate(["--docx", docx, "--detail", "0", "--out", rp])
+        self.assertEqual(rc, 1, out)
+        self.assertIn("另有", out, "stdout 应提示明细被截断")
+        self.assertNotIn("残留半角标点", out, "--detail 0 时明细不应进上下文")
+        with open(rp, encoding="utf-8") as f:
+            full = f.read()
+        self.assertNotIn("另有", full, "落盘报告不得截断")
+        self.assertIn("残留半角标点", full, "落盘报告应含完整明细")
+
+    def test_22_json_contract_and_no_human_output(self):
+        """阳性：--json 单行结构化、含 items/detail_log、无人类输出混入。"""
+        import json as _json
+        docx, md = self._ok_docx_md()
+        rp = self.p("j.log")
+        rc, out = run_gate(["--docx", docx, "--md", md, "--anchors", "36,507.55",
+                            "--json", "--out", rp])
+        self.assertEqual(rc, 0, out)
+        lines = [l for l in out.split("\n") if l.strip()]
+        self.assertEqual(len(lines), 1, f"--json 应只输出一行：\n{out}")
+        j = _json.loads(lines[0])
+        for k in ("tool", "target", "verdict", "error", "warn", "issues",
+                  "items", "skipped", "detail_log"):
+            self.assertIn(k, j, f"json 契约缺字段 {k}")
+        self.assertEqual(j["tool"], "deliver_gate")
+        self.assertEqual(j["verdict"], "PASS")
+        self.assertEqual(j["error"], 0)
+        self.assertEqual(len(j["items"]), 11,
+                         "items 应含基础十项 ＋ 常驻「物理扫描」一项（未启用时为 SKIP）")
+        self.assertTrue(all(i["status"] in ("PASS", "FAIL", "SKIP") for i in j["items"]))
+        self.assertEqual(j["detail_log"], rp)
+        self.assertTrue(os.path.exists(rp))
+
+    def test_23_json_fail_branch(self):
+        """--json 失败分支：verdict FAIL、error ≥1、issues 非空、退出码 1。"""
+        import json as _json
+        docx = self.p("jbad.docx")
+        make_docx(docx, good_body(('甲方应于 "2026" 年完成 (交割)。',)))
+        rc, out = run_gate(["--docx", docx, "--json", "--out", self.p("jb.log")])
+        self.assertEqual(rc, 1, out)
+        j = _json.loads([l for l in out.split("\n") if l.strip()][0])
+        self.assertEqual(j["verdict"], "FAIL")
+        self.assertGreaterEqual(j["error"], 1)
+        self.assertTrue(any(i["level"] == "ERROR" for i in j["issues"]))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

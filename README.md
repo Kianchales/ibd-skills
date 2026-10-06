@@ -73,9 +73,9 @@
 装好后**不用找任何文档**，先跑自测确认环境可用（纯标准库，零安装；任一目录执行）：
 
 ```bash
-# 1. 质量校验包自测（5 组用例）
+# 1. 质量校验包自测（扫描 5 例 + 输出契约 4 例 = 9 例）
 python skills/ibd-quality-gates/scripts/tests/test_check_gates.py
-# 2. 格式核对包自测（内容核对 20 项 + 交付门禁 26 项）
+# 2. 格式核对包自测（内容核对 22 项 + 交付门禁 37 项）
 python skills/ibd-doc-review/scripts/tests/test_check_content.py
 python skills/ibd-doc-review/scripts/tests/test_deliver_gate.py
 ```
@@ -96,10 +96,10 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
 | [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.19.0 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
-| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.14.1 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
+| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.15.0 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.15.2 | 🟢 doc-review ≥0.26.2（交付口径单一事实源 + 三形态路由/深度三档/类型词表 12 类/清单 anyOf；缺则只产清单不落地）；🟢 方法论库财务域（同类案例「先库后源」）+ methods-query（缺则直查公开问询件） |
 | [ibd-legal-review](skills/ibd-legal-review/README.md) | **法律惯例对照复核**：把本稿与同类情形的市场惯例并排比，出对照标注；**只对照、不定性**（法律判断归签字人） | 0.3.1 | 🔴 doc-review（复核链清单汇总口，不随包携带）；🟢 方法论库（B 档惯例取例，缺则退 A 档） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.30.0 | 零外部 skill 依赖（基座） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.31.0 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份总览（Markdown + Word） | 0.11.1 | 🔴 doc-review ≥0.26.2（规范 + 校验门禁内部回调 + 交付口径 delivery.md + 清单 anyOf；单入口路由） |
 | [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.35.14 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.6 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
@@ -202,11 +202,11 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
-| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.14.1 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.30.0 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.26.2 | 0.30.0 | ✅ |
-| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.26.2 | 0.30.0 | ✅ |
-| ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.30.0 | ✅ |
+| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.15.0 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.31.0 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.26.2 | 0.31.0 | ✅ |
+| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.26.2 | 0.31.0 | ✅ |
+| ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.31.0 | ✅ |
 | ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.35.14 | ✅ |
 | ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.35.14 | ✅ |
 | ibd-doc-review（样式套用/新建 docx） | **平台 docx 工具**〔`tencent-docx`／`minimax-docx`／本地 Office 任选其一〕 | 无版本约束 | — | 🔴 必备 |
@@ -217,7 +217,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 > - 逐项引入版本 → `skills/ibd-doc-review/references/interface.md` §7「版本下限速查（下游契约登记处）」；依赖方升版时按该表复核。
 > - 末行 **「平台工具」非 skill 间依赖、无版本约束**，但属 **🔴 硬依赖**——`ibd-doc-review` 样式套用/新建 docx 必用其一，装技能包之外须自备。
 
-验证方法：装齐后各包跑自测（gates `scripts/tests/test_check_gates.py`、doc-review `scripts/tests/`（5 脚本 85 项）、ops `scripts/check_methods_health.py`），全绿即组合可用。
+验证方法：装齐后各包跑自测（gates `scripts/tests/test_check_gates.py`（9 例）、doc-review `scripts/tests/`（7 脚本 140 项）、ops `scripts/check_methods_health.py`），全绿即组合可用。
 
 ## 🛠 技术细节
 
@@ -227,7 +227,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 ## 📌 近期更新
 
-- **2026-10-06 · v0.5.3（已上提 · 待 tag/Release）**：**2 包上提（质量自评防凑数 ＋ 财务复核口径如实化）**——① **`ibd-quality-gates` 0.14.0 → 0.14.1**（**质量自评加两条结构约束 · 防 Goodhart**：原「6 维 30 分 · 低于 25 分回炉」仅靠「**打分要诚实**」道德劝说防虚高，而 G5 门查「**总分 ≥25**」使**分数本身成为目标** ⇒ ① **否决项**——任一维 ≤1 ⇒ **即使总分 ≥25 也不交付**（堵 `5+5+5+5+4+1＝25` 的维间互补）；② **反向面**——必先写「**最弱的一维 ＋ 为何没更低**」再给分；G5 门判据同步收紧，报告模板增栏）；② **`ibd-finance-review` 0.15.1 → 0.15.2**（`references/execution-discipline.md` 铁律 1 第 3 条「**脚本全量扫机械层**」与同包「**零硬依赖·无脚本**」（脚本＝可选增强）**相冲**——该措辞**预设工具存在** ⇒ 改为「**有勾稽工具则先跑脚本全量扫机械层；无工具则人工逐数重算并留算式——两条路都不得抽样**」，`SKILL.md` 步骤②同步）。版本矩阵与依赖兼容矩阵同步。
+- **2026-10-06 · v0.5.3（已上提 · 待 tag/Release）**：**4 包上提（质量自评防凑数 ＋ 财务复核口径如实化 ＋ 核验脚本输出分层）**——① **`ibd-quality-gates` 0.14.0 → 0.14.1**（**质量自评加两条结构约束 · 防 Goodhart**：原「6 维 30 分 · 低于 25 分回炉」仅靠「**打分要诚实**」道德劝说防虚高，而 G5 门查「**总分 ≥25**」使**分数本身成为目标** ⇒ ① **否决项**——任一维 ≤1 ⇒ **即使总分 ≥25 也不交付**（堵 `5+5+5+5+4+1＝25` 的维间互补）；② **反向面**——必先写「**最弱的一维 ＋ 为何没更低**」再给分；G5 门判据同步收紧，报告模板增栏）；② **`ibd-finance-review` 0.15.1 → 0.15.2**（`references/execution-discipline.md` 铁律 1 第 3 条「**脚本全量扫机械层**」与同包「**零硬依赖·无脚本**」（脚本＝可选增强）**相冲**——该措辞**预设工具存在** ⇒ 改为「**有勾稽工具则先跑脚本全量扫机械层；无工具则人工逐数重算并留算式——两条路都不得抽样**」，`SKILL.md` 步骤②同步）；③ **`ibd-doc-review` 0.30.0 → 0.31.0**（**核验脚本输出分层（上下文卫生 · P10 落地）**——`check_styles.py`／`deliver_gate.py` 统一「**指标行进上下文、明细行落盘**」：`check_styles.py` 默认 stdout 只出「一行一指标」，**pStyle 分布／裸段落清单／序号清单改为落盘**（新增 `--detail N` 内联前 N 行、`--verbose` 全内联＝改造前行为、`--out` 指定路径；默认 `<%TEMP%>/<输入名>.check_styles.log`）；`deliver_gate.py` 新增 **`--json`**（结构化结果，含 `items`／`skipped`／`detail_log`）与 **全量明细（不截断）落盘**（默认文本输出**不变**，仅末行回路径）；**判据不是「输出变短」而是「明细有没有可定向读的落盘位置」**——故不设长度阈值，只设落盘。自测 **131 → 140 项**（新增三档样本：阴性＝默认不出明细／阳性＝`--verbose` 全内联／边界＝`--detail N` 恰 N 行））；④ **`ibd-quality-gates` 0.14.1 → 0.15.0**（**报告落盘补齐输出契约**——`check_gates.py` 新增 `--out`（**报告全文默认落盘** `<%TEMP%>/<文件名>.check_gates.log`）并在末行回路径，`--json` 契约扩展 `detail_log` 指针；默认文本报告格式**不变**（仅追加路径行）；自测 **5 → 9 例**）。版本矩阵与依赖兼容矩阵同步。
 
 - **2026-10-05 · v0.5.2**：**4 包上提（复核链语体规则反哺 ＋ 门禁误报止血 ＋ 财务复核文号更正 ＋ 方法库修订累积）**——① **`ibd-doc-review` 0.28.0 → 0.30.0**（**遣词规范反哺**：新增「遣词规范」节、「主观辩护转客观陈述」条、「与库的关系（非强关联）」声明；**禁词表误报止血**：「大力」「赋能」降提示档并作**职责归位**——文风词非合规红线、归写作侧，新增 `_职责边界` 字段；**禁词命中携带上下文**：`deliver_gate.py` 新增 `_scan_hits`，命中附原文片段供人工核对描述对象（自身／第三方），「全球第一」「全球领先」「唯一」降提示档；实测招股书禁用词项 **35 处 → 0 阻断 ＋ 29 提示**、由 FAIL 转 PASS）；② **`ibd-doc-write` 0.18.1 → 0.19.0**（同步反哺：新增「遣词规范」5 条（提炼自方法论库 WL 遣词类、**剥离案名**）＋「主观辩护转客观陈述」＋「与库的关系」声明）；③ **`ibd-finance-review` 0.15.0 → 0.15.1**（**修正两处准则解释文号**——「解释 17 号」财会〔2023〕25号 → **21号**、「解释 18 号」财会〔2024〕33号 → **24号**，经财政部官网 ＋ 交易所公告双向核验；判据零变更）；④ **`ibd-methods-ops` 1.35.8 → 1.35.14**（六个修订版累积：**活文档过程痕迹清理**（`references/` 内 3 处日期戳／裁定词，判据句全保留）＋ 体例与流程修订）。版本矩阵与依赖兼容矩阵同步。
 

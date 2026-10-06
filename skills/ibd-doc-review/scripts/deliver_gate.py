@@ -49,6 +49,13 @@ XML/结构核验 6 次、锚点 5 次），每次脚本输出都进上下文，�
     --officecli-path P   officecli 可执行文件路径（默认自动探测）
     --expect-issues N    可接受的渲染层缺陷条数上限，默认 0（配 --officecli）
     --detail N           FAIL 时最多展开几条明细，默认 5
+    --out P              全量结果落盘路径（默认 <%TEMP%>/<交付件名>.deliver_gate.log）
+    --json               输出结构化 JSON（供上层消费）；开启后不打印人读报告
+
+输出分层（上下文卫生 · docs/ENGINEERING.md §1 P10）:
+    · stdout 只出**结论行**（PASS 不展开、FAIL 才给明细，最多 `--detail` 条）
+    · **全量明细（不截断）落盘**到 `--out` 报告，stdout 末行给路径 —— 可定向读
+    · `--json` 走单一结构化出口，含 `detail_log` 指针（契约见 §4.4）
 
 退出码: 0 = 无 FAIL（含全 SKIP）；1 = 存在 FAIL（可直接作为交付门禁判断依据）
 
@@ -66,6 +73,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import zipfile
 import xml.etree.ElementTree as ET
 
@@ -797,6 +805,70 @@ def run_full(args, md_text, anchors, ban):
     return [r for r in results if r is not None]
 
 
+# ----------------------------------------------------------------- 报告渲染
+
+def _render(results, title, head, tail, detail_limit):
+    """渲染人读报告（行列表）。`detail_limit=None` ⇒ 明细**不截断**，供落盘用。
+
+    这保证「上下文里看到的」永远只是摘要，而「盘上的」是全量——`--out` 报告是
+    那条可定向读的落盘凭据（§4.4 上下文卫生三则 ③）。
+    """
+    L = ["=" * 72, title] + list(head) + ["=" * 72]
+    n_fail = n_skip = 0
+    for name, ok, detail, fails in results:
+        tag = "SKIP" if ok is None else ("PASS" if ok else "FAIL")
+        L.append(f"[{tag}] {name:<10} {detail}")
+        if ok is None:
+            n_skip += 1
+            continue
+        if not ok:
+            n_fail += 1
+        # FAIL 明细必展开；PASS 带提示档明细也要可见（否则等于静默丢弃）
+        if not fails:
+            continue
+        shown = fails if detail_limit is None else fails[:detail_limit]
+        for f in shown:
+            L.append(f"         └─ {f}")
+        if detail_limit is not None and len(fails) > detail_limit:
+            L.append(f"         └─ …另有 {len(fails) - detail_limit} 条"
+                     f"（全量见落盘报告，见 --out）")
+    L.append("-" * 72)
+    total = len(results)
+    n_run = total - n_skip
+    skip_note = f"（{n_skip} 项 SKIP 未执行）" if n_skip else ""
+    if n_fail == 0:
+        L.append(f"结论 {n_run - n_fail}/{n_run} PASS ✅  {tail}{skip_note}")
+    else:
+        L.append(f"结论 {n_run - n_fail}/{n_run} PASS ❌  有 {n_fail} 项 FAIL，修复后重跑{skip_note}")
+    return L, n_fail, n_skip
+
+
+def _report_path(args):
+    src = args.docx or args.md or "deliver_gate"
+    base = os.path.splitext(os.path.basename(str(src)))[0] or "deliver_gate"
+    return os.path.join(tempfile.gettempdir(), base + ".deliver_gate.log")
+
+
+def _json_payload(results, target, n_fail, n_skip, detail_log):
+    """`--json` 契约（docs/ENGINEERING.md §4.4）：基础字段 ＋ items/skipped/detail_log。"""
+    issues = []
+    for name, ok, _, fails in results:
+        if ok is None:
+            continue
+        level = "WARN" if ok else "ERROR"
+        for f in fails:
+            issues.append({"level": level, "gate": name, "msg": f})
+    return {
+        "tool": "deliver_gate", "target": target,
+        "verdict": "FAIL" if n_fail else "PASS",
+        "error": n_fail, "warn": sum(1 for i in issues if i["level"] == "WARN"),
+        "skipped": n_skip, "detail_log": detail_log,
+        "items": [{"gate": n, "status": "SKIP" if ok is None else ("PASS" if ok else "FAIL"),
+                   "detail": d, "n_issues": len(fs)} for n, ok, d, fs in results],
+        "issues": issues,
+    }
+
+
 def main():
     ap = argparse.ArgumentParser(description="交付前综合核验（一次跑完 · 极简输出）")
     ap.add_argument("--docx", help="交付件 docx（给了跑全套十项）")
@@ -818,6 +890,10 @@ def main():
     ap.add_argument("--expect-issues", type=int, default=0,
                     help="可接受的渲染层缺陷条数上限，默认 0（配 --officecli）")
     ap.add_argument("--detail", type=int, default=5, help="FAIL 时最多展开明细条数")
+    ap.add_argument("--out", default=None,
+                    help="全量结果落盘路径（默认 <%%TEMP%%>/<交付件名>.deliver_gate.log）")
+    ap.add_argument("--json", action="store_true",
+                    help="输出结构化 JSON（供上层消费）；开启后不打印人读报告")
     args = ap.parse_args()
 
     if not args.docx and not args.md:
@@ -843,41 +919,32 @@ def main():
         results = run_md_precheck(md_text, anchors, ban)
         title, tail = "内容源预检（md 阶段 · 套样式前）", "可进入套样式"
 
-    print("=" * 72)
-    print(title)
+    head = []
     if args.docx:
-        print(f"  交付件: {args.docx}")
+        head.append(f"  交付件: {args.docx}")
     if args.md:
-        print(f"  内容源: {args.md}")
-    print("=" * 72)
+        head.append(f"  内容源: {args.md}")
 
-    n_fail = 0
-    n_skip = 0
-    for name, ok, detail, fails in results:
-        # ok 三态：True=PASS / False=FAIL / None=SKIP（未执行，不阻断）
-        tag = "SKIP" if ok is None else ("PASS" if ok else "FAIL")
-        print(f"[{tag}] {name:<10} {detail}")
-        if ok is None:
-            n_skip += 1
-        elif not ok:
-            n_fail += 1
-            for f in fails[: args.detail]:
-                print(f"         └─ {f}")
-            if len(fails) > args.detail:
-                print(f"         └─ …另有 {len(fails) - args.detail} 条（用 check_content.py / check_styles.py 看全量）")
-        elif fails:
-            # PASS 但带提示档明细（MINOR·不阻断）——提示必须可见，否则等于静默丢弃
-            for f in fails[: args.detail]:
-                print(f"         └─ {f}")
+    # 落盘：全量明细（不截断）。上下文里只留摘要，盘上留全量并可定向读（§4.4 三则 ③）
+    rp = args.out or _report_path(args)
+    try:
+        full, _, _ = _render(results, title, head, tail, None)
+        with open(rp, "w", encoding="utf-8") as f:
+            f.write("\n".join(full) + "\n")
+    except OSError:
+        rp = None
 
-    print("-" * 72)
-    total = len(results)
-    n_run = total - n_skip
-    skip_note = f"（{n_skip} 项 SKIP 未执行）" if n_skip else ""
-    if n_fail == 0:
-        print(f"结论 {n_run - n_fail}/{n_run} PASS ✅  {tail}{skip_note}")
-    else:
-        print(f"结论 {n_run - n_fail}/{n_run} PASS ❌  有 {n_fail} 项 FAIL，修复后重跑{skip_note}")
+    lines, n_fail, n_skip = _render(results, title, head, tail, args.detail)
+
+    if args.json:
+        print(json.dumps(_json_payload(results, args.docx or args.md, n_fail, n_skip, rp),
+                         ensure_ascii=False), file=sys.__stdout__)
+        return 1 if n_fail else 0
+
+    for ln in lines:
+        print(ln)
+    if rp:
+        print(f"  [结果] 全量明细（不截断） → {rp}")
     return 1 if n_fail else 0
 
 

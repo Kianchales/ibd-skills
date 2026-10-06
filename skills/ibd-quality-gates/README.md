@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E8%B4%A8%E9%87%8F%E6%A0%A1%E9%AA%8C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.14.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.15.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -38,9 +38,9 @@
 **自动化脚本**（Python 3 标准库，零第三方依赖）：
 
 ```bash
-python scripts/check_gates.py 文档.md              # 反模式/绝对化/AI 痕迹机械扫描
+python scripts/check_gates.py 文档.md              # 反模式/绝对化/AI 痕迹机械扫描（报告落盘、末行回路径；--json 供上层）
 python scripts/check_data.py --input 文档.md        # 数值自洽（金额写法/一致/勾稽/跨表）
-python scripts/tests/test_check_gates.py            # 内置自测（5 用例）
+python scripts/tests/test_check_gates.py            # 内置自测（5 用例 ＋ 输出契约 4 例）
 ```
 
 > 脚本只查机械项；语义项（来源/口径/论证逻辑）按 antipatterns.md 人工核对——脚本替代不了人。
@@ -80,6 +80,7 @@ ibd-quality-gates/
 
 ## 📌 近期更新
 
+- **2026-10-06 · v0.15.0**：**输出契约补齐（报告落盘）** —— `check_gates.py` 新增 `--out`（**报告全文默认落盘**，`<%TEMP%>/<文件名>.check_gates.log`）并在末行回路径；`--json` 契约扩展 `detail_log` 指针。默认文本报告格式**不变**（仅追加路径行）。依据 = 上下文卫生（`docs/ENGINEERING.md` §1 P10 ＋ §4.4 三则③「工具明细默认落盘」）；自测 **5 → 9 例**（新增 4 例输出契约）
 - **2026-10-02 · v0.14.0**：**依赖面接线** —— 🟢 可选层的「方法论库」补**取用通道点名**（建库/蒸馏/维护 → `ibd-methods-ops`；按问题查库 → `ibd-methods-query`）；**层级不变**，仍无需任何外部依赖即可完成校验
 - **2026-09-18 · v0.11.0**：新增 rules.md **§8 改写既有工作簿四条纪律**——改前体检结构（表头/列序/公式引用）、写后读回验证（工具「返回成功」≠ 已落盘）、汇总默认全公式（静态快照须标注取值时点）、构造参照值前先分离「明细」与「合计」行；源自 I-0008~I-0011 四连事故
 - **2026-09-18 · v0.10.0**：Excel 交付物专项——公式写入形态（A 裸写 / B 前缀写 / C 静态写）+ 交付前重算原则；反模式新增 D-8（公式假值/静默截断），清单扩为 23 条

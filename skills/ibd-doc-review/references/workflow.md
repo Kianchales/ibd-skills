@@ -169,7 +169,7 @@
 - 表格三线表规范（框线/字号/对齐/tblHeader/合计加粗）→ [rules.md](rules.md) 第二节
 
 **S6 校验门禁**
-- **交付前综合核验（推荐先跑这一条）**：`python deliver_gate.py --docx <交付件.docx> --md <内容源.md> --anchors "36,507.55;19.96" --scenario 反馈回复 --expect-vmerge N` —— 基础十项一次跑完、只输出「一行一指标」，**PASS 不展开、FAIL 才给明细**；退出码 0/1 直接作交付判据。`--ban` 可省略（默认按 `--scenario` 从 `banned-terms.json` 装载投行禁用词红线——**行为禁语「经核查」等仅招股书装载**，回复件不报），`--anchors` 用**分号**分隔（数字含千分位逗号，勿用逗号）；`--ban` 传值则作为**临时追加**词（阻断档）。需要全量明细再单独跑 check_styles / check_content
+- **交付前综合核验（推荐先跑这一条）**：`python deliver_gate.py --docx <交付件.docx> --md <内容源.md> --anchors "36,507.55;19.96" --scenario 反馈回复 --expect-vmerge N` —— 基础十项一次跑完、只输出「一行一指标」，**PASS 不展开、FAIL 才给明细**；退出码 0/1 直接作交付判据。**全量明细（不截断）默认落盘**（`--out` 指定路径，默认 `<%TEMP%>/<交付件名>.deliver_gate.log`）并在末行回路径；`--json` 输出结构化结果（含 `items`／`detail_log`）。`--ban` 可省略（默认按 `--scenario` 从 `banned-terms.json` 装载投行禁用词红线——**行为禁语「经核查」等仅招股书装载**，回复件不报），`--anchors` 用**分号**分隔（数字含千分位逗号，勿用逗号）；`--ban` 传值则作为**临时追加**词（阻断档）。要看某一项的逐条明细，直接读落盘报告（不必再单独跑 check_styles / check_content）
 - **复核产物交付（批注版/修订版）在十项之上加开关**：批注版 `--annotated [--expect-annotated N]`（追加 批注部件／批注结构·含编号）、修订版 `--revised [--expect-revised N]`（追加 修订成对／修订落定·含计数），均为十二项；两开关**互斥**、且必须配 `--docx`。带 `--annotated` 时 `check_annotations.py` 的 docx 侧断言已全覆盖（PDF 侧高亮注释仍需单独跑）；带 `--revised` 时 `check_revisions.py --mode revise` 的断言已全覆盖（**含落定证明**），`--mode clean` 的「无残留」判据用 `--revised` 时 ins/del 计数为 0 即等价成立
 - 成品文档校验：`python check_styles.py --input <docx或目录> --scenario <招股书|反馈回复>`（脚本位于本包 scripts/）（`报告` 为 `招股书` 别名，兼容旧调用；默认 `--mode document`）
 - 模板/样式库校验：`--mode template`（检查 styles.xml 中 000-009 / 0011+001 / a4-a6 是否齐全；模板正文为空属正常，勿用 document 模式误判）
@@ -260,7 +260,7 @@ python scripts/deliver_gate.py --docx <修订稿.docx> --revised --expect-revise
 - 修订稿检查项（revise 版）：ins==del 对、author 归责、id 成对唯一、delText/ins 非空、settings 开 trackRevisions、clean 化后 ins 文本落定；clean 版：无修订标记残留
 - **加粗判定须按语义**：`<w:b w:val="0">` 是**显式取消加粗**，不能只判 `<w:b>` 元素存在——否则合规批注会被误判 FAIL（实测，已修 `check_annotations.py` 与 `deliver_gate.py`）
 - **任一 FAIL → 退回 `ibd-doc-annotate` 重新注入/生成，不交付**
-- **自测**：`python scripts/tests/test_deliver_gate.py`（32 项）／`test_check_annotations.py`（10）／`test_check_content.py`（22）／`test_check_revisions.py`（11）／`test_check_styles.py`（18）／`test_validate_schema.py`（26）／`test_extract_final_text.py`（12）——**共 131 项**；改动脚本后务必全跑
+- **自测**：`python scripts/tests/test_deliver_gate.py`（37 项）／`test_check_annotations.py`（10）／`test_check_content.py`（22）／`test_check_revisions.py`（11）／`test_check_styles.py`（22）／`test_validate_schema.py`（26）／`test_extract_final_text.py`（12）——**共 140 项**；改动脚本后务必全跑
 
 ---
 
@@ -271,20 +271,20 @@ python scripts/deliver_gate.py --docx <修订稿.docx> --revised --expect-revise
 | 你要做什么 | 命令 | 说明 |
 |---|---|---|
 | **读源件取终稿文本（读前先跑）** | `python scripts/extract_final_text.py <docx> [--check] [-o out.txt] [--json]` | 先探测 `w:ins`／`w:del`／批注 → 取「接受全部修订 ＋ 剔除全部批注」的终稿并标注；**只读，源文件零写操作**；细则 → [read-docx.md](read-docx.md) |
-| **交付前综合核验（首选）** | `python scripts/deliver_gate.py --docx <件> --md <源.md> --anchors "A;B" --scenario <招股书\|反馈回复> [--expect-vmerge N] [--officecli]` | 基础十项一次跑完、只输出结论行，退出码 0/1 作交付判据；加 `--officecli` 追加物理扫描（共十一项，未装则 SKIP 不阻断） |
+| **交付前综合核验（首选）** | `python scripts/deliver_gate.py --docx <件> --md <源.md> --anchors "A;B" --scenario <招股书\|反馈回复> [--expect-vmerge N] [--officecli] [--json] [--out 报告]` | 基础十项一次跑完、只输出结论行，退出码 0/1 作交付判据；**全量明细落盘并回路径**；加 `--officecli` 追加物理扫描（共十一项，未装则 SKIP 不阻断） |
 | 交付**批注版** | `python scripts/deliver_gate.py --docx <批注版> --annotated --expect-annotated N` | 十项 + 批注两项 = 十二项 |
 | 交付**修订版** | `python scripts/deliver_gate.py --docx <修订稿> --revised --expect-revised N` | 十项 + 修订两项 = 十二项（含落定证明） |
-| 套样式后校验样式 | `python scripts/check_styles.py --input <docx或目录> --scenario <招股书\|反馈回复>` | 必备样式/裸段落/空段落/跳级 |
+| 套样式后校验样式 | `python scripts/check_styles.py --input <docx或目录> --scenario <招股书\|反馈回复> [--detail N\|--verbose] [--out 报告]` | 必备样式/裸段落/空段落/跳级；**stdout 只出指标行，明细默认落盘给路径** |
 | 校验模板/样式库 | `python scripts/check_styles.py --input <模板> --mode template` | 查 000-009 / 0011+001 / a4-a6 是否齐全 |
 | 证明没改原文 | `python scripts/check_styles.py --input <结果.docx> --verify-content <原文.docx>` | 逐字对比，改一个字即 FAIL |
 | 出格式问题清单 | `python scripts/check_styles.py --input <结果.docx> --diff <原文.docx>` | 生成 `_格式修改清单.md` |
 | 出格式修订稿 | `python scripts/check_styles.py --input <结果.docx> --revise <原文.docx>` | w:pPrChange 修订 + trackChanges |
-| 序号段落核对 | `python scripts/check_styles.py --input <docx> --check-numbering` | 列序号段落及上下文 |
+| 序号段落核对 | `python scripts/check_styles.py --input <docx> --check-numbering [--verbose]` | 列序号段落及上下文（**清单属明细，默认落盘**，`--verbose` 内联） |
 | **格式核对（只读）** | `python scripts/check_content.py --input <docx> [--checks text\|table\|geo,table_na]` | 十二项核对，出 `_格式核对报告.md` |
 | 校验批注（docx） | `python scripts/check_annotations.py --input <带批注.docx 或目录>` | 四件套/4 段无空行/加粗分布/编号 |
 | 校验批注（pdf） | `python scripts/check_annotations.py --pdf <带注释.pdf> --expect N` | 需 pymupdf |
 | 校验修订稿 | `python scripts/check_revisions.py --input <修订稿.docx> --mode <revise\|clean> [--expect N]` | ins/del 对/author/id/落定 |
-| **改脚本后自测** | `python scripts/tests/test_deliver_gate.py` 等七份 | 共 131 项，务必全跑 |
+| **改脚本后自测** | `python scripts/tests/test_deliver_gate.py` 等七份 | 共 140 项，务必全跑 |
 
 **两条时序铁律**（写在这里，因为都是"动手前"的事）：
 1. **文字规范必须在套样式之前查**——`check_content.py --checks text` 先跑（标点全角化/数字空格），再套样式。套样式后才发现文字问题会导致样式重做（实测一份交付件 384 处半角引号一路漏到套样式之后）

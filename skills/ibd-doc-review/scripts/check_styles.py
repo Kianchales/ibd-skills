@@ -7,12 +7,18 @@ check_styles.py — IPO 文档样式应用检查脚本（ibd-doc-review skill �
 用法：
   python check_styles.py --input <docx路径或目录> --scenario 招股书|反馈回复|报告 [--mode document|template]
   python check_styles.py --input <套样式后.docx> --verify-content <原文.docx>   # 内容完整性校验（严禁修改原文内容）
+输出分层（上下文卫生 · 默认）：
+  - stdout 只出**指标行**（[PASS]/[FAIL]/[WARN]/[INFO]/[ERROR] 与统计行，一行一指标）；
+  - **明细行**（pStyle 分布、裸段落清单、序号段落清单…）默认**落盘**，路径打在末行；
+  - 要看明细：`--detail N` 内联前 N 行、`--verbose` 全部内联（等价改造前行为）；
+  - 报告路径默认 `%TEMP%/<输入名>.check_styles.log`，可用 `--out` 指定。
 说明：
   - 只依赖标准库 zipfile/re，无第三方依赖。
   - 中文文件名：优先用 glob 兜底（Git Bash 直传中文参数可能乱码）。
   - 场景决定「一级样式」：招股书/报告 → 001；反馈回复 → 0011+001（监管问题黑体）。
 """
 import argparse
+import contextlib
 import datetime
 import glob
 import io
@@ -20,6 +26,7 @@ import json
 import os
 import re
 import sys
+import tempfile
 import zipfile
 
 # 各场景必备样式：正文 + 一级（必检）；002 及以上由跳级检测兜底
@@ -46,6 +53,48 @@ NUMBER_PAT = re.compile(
     r"|^[①-⑳]"                                      # ①-⑳
     r"|^[A-Za-z]\s*[、．.]"                          # A、a．a.
 )
+
+# --------------------------------------------------------------------
+# 输出分层（P10 上下文卫生 · docs/ENGINEERING.md §1 P10 ＋ §4.4「上下文卫生三则」③）
+# 明细行由 `_detail()` 打标记，main() 的捕获层据此分流：
+#   · 指标行 → 默认进 stdout（**一行一指标**）
+#   · 明细行 → 默认只进**落盘报告**，末行给路径；`--detail N` 内联前 N 行、`--verbose` 全内联
+# 判据是「**有没有可定向读的落盘位置**」，不是「行数多少」——故不设长度阈值，只设落盘。
+# --------------------------------------------------------------------
+_DETAIL_MARK = "\x00D\x00"
+
+
+def _detail(text=""):
+    """明细行（pStyle 分布／裸段落清单／序号清单／逐条差异）：默认落盘，不进上下文。"""
+    print(_DETAIL_MARK + str(text))
+
+
+def _split_report(text, detail_budget=0):
+    """按明细标记分流，返回 (inline, full, hidden)。
+
+    inline ＝ 进上下文的行（指标行 ＋ 预算内的明细行）
+    full   ＝ 全部行（落盘报告用）
+    hidden ＝ 已落盘但未内联的明细行数（detail_budget < 0 ⇒ 全内联，恒为 0）
+    """
+    inline, full, hidden, shown = [], [], 0, 0
+    for ln in text.split("\n"):
+        if ln.startswith(_DETAIL_MARK):
+            body = ln[len(_DETAIL_MARK):]
+            full.append(body)
+            if detail_budget < 0 or shown < detail_budget:
+                inline.append(body)
+                shown += 1
+            else:
+                hidden += 1
+        else:
+            inline.append(ln)
+            full.append(ln)
+    for seq in (inline, full):
+        while seq and not seq[0].strip():
+            seq.pop(0)
+        while seq and not seq[-1].strip():
+            seq.pop()
+    return inline, full, hidden
 
 
 def resolve_files(path):
@@ -112,11 +161,11 @@ def check_document(docx_path, scenario):
         if sc.start() not in table_p_offsets:
             empty.append(sc.start())
 
-    print("  pStyle 分布：")
+    _detail("  pStyle 分布：")
     if not stats:
-        print("    （无任何已命名样式段落 —— 未套用样式体系）")
+        _detail("    （无任何已命名样式段落 —— 未套用样式体系）")
     for s in sorted(stats, key=lambda x: (x is None, x)):
-        print(f"    {s if s else '(裸)'}: {stats[s]}")
+        _detail(f"    {s if s else '(裸)'}: {stats[s]}")
 
     ok = True
     req = REQUIRED.get(scenario, REQUIRED["报告"])
@@ -130,7 +179,7 @@ def check_document(docx_path, scenario):
     if bare:
         print(f"  [WARN] {len(bare)} 个裸段落（未应用样式，建议补 pStyle）：")
         for b in bare[:5]:
-            print(f"    - {b}")
+            _detail(f"    - {b}")
     else:
         print("  [PASS] 无裸正文段落")
 
@@ -502,8 +551,8 @@ def check_numbering(docx_path):
         print("  [INFO] 未发现序号开头段落（（一）/1、/（1）/① 等）")
         return True
 
-    print(f"  共 {len(hits)} 个序号开头段落（按双维度算法核对：长短 + 后段是否分段）:")
-    print("  # | 样式 | 字数 | 序号段落(前24字) | 后段(前24字) | 倾向")
+    print(f"  [INFO] 序号段落核对：共 {len(hits)} 处（清单见落盘报告）")
+    _detail("  # | 样式 | 字数 | 序号段落(前24字) | 后段(前24字) | 倾向")
     for idx, (i, style, text) in enumerate(hits, 1):
         nxt = paras[i + 1][1] if i + 1 < len(paras) else ""
         nxt_is_num = bool(nxt and NUMBER_PAT.match(nxt))
@@ -515,7 +564,7 @@ def check_numbering(docx_path):
         else:
             lean = "情况1:标题+展开(后段独立正文)" if short else "长句+后段展开→上下文主判,按分段定"
         style_s = style if style else "(裸)"
-        print(f"  {idx:2d} | {style_s:6s} | {len(text):3d} | {text[:24]} | {nxt[:24]} | {lean}")
+        _detail(f"  {idx:2d} | {style_s:6s} | {len(text):3d} | {text[:24]} | {nxt[:24]} | {lean}")
     print("  [HINT] 判定主判据=上下文是否分段；长短为辅助。详见 rules.md「序号段落判定」。")
     return True
 
@@ -535,8 +584,8 @@ def verify_content(docx_path, original_path):
     for i, (a, b) in enumerate(zip(t_orig, t_new)):
         if a != b:
             print(f"  [FAIL] 第 {i + 1} 处文本被修改：")
-            print(f"    原文: {a[:50]}")
-            print(f"    现文: {b[:50]}")
+            _detail(f"    原文: {a[:50]}")
+            _detail(f"    现文: {b[:50]}")
             break
     else:
         if len(t_orig) != len(t_new):
@@ -560,24 +609,59 @@ def main():
     ap.add_argument("--revise", metavar="原文件.docx", default=None,
                     help="生成 Word 修订稿：以原文件为基底，将 --input（样式化结果）的格式改动转为 Word 修订（w:pPrChange 格式更改），并开启 trackChanges；输出 <原文件>_修订稿.docx（--output 可覆盖）")
     ap.add_argument("--output", default=None, help="--revise 的输出路径（默认 <原文件>_修订稿.docx）")
-    ap.add_argument("--verbose", action="store_true")
+    ap.add_argument("--verbose", action="store_true",
+                    help="明细全部内联打印（改造前行为）；默认明细落盘、stdout 只出指标行")
+    ap.add_argument("--detail", type=int, default=0,
+                    help="默认模式下内联展开的明细行数（默认 0＝明细全部落盘、只给路径）")
+    ap.add_argument("--out", default=None,
+                    help="核对明细报告路径（默认 <%%TEMP%%>/<输入名>.check_styles.log）")
     ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     args = ap.parse_args()
     if args.json:
         # JSON 模式下抑制检查过程的报告打印，只保留最终的机器可读结果
         sys.stdout = io.StringIO()
 
+    real_out = sys.stdout      # 捕获开始前的真实出口（finish 在此打印）
+    cap = io.StringIO()        # 捕获全部检查输出，供分层
+    budget = -1 if args.verbose else max(args.detail, 0)
+
+    def report_path():
+        if args.out:
+            return args.out
+        base = os.path.basename(str(args.input).rstrip("/\\")) or "check_styles"
+        return os.path.join(tempfile.gettempdir(),
+                            os.path.splitext(base)[0] + ".check_styles.log")
+
     def finish(all_ok, ok_msg, bad_msg, tag):
-        """统一出口：--json 输出结构化，否则人读；退出码 0（通过）／2（未通过）。"""
+        """统一出口：--json 输出结构化，否则人读；退出码 0（通过）／2（未通过）。
+
+        输出分层（P10 上下文卫生）：stdout 只出**指标行**；**明细行**写入报告文件并给出
+        路径（`--detail N` 内联前 N 行、`--verbose` 全内联）。落盘是「可定向读」的凭据，
+        故默认不再把明细堆进上下文。
+        """
+        inline, full, hidden = _split_report(cap.getvalue(), budget)
+        rp = report_path()
+        try:
+            with open(rp, "w", encoding="utf-8") as f:
+                f.write("\n".join(full).strip() + "\n")
+        except OSError as e:
+            rp, hidden = None, 0
+            inline.append(f"  [WARN] 明细报告写入失败：{e}")
         if args.json:
             print(json.dumps({
                 "tool": "check_styles", "target": args.input, "mode": tag,
                 "verdict": "PASS" if all_ok else "FAIL",
                 "error": 0 if all_ok else 1, "warn": 0,
+                "detail_log": rp,
                 "issues": ([] if all_ok else [{"level": "ERROR", "msg": bad_msg}]),
             }, ensure_ascii=False), file=sys.__stdout__)
         else:
-            print(f"\n{ok_msg if all_ok else bad_msg}")
+            for ln in inline:
+                print(ln, file=real_out)
+            if rp:
+                print(f"  [明细] 未内联 {hidden} 行 → {rp}"
+                      f"（明细全文在该文件；--detail N／--verbose 可内联）", file=real_out)
+            print(f"\n{ok_msg if all_ok else bad_msg}", file=real_out)
         sys.exit(0 if all_ok else 2)
 
     files = resolve_files(args.input)
@@ -585,44 +669,45 @@ def main():
         print(f"[ERROR] 未找到 docx: {args.input}", file=sys.stderr)
         sys.exit(1)
 
-    if args.diff:
-        orig_files = resolve_files(args.diff)
-        if not orig_files:
-            print(f"[ERROR] 未找到原文: {args.diff}", file=sys.stderr)
-            sys.exit(1)
-        all_ok = all(cmd_diff(f, orig_files[0]) for f in files)
-        finish(all_ok, "格式修改清单生成完成 ✅", "生成失败 ❌", "diff")
+    with contextlib.redirect_stdout(cap):
+        if args.diff:
+            orig_files = resolve_files(args.diff)
+            if not orig_files:
+                print(f"[ERROR] 未找到原文: {args.diff}", file=sys.stderr)
+                sys.exit(1)
+            all_ok = all(cmd_diff(f, orig_files[0]) for f in files)
+            finish(all_ok, "格式修改清单生成完成 ✅", "生成失败 ❌", "diff")
 
-    if args.check_numbering:
-        all_ok = all(check_numbering(f) for f in files)
-        finish(all_ok, "序号段落核对完成 ✅", "核对异常 ❌", "check_numbering")
+        if args.check_numbering:
+            all_ok = all(check_numbering(f) for f in files)
+            finish(all_ok, "序号段落核对完成 ✅", "核对异常 ❌", "check_numbering")
 
-    if args.verify_content:
-        orig_files = resolve_files(args.verify_content)
-        if not orig_files:
-            print(f"[ERROR] 未找到原文: {args.verify_content}", file=sys.stderr)
-            sys.exit(1)
-        # 内容校验：--input 每个文件与原文对比（单文件对单文件）
-        all_ok = True
-        for f in files:
-            all_ok &= verify_content(f, orig_files[0])
-        finish(all_ok, "内容完整性全部通过 ✅", "内容被修改 ❌（严禁修改原文内容）", "verify_content")
+        if args.verify_content:
+            orig_files = resolve_files(args.verify_content)
+            if not orig_files:
+                print(f"[ERROR] 未找到原文: {args.verify_content}", file=sys.stderr)
+                sys.exit(1)
+            # 内容校验：--input 每个文件与原文对比（单文件对单文件）
+            all_ok = True
+            for f in files:
+                all_ok &= verify_content(f, orig_files[0])
+            finish(all_ok, "内容完整性全部通过 ✅", "内容被修改 ❌（严禁修改原文内容）", "verify_content")
 
-    if args.revise:
-        orig_files = resolve_files(args.revise)
-        if not orig_files:
-            print(f"[ERROR] 未找到原文件: {args.revise}", file=sys.stderr)
-            sys.exit(1)
-        print(f"\n=== 生成 Word 修订稿（--input 为样式化结果，--revise 为原文件）===")
-        all_ok = True
-        for f in files:
-            out = args.output or os.path.splitext(orig_files[0])[0] + "_修订稿.docx"
-            all_ok &= make_revision(orig_files[0], f, out)
-        finish(all_ok, "修订稿生成完成 ✅", "生成失败 ❌", "revise")
+        if args.revise:
+            orig_files = resolve_files(args.revise)
+            if not orig_files:
+                print(f"[ERROR] 未找到原文件: {args.revise}", file=sys.stderr)
+                sys.exit(1)
+            print(f"\n=== 生成 Word 修订稿（--input 为样式化结果，--revise 为原文件）===")
+            all_ok = True
+            for f in files:
+                out = args.output or os.path.splitext(orig_files[0])[0] + "_修订稿.docx"
+                all_ok &= make_revision(orig_files[0], f, out)
+            finish(all_ok, "修订稿生成完成 ✅", "生成失败 ❌", "revise")
 
-    fn = check_template if args.mode == "template" else check_document
-    all_ok = all(fn(f, args.scenario) for f in files)
-    finish(all_ok, "全部通过 ✅", "存在需修正项 ❌", args.mode)
+        fn = check_template if args.mode == "template" else check_document
+        all_ok = all(fn(f, args.scenario) for f in files)
+        finish(all_ok, "全部通过 ✅", "存在需修正项 ❌", args.mode)
 
 
 if __name__ == "__main__":

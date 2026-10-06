@@ -28,7 +28,7 @@ description: >
   「修订结构对不对」「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」
   「查哪些项」「本轮查什么」「检查项声明」「复核范围」
   「研究下XX节」「帮我看看这段」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
-version: 0.30.0
+version: 0.31.0
 agent_created: true
 ---
 
@@ -77,11 +77,11 @@ agent_created: true
 | **场景A** 已有 docx 整套套样式 | source=用户文件 / template=模板 / output=新文件 | `minimax-docx apply-template` |
 | **场景B** 新建 docx | 从模板基底填充 | `tencent-docx`（降级 `minimax-docx create`） |
 | **场景C** 局部调整 | 单段 / 单表改样式 | `tencent-local-office-edit`（唯一编辑中枢） |
-| **场景D** 生成后校验样式 | pStyle 分布 ＋ 必备样式是否应用 | `check_styles.py` |
+| **场景D** 生成后校验样式 | 必备样式是否应用（pStyle 分布等**明细默认落盘给路径**） | `check_styles.py`（stdout 只出「一行一指标」；`--detail N`／`--verbose` 可内联，`--out` 指定报告路径） |
 | **场景E** 格式核对（只读不改文件） | 文字 text 组 ＋ 表格 table 组 | `check_content.py` |
 | **场景F** 批注产物校验（只读） | 四件套 / 4 段无空行 / 编号唯一 | `check_annotations.py`（≡ `deliver_gate.py --annotated`） |
 | 场景G | 修订稿产物校验（只读） | ins==del 对 / author·id 成对 / 落定证明 | `check_revisions.py`（≡ `deliver_gate.py --revised`） |
-| **场景H** 交付前综合核验 | 基础十项一次跑完，三态 PASS/FAIL/SKIP | `deliver_gate.py` |
+| **场景H** 交付前综合核验 | 基础十项一次跑完，三态 PASS/FAIL/SKIP；全量明细落盘给路径 | `deliver_gate.py`（`--json` 供上层消费） |
 | **场景I** 检查项声明与范围核对（只读） | 「只核对X」「X 过一遍」「挑一下错别字」——用户**显式圈定范围** | **先进门第一档出声明单**（明细 → [check-scope.md](references/check-scope.md)）；域路由：文字与格式→本 skill `check_content.py --checks <项id>`；内容质量→`ibd-quality-gates`；财务→`ibd-finance-review`（**C-P 专业判断／C-Q 数值正确性／C-D 执行要求可分勾**）；法律→`ibd-legal-review`。**报告头与声明单首尾一致**（delivery.md §零／§八） |
 | **场景J** 惯例对照（查「同类情形别家怎么写」，只对照不定性） | 情形无明文或属灰色地带，要看**市场惯例**怎么处理（D 法律域 ／ C 财务域 ／ 预留 E 行业域） | **方法 → [convention-compare.md](references/convention-compare.md)**（四步法：取例→对照→标注→S3 兼容；跨域共用）；D 法律域执行 → `ibd-legal-review` |
 
@@ -171,6 +171,7 @@ agent_created: true
 - **顺序规则：内容质量门禁在前、格式落地在后**——write 草稿先过 `ibd-quality-gates`（数字五要素/反模式/G1-G5 + 数值自洽 check_data.py，md 即可跑），内容定稿后再交本 skill 套样式
 - **⚠️ 文字规范必须在「套样式之前」先查**：完整顺序 = **内容定稿 → `check_content.py --checks text`（标点全角化）→ 套样式 → `deliver_gate.py` 综合核验（复核产物加 `--annotated`/`--revised`）→ 交付**；理由与实测数据（384 处半角引号漏到套样式之后） → [workflow.md](references/workflow.md) 附录「两条时序铁律」
 - **交付前一律先跑 `deliver_gate.py`**：基础十项一次跑完、只输出结论行，复核产物再加 `--annotated` / `--revised`；不要用分散的多条核验命令替代（实测同一指标被反复统计 5-8 次，输出本身成为 token 大头）
+- **输出分层（上下文卫生 · 2026-10-06）**：三个核验脚本统一「**指标行进上下文、明细行落盘**」——`check_styles.py` 默认 stdout 只出「一行一指标」，**pStyle 分布／裸段落清单／序号清单默认落盘**（`--detail N` 内联前 N 行、`--verbose` 全内联、`--out` 指定路径）；`deliver_gate.py` / `check_gates.py` **全量明细（不截断）落盘**并在末行回路径（默认 `<%TEMP%>/<输入名>.<脚本名>.log`）。`--json` 走单一结构化出口，均带 `detail_log` 指针。**判据不是「输出变短」而是「明细有没有可定向读的落盘位置」**——落盘后原文不得继续占用上下文（依据 `docs/ENGINEERING.md` §1 P10 ＋ §4.4 三则③）
 - **SKIP 须向用户点名**（2026-09-16）：deliver_gate 输出含 SKIP 项（officecli 未装/未启用、pymupdf 缺失等）时，AI 必须在回复中注明「本次 N 项 SKIP 未执行（原因）」——脚本层保证「可见的未跑」，本条保证「被看到」；静默跳过与静默失败同罪
 - **批注版链路**：复核产出批注版原文 → 执行器 `ibd-doc-annotate` 注入（规范依据 = [annotations.md](references/annotations.md)）→ 本 skill `check_annotations.py` 门禁 → 交付（批注版 + 精简总览双轨）
 - **下游协作**：本 skill 只改格式不改内容（铁律 0）；**内容质量（数字五要素/反模式/来源可溯）归 `ibd-quality-gates`**（内容层公共服务，上游同样开放）

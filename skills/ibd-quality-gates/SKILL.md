@@ -16,7 +16,7 @@ description: >
   （写入形态 A 裸写／B 前缀写／C 静态写 ＋ 改写四条纪律）。
   触发词：「质量校验」「这篇能不能交」「交付前检查」「数字五要素」
   「绝对化扫描」「反模式扫描」「质量自评」「这篇打几分」「Excel 交付检查」
-version: 0.14.1
+version: 0.15.0
 agent_created: true
 ---
 
@@ -96,7 +96,7 @@ Excel 文件含公式的，**先跑交付门禁**：`ibd-excel-ops/scripts/xlsx_
 
 ```
 初稿完成
-  → ① 跑脚本 python scripts/check_gates.py <文件>          # 机器扫：裸数字粗筛 + 绝对化/AI 痕迹
+  → ① 跑脚本 python scripts/check_gates.py <文件>          # 机器扫：裸数字粗筛 + 绝对化/AI 痕迹（报告落盘、末行回路径；--json 供上层）
   → ①' 跑脚本 python scripts/check_data.py --input <草稿.md|docx>   # 机器核：金额写法/前后一致/合计勾稽/跨表比对
        （md 草稿阶段就能跑，此刻改的是 md，零排版成本；docx 正式稿复核也能跑）
   → ② 人工过反模式清单 references/antipatterns.md          # 机器扫不了的语义问题，人来核
@@ -134,7 +134,7 @@ Excel 文件含公式的，**先跑交付门禁**：`ibd-excel-ops/scripts/xlsx_
 | [wordlist-absolute.txt](references/wordlist-absolute.txt) | 绝对化用词黑名单（G2 用，本 skill 独有） |
 | [wordlist-ai-flavor.txt](references/wordlist-ai-flavor.txt) | AI 写作痕迹词黑名单 |
 | [examples.md](references/examples.md) | 最小复现示例（对话触发 / 命令 / 期望输出） |
-| [check_gates.py](scripts/check_gates.py) | 自动化扫描：绝对化/AI 痕迹 + 裸数字粗筛 |
+| [check_gates.py](scripts/check_gates.py) | 自动化扫描：绝对化/AI 痕迹 + 裸数字粗筛；报告全文落盘（默认 `<%TEMP%>/<文件名>.check_gates.log`）并回路径，`--out` 指定路径、`--json` 出结构化（含 detail_log） |
 | [check_data.py](scripts/check_data.py) | 数值自洽核对：金额写法/数值一致/合计勾稽/跨表比对（md/txt/docx） |
 
 ## 依赖与工具
