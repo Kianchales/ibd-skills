@@ -50,7 +50,7 @@ finance-review 16 维复核产出问题清单（J-01 起编号）→ 本 skill �
 
 ## 📦 安装与依赖
 
-- 🔴 **必须**：Python 3 + `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）——按载体装
+- 🔴 **必须**：Python 3 + `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）、`openpyxl`（xlsx 链路·复核报告生成）——按载体装
 - 🔴 **外部依赖**：`ibd-doc-review ≥ 0.19.0`（格式规范 + 校验门禁 + 交付口径 `delivery.md`，不随本包携带）——缺依赖时可执行注入/修订/出报告，但交付前规范校验不可用，按断链自助指引从集合仓库补齐
 
 ## 📁 目录结构
@@ -79,7 +79,7 @@ ibd-doc-annotate/
     └── tests/
         ├── test_fix_missing_ranges.py    # 后处理脚本自测（8 项）
         ├── test_annotate_docx.py         # 批注注入自测（7 项）
-        ├── test_review_report_to_xlsx.py # 复核报告生成器自测（8 项）
+        ├── test_review_report_to_xlsx.py # 复核报告生成器自测（9 项）
         └── test_validate_issues.py       # 入口校验自测（10 项）
 ```
 

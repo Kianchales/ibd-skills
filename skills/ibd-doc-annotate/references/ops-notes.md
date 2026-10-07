@@ -28,7 +28,7 @@
 
 | 维度 | 说明 |
 |---|---|
-| 🔴 必须（Python 库） | `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）——仅用到对应载体时按需安装；Python 3 |
+| 🔴 必须（Python 库） | `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）、`openpyxl`（xlsx 链路·复核报告生成）——仅用到对应载体时按需安装；Python 3 |
 | 使用者资产 | **无需自备**——任务输入 = 原文 docx/PDF + 复核问题清单 JSON（模板随包），不依赖方法论库 / KB 后端；接入点总表见 ibd-skills 集合仓 `ATTACHMENT-POINTS.md` |
 | 🔴 必须（skill 依赖） | `ibd-doc-review` skill：格式规范单一事实源（annotations.md、revisions.md）+ 校验门禁（check_annotations.py、check_revisions.py）均在该 skill 内，本 skill 不重复维护、不随包携带。**依赖声明制**：本 skill 按「引用外部依赖」发布——使用方在缺少 `ibd-doc-review` 的环境（断链）自行下载安装该依赖后即可完整运行；获取途径 = `ibd-doc-review` 同渠道发布物（GitHub：Kianchales/ibd-skills 集合仓库），版本兼容见该 skill CHANGELOG。**版本下限：`ibd-doc-review ≥ 0.19.0`**（0.6.0 起对齐单入口路由语义引入版——旧版 interface.md 仍声明 PDF 侧直接调用，与本 skill 单入口契约冲突；低于此版须升依赖。**下限登记 → `ibd-doc-review/references/interface.md` §6**。任一 skill 升版后须复核并同步下限） |
 | 运行模式 | 单机直接调用；也可作为投行复核流水线（专家团/人工审查）的落地执行器 |
@@ -38,7 +38,7 @@
 ## §维护
 
 - 版本变更记录见 `CHANGELOG.md`；格式规则变更只改 `ibd-doc-review` 的 annotations.md 与 revisions.md
-- 自测：`python scripts/tests/test_fix_missing_ranges.py`（后处理脚本 8 项；须装 python-docx，未装则整类 SKIP）／`test_annotate_docx.py`（7 项）／`test_review_report_to_xlsx.py`（8 项；须装 openpyxl）／`test_validate_issues.py`（10 项；跨包项未装 `ibd-doc-review` 则 SKIP）
+- 自测：`python scripts/tests/test_fix_missing_ranges.py`（后处理脚本 8 项；须装 python-docx，未装则整类 SKIP）／`test_annotate_docx.py`（7 项）／`test_review_report_to_xlsx.py`（9 项；须装 openpyxl）／`test_validate_issues.py`（10 项；跨包项未装 `ibd-doc-review` 则 SKIP）
 
 ## §踩坑全文分布（按主题归册，不重复维护）
 

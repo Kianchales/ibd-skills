@@ -10,6 +10,7 @@
 - **封面新增「复核声明」节**：`--meta .declaration` 渲染，两形态皆收——**结构化**（`depth` 复核深度 ＋ `checked` 检查／`not_checked` 不查（点名＋原因）／`special` 特别专项／`gates` 交付前将跑，对应《本轮检查项声明》`ibd-doc-review` check-scope.md §六）或**字符串数组**（逐行文字）。落地 delivery.md §八 落款义务——报告是独立文件、会脱离对话流转，**声明必须随报告走**；`declaration` 缺省**不阻断生成但打 `[WARN]`**（声明未做 ＝ 未声明范围，与 SKIP 同纪律）。模板与 `report-meta.example.json` 同步。
 - **新增 `scripts/issue_numbering.py`**（**编号单一事实源**）：`derive_code`（code > ASCII 名首字母 > U）／`full_label`（同前缀超 99 条顺延双字母分段）／`assign_numbers`；`annotate_docx.py`／`annotate_pdf.py`／报告生成器共用，**消除三处重复实现**（防编号漂移）。
 - **清单 schema 增可选字段**：`nature`（问题性质，报告分表轴）、`line`（回复行号）；`problems.schema.json`、`interface.md` §3、`issues-schema.md` §二 同步（`additionalProperties: false`，故须显式登记）。
+- **依赖声明补 `openpyxl`（xlsx 链路·按需装）**：`SKILL.md`／`README.md`／`references/ops-notes.md` 三处依赖表同步——报告生成器引入新第三方库，须与「按载体按需装」声明一致；对应 `skill-publish-pipeline` P6.5 零依赖审计白名单同步放行（否则冷启动冒烟 FAIL）。
 - **自测**：新增 `scripts/tests/test_review_report_to_xlsx.py`（**9 项**：多性质分表端到端／无 nature 回退 type／无 meta 封面仍完整／`--split sev` 轴／坏清单拦截退出 2／**复核声明四栏渲染 ＋ 声明在先的动态编号**／**只主标题居中·其余标题左对齐**／**封面上下等宽（全行跨到 C 列）**／**声明缺省时 WARN**）；`test_annotate_docx.py` 的「总览开关两态」改为「恒只产 md ＋ 旧 `--overview-docx` 报错」；`TestNumbering` 去依赖后可独立跑。
 
 ## [0.11.1] - 2026-10-02

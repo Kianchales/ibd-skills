@@ -113,7 +113,7 @@ python scripts/review_report_to_xlsx.py --issues issues.json [--meta report-meta
 
 ## 依赖与工具
 
-**判据**：Python 3 ＋ `python-docx`、`lxml`（docx 链路）／`pymupdf`（pdf 链路）按载体按需装；**外部依赖 `ibd-doc-review ≥ 0.19.0`**（规范单一事实源 ＋ 校验门禁；**下限登记 → `ibd-doc-review/references/interface.md` §6**）**不随包携带**，断链按自助指引从集合仓补齐——本 skill 单跑注入不受影响，仅门禁不可用。详表与断链自助见 [ops-notes.md](references/ops-notes.md) §依赖与工具。
+**判据**：Python 3 ＋ `python-docx`、`lxml`（docx 链路）／`pymupdf`（pdf 链路）／`openpyxl`（xlsx 链路·复核报告生成）按载体按需装；**外部依赖 `ibd-doc-review ≥ 0.19.0`**（规范单一事实源 ＋ 校验门禁；**下限登记 → `ibd-doc-review/references/interface.md` §6**）**不随包携带**，断链按自助指引从集合仓补齐——本 skill 单跑注入不受影响，仅门禁不可用。详表与断链自助见 [ops-notes.md](references/ops-notes.md) §依赖与工具。
 
 ## 边界与协作
 
@@ -134,4 +134,4 @@ python scripts/review_report_to_xlsx.py --issues issues.json [--meta report-meta
 
 ## 维护
 
-版本变更记录见 [CHANGELOG.md](CHANGELOG.md)；格式规则变更只改 `ibd-doc-review` 的 annotations.md 与 revisions.md；自测 `scripts/tests/`（`test_fix_missing_ranges.py` 8 项／`test_annotate_docx.py` 7 项／`test_review_report_to_xlsx.py` 8 项／`test_validate_issues.py` 10 项）等维护细则见 [ops-notes.md](references/ops-notes.md) §维护。
+版本变更记录见 [CHANGELOG.md](CHANGELOG.md)；格式规则变更只改 `ibd-doc-review` 的 annotations.md 与 revisions.md；自测 `scripts/tests/`（`test_fix_missing_ranges.py` 8 项／`test_annotate_docx.py` 7 项／`test_review_report_to_xlsx.py` 9 项／`test_validate_issues.py` 10 项）等维护细则见 [ops-notes.md](references/ops-notes.md) §维护。
