@@ -238,7 +238,7 @@ python scripts/check_content.py --input <docx> --checks geo,table_na    # 指定
 
 ## 三、批注与修订复核交付模式（规范 + 只读校验）
 
-> 复核结论落到原文（用户裁定：**双轨并存、批注优先**——批注版原文 + 精简总览报告双交付物，替代原「默认只出独立审核报告」；用户明确「生成修订稿」时才走修订，按提示词区分 revise/clean/both）。**交付口径单一事实源 = [delivery.md](delivery.md)；批注规范 = [annotations.md](annotations.md)；修订稿规范 = [revisions.md](revisions.md)**。
+> 复核结论落到原文（默认交付：**批注版原文 + 复核报告（Excel，按问题性质分表）**，批注总览 md 为中间件不交付；替代原「默认只出独立审核报告」；用户明确「生成修订稿」时才走修订，按提示词区分 revise/clean/both）。**交付口径单一事实源 = [delivery.md](delivery.md)；批注规范 = [annotations.md](annotations.md)；修订稿规范 = [revisions.md](revisions.md)**。
 
 - **职责分工**：本 skill 定义规范 + 校验门禁（只读）；**批注注入 / 修订稿生成 = `ibd-doc-annotate` skill**（同一份复核问题清单 → `annotate_docx.py`/`annotate_pdf.py` 批注版，或 `revise_docx.py --mode` 修订稿）——两 skill 交接以本文件为合规依据
 - **职权边界**：复核交付的批注与修订稿同属 `ibd-doc-annotate` 职权（批注/修订同为其复核落地形态）；本 skill `check_styles.py --revise` 的格式修订属样式应用链路、与复核交付无关

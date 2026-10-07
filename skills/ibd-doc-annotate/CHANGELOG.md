@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.0] - 2026-10-07
+
+### 功能：复核报告改 Excel 交付形态 ＋ 总览 md 降为中间件 ＋ 编号单一事实源
+
+- **交付形态变更（撤总览 Word 版）**：原「批注版 + 总览 md/Word」双轨改为「批注版原文 + **复核报告 Excel**（按问题性质分工作表，人读报告）」；总览 **md 恒只产、为中间件（不交付用户）**。删 `scripts/overview_to_docx.py` 与 `annotate_docx.py`／`annotate_pdf.py` 的 `--overview-docx` 开关；旧调用须**显式报错**（argparse 拒绝），不得静默失效。交付口径单一事实源 `ibd-doc-review` delivery.md §一／§八之二 同步。
+- **新增 `scripts/review_report_to_xlsx.py`**（复核报告生成器）：清单 → xlsx，三类工作表（封面与汇总／按性质分页／全部）；`--split nature|type|code|sev`（默认 `nature`，按问题性质 ①–⑤）；性质轴取 `nature` 字段、缺省回退 `type` 大类；列＝编号／严重度／性质／域／行号／原文片段／问题标题／问题描述／建议（＋定稿文本/作者，若有）；严重度着色（高红／中橙／低灰）、冻结首发列、表头筛选。`openpyxl` **惰性导入**（不出报告不加载）；`--meta`（封面/结论元数据，模板 `report-meta.example.json`）、`--json`、`--verbose`（WARN 默认折叠一行）。
+- **封面排版（用户裁定）**：**仅主标题一行跨列合并 ＋ 水平居中**，其余标题（副标题、小节标题）一律**左对齐**；**所有行统一铺满 A:C**——文本行跨 A:C 合并、键值行值格合并 B:C、两列小计表末列右延并合并到 C（`_write_table(..., extend_last_to=COVER_LAST_COL)`），列宽 A:B:C 唯一一套——封面**上下等宽**；小节序号（一、二、…）改**按实际渲染顺序自增**——某节缺内容而缺省时不再出现「一、三、四」跳号。
+- **封面新增「复核声明」节**：`--meta .declaration` 渲染，两形态皆收——**结构化**（`depth` 复核深度 ＋ `checked` 检查／`not_checked` 不查（点名＋原因）／`special` 特别专项／`gates` 交付前将跑，对应《本轮检查项声明》`ibd-doc-review` check-scope.md §六）或**字符串数组**（逐行文字）。落地 delivery.md §八 落款义务——报告是独立文件、会脱离对话流转，**声明必须随报告走**；`declaration` 缺省**不阻断生成但打 `[WARN]`**（声明未做 ＝ 未声明范围，与 SKIP 同纪律）。模板与 `report-meta.example.json` 同步。
+- **新增 `scripts/issue_numbering.py`**（**编号单一事实源**）：`derive_code`（code > ASCII 名首字母 > U）／`full_label`（同前缀超 99 条顺延双字母分段）／`assign_numbers`；`annotate_docx.py`／`annotate_pdf.py`／报告生成器共用，**消除三处重复实现**（防编号漂移）。
+- **清单 schema 增可选字段**：`nature`（问题性质，报告分表轴）、`line`（回复行号）；`problems.schema.json`、`interface.md` §3、`issues-schema.md` §二 同步（`additionalProperties: false`，故须显式登记）。
+- **自测**：新增 `scripts/tests/test_review_report_to_xlsx.py`（**9 项**：多性质分表端到端／无 nature 回退 type／无 meta 封面仍完整／`--split sev` 轴／坏清单拦截退出 2／**复核声明四栏渲染 ＋ 声明在先的动态编号**／**只主标题居中·其余标题左对齐**／**封面上下等宽（全行跨到 C 列）**／**声明缺省时 WARN**）；`test_annotate_docx.py` 的「总览开关两态」改为「恒只产 md ＋ 旧 `--overview-docx` 报错」；`TestNumbering` 去依赖后可独立跑。
+
 ## [0.11.1] - 2026-10-02
 
 ### 入口校验对齐契约：`advice` / `rev` 改 anyOf 条件必填 ＋ 双校验器同输入同结论回归

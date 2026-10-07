@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-test_annotate_docx.py — annotate_docx.py 注入器修复自测（T1 保留性 / T2 编号合规 / T3 总览开关）
+test_annotate_docx.py — annotate_docx.py 注入器修复自测（T1 保留性 / T2 编号合规 / T3 总览只产 md）
 
 背景（2026-09-29 注入器修复批次）：
   1. T1 段落重建原为「保留 pPr、清空其余内容流」——静默删除同段他人批注锚点、
@@ -8,15 +8,16 @@ test_annotate_docx.py — annotate_docx.py 注入器修复自测（T1 保留性 
      修复后：非文本内容原位保留、既有批注内容合并保留、新批注 id 接续既有最大 id。
   2. T2 同前缀超 99 条曾产出 3 位序号（X-103），与门禁 LABEL_PAT（前缀 [A-Z]{1,2}、
      序号恰 2 位）冲突；修复后顺延双字母分段（J-99 → JA-01…），序号恒 2 位。
-  3. T3 总览由「双格式默认」改为「默认只产 md」，Word 版须显式 --overview-docx。
+  3. T3 总览**恒只产 md**（中间件、不交付用户）——2026-10-07 撤除 Word 版链路与
+     `--overview-docx` 开关；人读报告改由 review_report_to_xlsx.py 出 Excel 复核报告。
 
 覆盖：
-  TestNumbering（纯函数）：边界（1/99/100/131）、131 条同前缀全部合规、双字母前缀溢出报错、
-    分段容量穷尽报错
+  TestNumbering（纯函数，被测 = issue_numbering）：边界（1/99/100/131）、131 条同前缀全部合规、
+    双字母前缀溢出报错、分段容量穷尽报错
   TestPreserveAndMerge（端到端）：① 纯 w:tab 兄弟 run 注入后仍在、段落文本零改动；
     ② 二次批注：既有 range 保留、comments.xml 合并（既有批注内容不丢）、id 接续、
     cs/ce/ref 对数与 comments 条数一致
-  TestOverviewFlag（端到端）：默认不产总览 Word 版；加 --overview-docx 才产
+  TestOverviewFlag（端到端）：总览恒只产 md、不产 docx；已撤除的 --overview-docx 须报错
 
 依赖：python-docx（本包 docx 链路的声明依赖）——未安装则整类 SKIP。
 运行：python scripts/tests/test_annotate_docx.py
@@ -101,15 +102,20 @@ def _comments(path):
     return out
 
 
-@unittest.skipUnless(HAS_DOCX, "python-docx 未安装")
 class TestNumbering(unittest.TestCase):
-    """T2：编号分段顺延（纯函数，直接 import 被测模块）。"""
+    """T2：编号分段顺延（纯函数，被测 = issue_numbering；**零三方依赖，恒运行**）。
+
+    2026-10-07 起编号规则抽至 `issue_numbering.py`，本类不再依赖 python-docx——
+    故摘掉原与 docx 链路共用的 `skipUnless`（抽模块后该跳过条件已不成立）。
+    """
 
     @classmethod
     def setUpClass(cls):
         sys.path.insert(0, os.path.join(SKILL_DIR, "scripts"))
-        import annotate_docx  # noqa: F401
-        cls._full_label = staticmethod(annotate_docx._full_label)
+        # 编号规则的单一事实源已抽至 issue_numbering.py（2026-10-07）——
+        # annotate_docx / annotate_pdf / review_report_to_xlsx 三处共用，勿再各自抄一份。
+        import issue_numbering
+        cls._full_label = staticmethod(issue_numbering.full_label)
 
     def test_boundaries(self):
         f = self._full_label
@@ -181,7 +187,8 @@ class TestPreserveAndMerge(unittest.TestCase):
 
 @unittest.skipUnless(HAS_DOCX, "python-docx 未安装")
 class TestOverviewFlag(unittest.TestCase):
-    """T3：总览默认只产 md；--overview-docx 显式才产 Word 版。"""
+    """T3（2026-10-07 起）：总览**恒只产 md**（中间件，不交付用户）；Word 版链路与
+    `--overview-docx` 开关已撤除——旧调用须被显式拒绝，不得静默失效。"""
 
     def _inject(self, td, tag, extra):
         src = os.path.join(td, f"src_{tag}.docx")
@@ -191,17 +198,26 @@ class TestOverviewFlag(unittest.TestCase):
         base = os.path.splitext(out)[0]
         return os.path.exists(base + "_批注总览.md"), os.path.exists(base + "_批注总览.docx")
 
-    def test_default_md_only(self):
+    def test_only_md_never_docx(self):
+        """阳性 + 阴性：总览 md 必产、总览 docx 恒不产。"""
         with tempfile.TemporaryDirectory() as td:
-            md, docx = self._inject(td, "default", extra=())
-            self.assertTrue(md)
-            self.assertFalse(docx, "未加开关却产出了总览 Word 版")
+            md, docx = self._inject(td, "only_md", extra=())
+            self.assertTrue(md, "总览 md 应恒产出（中间件）")
+            self.assertFalse(docx, "总览 Word 版已撤除，不得产出")
 
-    def test_opt_in_docx(self):
+    def test_removed_flag_errors(self):
+        """边界：已撤除的 --overview-docx 须被 argcparse 拒绝（rc≠0），防旧调用静默失效。"""
         with tempfile.TemporaryDirectory() as td:
-            md, docx = self._inject(td, "optin", extra=("--overview-docx",))
-            self.assertTrue(md)
-            self.assertTrue(docx)
+            src = os.path.join(td, "src_flag.docx")
+            _make_fixture(src)
+            out = os.path.join(td, "out_flag.docx")
+            issues_path = src + ".issues.json"
+            with open(issues_path, "w", encoding="utf-8") as fh:
+                json.dump([_issue("锚点文本在这里")], fh, ensure_ascii=False)
+            cmd = [sys.executable, SCRIPT, "--docx", src, "--issues", issues_path,
+                   "--out", out, "--overview-docx"]
+            proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+            self.assertNotEqual(proc.returncode, 0, "已撤除的 --overview-docx 不应被接受")
 
 
 if __name__ == "__main__":

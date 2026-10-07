@@ -2,6 +2,10 @@
 
 本 skill 遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 与语义化版本。集合分发包（ibd-skills）随 zip 携带本文件；单包独立分发可自行剔除（历史说明不随包，版本记录由发布门禁在打包前校验）。
 
+## [0.15.3] - 2026-10-07
+
+- **交付形态对齐（复核报告改 Excel）**：本包原述「交付 = 批注版原文 + 精简总览」——承 `ibd-doc-review` 0.32.0 新口径改为「批注版原文 + **复核报告（Excel，按问题性质分表）**」；批注总览 md 降为**中间件**（不交付用户）。触及 `SKILL.md`（§⑤ 汇总问题清单、能力表「复核结论落地」行）、`README.md`、`references/issue-list-format.md`（§1 字段表增可选 `nature`／`line`；§4 清单交付要求）、`references/integration-and-fallbacks.md`、`references/examples.md`、`references/execution-discipline.md`。**零脚本改动**（本包无脚本）。
+
 ## [0.15.2] - 2026-10-06
 
 - **口径如实化（消同包自相矛盾 · 承 P2「边界判据」）**：`references/execution-discipline.md` 原写「机械可算项…**脚本全量扫机械层**…脚本不是抽样借口」，与同包 `SKILL.md`／`README` 的「**零硬依赖·无脚本**（脚本为可选增强）」相冲——读起来像"有工具可用" ⇒ 模型可能**声称跑过脚本**、或**跳过机械层**。改为「**有勾稽工具则先跑脚本全量扫机械层；无工具则人工逐数重算并留算式——两条路都不得抽样**」，`SKILL.md` 步骤②同步同措辞。

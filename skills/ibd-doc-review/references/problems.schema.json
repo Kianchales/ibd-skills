@@ -60,6 +60,14 @@
         "type": "string",
         "description": "复核人名（可选）"
       },
+      "nature": {
+        "type": "string",
+        "description": "问题性质（可选）——复核报告（Excel）的分页轴，与 12 类 type 词表不是一套（type 管「是什么毛病」，nature 管「报告怎么分派处理」）。推荐五类：①数据不一致／②表述不一致／③自身逻辑／④格式规范／⑤事实存疑；项目可自定标签，同一报告内须统一。缺省时报告按 type 大类回退分页。规格见 delivery.md §八之二"
+      },
+      "line": {
+        "type": "string",
+        "description": "被复核文档的行号或行号区间（可选），如 \"340\"、\"9044-9046\"；供复核报告定位，缺则报告对应列留空"
+      },
       "code": {
         "type": "string",
         "pattern": "^[A-Z]{1,2}$",

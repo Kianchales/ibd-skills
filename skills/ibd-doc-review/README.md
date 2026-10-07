@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%A0%BC%E5%BC%8F%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.31.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.32.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -39,7 +39,7 @@ A 股投行文档的**格式层单一事实源**：样式规范化、格式核�
 > 注：批注/修订的**注入执行**（把意见打进原文）归 `ibd-doc-annotate`——本 skill 是规范与校验侧。
 
 ### 📤 章节复核交付约定
-章节复核交付的**默认形态与执行链路**单一事实源（见 [references/delivery.md](references/delivery.md)）：默认「批注版原文 + ≤1 页精简总览」双轨并存、批注优先；链路 = 复核清单 → 注入 → 门禁（`deliver_gate.py --annotated/--revised`）→ 交付；含批注/修订职权划分、触发语路由、批注全量覆盖纪律。
+章节复核交付的**默认形态与执行链路**单一事实源（见 [references/delivery.md](references/delivery.md)）：默认「**批注版原文 + 复核报告（Excel，按问题性质分表）**」，批注总览 md 为**中间件**（恒只产 md、不交付用户，**无 Word 版**）；链路 = 复核清单 → 注入 → 门禁（`deliver_gate.py --annotated/--revised`）→ 交付；含批注/修订职权划分、触发语路由、批注全量覆盖纪律、复核报告形态规格（§八之二）。
 
 > 注：除非明确说「生成修订稿」，不主动生成修订稿、不主动推进后续复核环节。
 
@@ -86,6 +86,7 @@ ibd-doc-review/
 
 ## 📌 近期更新
 
+- **2026-10-07 · v0.32.0**：**复核报告（Excel）交付形态定义；批注总览 md 降为中间件** —— `delivery.md` 新增 **§八之二**：章节复核默认交付 = **批注版原文 + 复核报告（Excel）**，报告按**问题性质**分工作表（推荐 ①数据不一致／②表述不一致／③回复自身逻辑／④格式规范／⑤事实存疑，缺省回退 `type` 大类），三类工作表（封面与汇总／按性质分页／全部），分表轴 `--split nature|type|code|sev`，严重度着色·冻结·筛选；封面**仅主标题居中**（其余标题左对齐）、**所有行铺满 A:C 上下等宽**、含**「复核声明」节**（声明四栏随报告走，`--meta .declaration`，缺声明打 WARN）；**撤总览 Word 版**（原 `--overview-docx`），总览 md 恒只产、为中间件不交付用户。清单 schema 增可选 `nature`（分表轴）／`line`（行号）；`interface.md` §1／§3／§5／§7 同步。执行器 = `ibd-doc-annotate ≥ 0.12.0` 的 `review_report_to_xlsx.py`
 - **2026-10-06 · v0.31.0**：**输出分层（上下文卫生 · P10 落地）** —— 三个核验脚本统一「**指标行进上下文、明细行落盘**」：`check_styles.py` 默认 stdout 只出「一行一指标」，**pStyle 分布／裸段落清单／序号清单改为落盘**（新增 `--detail N` 内联前 N 行、`--verbose` 全内联＝改造前行为、`--out` 指定路径；默认 `<%TEMP%>/<输入名>.check_styles.log`）；`deliver_gate.py` 新增 **`--json`**（结构化结果，含 `items`／`skipped`／`detail_log`）与 **全量明细（不截断）落盘**（默认文本输出**不变**，仅末行回路径）；`check_gates.py`（`ibd-quality-gates`）同批加 `--out`。依据 = `docs/ENGINEERING.md` §1 P10 ＋ §4.4「上下文卫生三则」③。**判据不是「输出变短」而是「明细有没有可定向读的落盘位置」** —— 故不设长度阈值，只设落盘。自测 **131 → 140 项**（新增三档样本：阴性＝默认不出明细／阳性＝`--verbose` 全内联／边界＝`--detail N` 恰 N 行）
 - **2026-10-05 · v0.30.0**：**禁词命中携带上下文**——`deliver_gate.py` 新增 `_scan_hits`，`check_ban` 命中行附原文片段（前后 14 字、最多 2 例），供人工核对**描述对象**（自身＝红线／第三方·事实陈述＝合规，引 WL-150040）；「全球第一」「全球领先」「唯一」降为 **MINOR**（提示档不阻断）。效果：招股书禁用词项 35 处 → **0 阻断 ＋ 29 提示**，转 **PASS**。回归：CRITICAL 档仍拦、幂等一致
 - **2026-10-05 · v0.29.1**：**禁词表误报止血**——实测招股书 35 处命中几乎全误报。改法（零脚本改动）：「大力」「赋能」由 `legacy_ban` 移入 `absolute` 降为 **MINOR**（职责归位：属文风词非合规红线，文风检查归写作侧）；「全球第一」「全球领先」「唯一」保留档位但 `note` 补「**须核对对象**」指引（描述第三方／事实陈述时放行，引 WL-150040）。效果：35 → **13 阻断 ＋ 22 提示**。新增 `_职责边界` 字段

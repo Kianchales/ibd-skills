@@ -2,7 +2,7 @@
 name: ibd-doc-review
 slug: ibd-doc-review
 displayName: IBD 投行格式复核
-summary: A 股投行文档格式复核：样式规范化（招股书/反馈回复排版）+ 格式核对（序号/日期/标点/简称/表格）+ 章节复核交付约定（批注版/总览双轨），只读核对不改文件。
+summary: A 股投行文档格式复核：样式规范化（招股书/反馈回复排版）+ 格式核对（序号/日期/标点/简称/表格）+ 章节复核交付约定（批注版＋复核报告 Excel），只读核对不改文件。
 description: >
   本技能用于 A 股投行文档的格式处理，提供两类能力：
   1. 样式应用：对 Word 文档套用招股书版或反馈回复版样式体系，适用于招股书、
@@ -19,7 +19,8 @@ description: >
 5. **章节复核交付约定**：**进门第一档 ＝ 检查项声明**（每次复核动手前先逐项声明「查什么／不查什么／为什么」；
    明细清单与声明模板 = [check-scope.md](references/check-scope.md)）、交付的默认形态（**三形态路由**：批注版/文本定稿/修订稿＋项目级形态记忆）、
    **复核深度三档**（L1 快扫/L2 标准/L3 深核——档位是**声明单的默认预设**；**分档轴＝性质：L2 装机器能判的〔格式/数值/台账〕，L3 才装专业判断**）、执行链路（**声明 → 复核清单 → 注入 → 门禁 → 交付**）、
-   批注/修订职权划分、触发语路由、批注全量覆盖纪律——单一事实源见
+   批注/修订职权划分、触发语路由、批注全量覆盖纪律、**复核报告（Excel）形态**（按问题性质分工作表；
+   批注总览 md 降为中间件、不交付）——单一事实源见
    [delivery.md](references/delivery.md)。
   本技能不修改文档内容。
   触发词：「按招股书样式」「招股书排版」「按反馈回复样式」「问询回复格式」
@@ -28,7 +29,7 @@ description: >
   「修订结构对不对」「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」
   「查哪些项」「本轮查什么」「检查项声明」「复核范围」
   「研究下XX节」「帮我看看这段」（批注/修订的注入执行归 ibd-doc-annotate——本 skill 是规范与校验侧）
-version: 0.31.0
+version: 0.32.0
 agent_created: true
 ---
 
@@ -124,6 +125,7 @@ agent_created: true
 
 > - **职责**：本 skill 定规范 + 门禁（只读）；**批注注入 / 修订稿生成 = `ibd-doc-annotate`**（同一份复核问题清单 → `annotate_docx.py` / `revise_docx.py --mode`）——两 skill 交接以本 skill 规范为合规依据。
 > - **门禁一条命令**：`deliver_gate.py --docx <件> --annotated [--expect-annotated N]` / `--revised [--expect-revised N]`，**任一 FAIL → 退回 `ibd-doc-annotate` 重注入，不交付**。
+> - **复核报告（Excel）不属本 skill 产出**：形态规范 = [delivery.md](references/delivery.md) §八之二（三类工作表／`--split` 分页轴／台账列）；生成器 = `ibd-doc-annotate/scripts/review_report_to_xlsx.py`；批注总览 md 为中间件、不进交付清单。
 > - **规范单一事实源**：批注 → [annotations.md](references/annotations.md)；修订 → [revisions.md](references/revisions.md)；交付口径 → [delivery.md](references/delivery.md)；**问题清单 schema** → [problems.schema.json](references/problems.schema.json)（校验入口 `validate_schema.py`）；**对外接口契约** → [interface.md](references/interface.md)。
 > - **⚠️ 加粗判定须按语义**：`<w:b w:val="0">` 是**显式取消加粗**，只判 `<w:b>` 元素存在会把合规批注误判 FAIL（实测，两脚本均已修）。
 > - 完整细则（门禁命令块 · 检查项清单 · 自测命令）→ [workflow.md](references/workflow.md) 第三节。
@@ -146,7 +148,7 @@ agent_created: true
 - **批注复核规范**（交付形态双轨 / 4 行紧凑结构 / 编号体系 / 类型词表 / 字体 / 锚点 / 门禁）→ [annotations.md](references/annotations.md)；**修订稿交付规范**（三模式 / rev 字段 / 落定 / 修改清单 / 门禁）→ [revisions.md](references/revisions.md)；执行器 = `ibd-doc-annotate`
 - **检查项明细清单**（**进门第一档 · 声明单的事实源**）→ [check-scope.md](references/check-scope.md)——A 文字与格式 12 项／B 内容质量 8 项／**C 财务 18 项**（**C-P 专业判断 16 ／ C-Q 数值正确性 1 ／ C-D 执行要求 1**）／**D 法律 22 项**（**19 现役 ＋ 3 待蒸馏占位**，挂 L3，由 `ibd-legal-review` 承载）／**E 行业·预留**（0 项，挂 L3）／F 交付件核验 10 项／S 四类前置门（读取前置 · 片段模式 · 敏感议题 · 数据基准）；**另设「性质」第二轴**（格式规范／数值正确性／表达与事实／专业判断／执行要求／门）；每项带**人话名称 ＋ 具体查什么 ＋ 默认档位 ＋ 前置条件**，附声明单模板与三条纪律；**档位轴＝性质**（L2＝机器能判的：格式／数值／台账；L3＝只有人能判的：专业判断，含 D 法律与预留行业）
 - **惯例对照四步法**（**跨域共用件 · 方法的唯一事实源**）→ [convention-compare.md](references/convention-compare.md)——取例→对照→标注→S3 兼容；§2 各域接法（D 法律／C 财务／预留 E 行业）；**各域只引用不复制**（法律域执行 → `ibd-legal-review`）
-- **章节复核交付约定**（**进门第一档：检查项声明** / 默认交付形态 / 执行链路 / 职权划分 / **三形态路由** / **深度三档＝声明预设** / 批注纪律 / 报告头范围声明）→ [delivery.md](references/delivery.md)
+- **章节复核交付约定**（**进门第一档：检查项声明** / 默认交付形态 / 执行链路 / 职权划分 / **三形态路由** / **深度三档＝声明预设** / 批注纪律 / 报告头范围声明 / **复核报告（Excel）形态＝§八之二**）→ [delivery.md](references/delivery.md)
 - **对外接口契约**（交付口径 / 门禁 CLI / 问题清单 schema / 编号与词表 / **多 skill 合并清单约定** / 脚本入口 / 版本下限）→ [interface.md](references/interface.md)；机器可执行 schema = [problems.schema.json](references/problems.schema.json)（语义源 = interface.md §3 + annotations.md §4）
 - **工具层级说明 + 踩坑全文** → [toolchain.md](references/toolchain.md)；**典型用例** → [examples.md](references/examples.md)；**敏感词/地理清单** → [sensitive-terms.json](references/sensitive-terms.json)；**禁词红线清单（单一事实源）** → [banned-terms.json](references/banned-terms.json)（behavior 行为禁语〔**文档类型敏感·仅招股书**〕／absolute 绝对化用语〔全场景〕／legacy_ban 宣传语〔全场景〕三层；deliver_gate 按 `--scenario` 装载，MINOR 档只提示不阻断，**新增词条改 json 即可、脚本零改动**）
 - **版本历史**：本包 CHANGELOG.md（当前代际 0.15.0 起）；0.1.0 – 0.14.1 共 24 个历史版本段已归档至 [changelog-archive.md](references/changelog-archive.md)
@@ -173,7 +175,7 @@ agent_created: true
 - **交付前一律先跑 `deliver_gate.py`**：基础十项一次跑完、只输出结论行，复核产物再加 `--annotated` / `--revised`；不要用分散的多条核验命令替代（实测同一指标被反复统计 5-8 次，输出本身成为 token 大头）
 - **输出分层（上下文卫生 · 2026-10-06）**：三个核验脚本统一「**指标行进上下文、明细行落盘**」——`check_styles.py` 默认 stdout 只出「一行一指标」，**pStyle 分布／裸段落清单／序号清单默认落盘**（`--detail N` 内联前 N 行、`--verbose` 全内联、`--out` 指定路径）；`deliver_gate.py` / `check_gates.py` **全量明细（不截断）落盘**并在末行回路径（默认 `<%TEMP%>/<输入名>.<脚本名>.log`）。`--json` 走单一结构化出口，均带 `detail_log` 指针。**判据不是「输出变短」而是「明细有没有可定向读的落盘位置」**——落盘后原文不得继续占用上下文（依据 `docs/ENGINEERING.md` §1 P10 ＋ §4.4 三则③）
 - **SKIP 须向用户点名**（2026-09-16）：deliver_gate 输出含 SKIP 项（officecli 未装/未启用、pymupdf 缺失等）时，AI 必须在回复中注明「本次 N 项 SKIP 未执行（原因）」——脚本层保证「可见的未跑」，本条保证「被看到」；静默跳过与静默失败同罪
-- **批注版链路**：复核产出批注版原文 → 执行器 `ibd-doc-annotate` 注入（规范依据 = [annotations.md](references/annotations.md)）→ 本 skill `check_annotations.py` 门禁 → 交付（批注版 + 精简总览双轨）
+- **批注版链路**：复核产出批注版原文 → 执行器 `ibd-doc-annotate` 注入（规范依据 = [annotations.md](references/annotations.md)）→ 本 skill `check_annotations.py` 门禁 → 交付（批注版 + 复核报告 Excel；批注总览 md 为中间件不交付）
 - **下游协作**：本 skill 只改格式不改内容（铁律 0）；**内容质量（数字五要素/反模式/来源可溯）归 `ibd-quality-gates`**（内容层公共服务，上游同样开放）
 
 ## 踩坑与要点（高频三条 · 全文见 [toolchain.md](references/toolchain.md) 第二节）
@@ -185,6 +187,7 @@ agent_created: true
 ## 维护
 
 - 格式规则（样式映射/核对项/批注与修订规范）修改只改本 skill——`ibd-doc-annotate`（执行器）与 `ibd-doc-write`（写作）引用本 skill 规范，不重复维护；规则变更同步 CHANGELOG
+- **报告形态同源对**：`delivery.md` §八之二（报告规格）⟷ `ibd-doc-annotate/scripts/review_report_to_xlsx.py`（生成器）——**改规格须同改生成器**，否则规范只写在纸上（同类教训：双处同源正则漏一处则门禁放行）
 - **规则变更同步清单（漏一环该规则即形同不存在）**：改一条格式铁律须同步 **6 环**——① 规则本体 [rules.md](references/rules.md)；② **检测脚本**（`content_text.py` ＋ `deliver_gate.py` **双处同源正则**，漏一处则门禁放行）；③ 核对项名（`CHECK_REGISTRY` / 模块 docstring / `workflow.md` 表格 / SKILL.md 资源索引）；④ **写作侧预防**（`ibd-doc-write` 的写作红线 `writing-style.md`——写作环节不加载本 skill，规则不落写作侧则产出即违例）；⑤ CHANGELOG ＋ 版本 bump ＋ README 变更摘要；⑥ 测试（**命中 ＋ 豁免不误报**双用例）＋ 端到端探针。**历史教训**：「中文不加空格」曾只做 ①③⑤，②④ 从未覆盖 → 中英之间长期无条款、无拦截
 - 本 skill 升版后须**核对 [interface.md](references/interface.md) §7「版本下限速查」**——那是下游契约的**唯一登记处**（含「引入版本」与「下游消费方」两列）。⚠️ **本行原内联两个下限**（doc-annotate ≥0.15.1／doc-write ≥0.15.0），**实测双双过期**（实际为 ≥0.19.0／≥0.15.7）**且漏了 `ibd-finance-review`**（≥0.16.2）⇒ 改为纯指针，**数值不再在本行重复**。
 - **版本历史**：当前代际记录见本包 CHANGELOG.md（0.15.0 起）；0.1.0 – 0.14.1 共 24 个历史版本段已归档至 [changelog-archive.md](references/changelog-archive.md)

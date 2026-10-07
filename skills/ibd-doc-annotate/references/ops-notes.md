@@ -10,6 +10,7 @@
 | 形态 | 状态 | 说明 |
 |---|---|---|
 | **批注版原文**（docx → Word 审阅批注 / PDF → 高亮弹注） | ✅ 现役 | 只加批注不改原文 |
+| **复核报告 Excel**（按问题性质分工作表） | ✅ 现役 | 批注版的**配套人读报告**（与批注同源同一份清单）；总览 md 降为中间件（恒只产 md、不交付用户），**无 Word 版** |
 | **修订稿**（docx，形态先与用户确认） | ✅ 现役 | `revise`=Word 修订模式（审阅可接受/拒绝）｜`clean`=直接改好｜`both`=双版；**用户提出修订需求先反问确认形态再执行，不按措辞自动路由**；与批注同源（同一份问题清单），归属本 skill 而非 ibd-doc-review |
 
 > 修订稿职权边界：原 `ibd-doc-review` 中「复核交付形态」的修订稿（内容级）已划归本 skill；`ibd-doc-review` `check_styles.py --revise` 的**格式修订**（套样式差异转 Word 修订）属格式层，仍留在 `ibd-doc-review`，与本 skill 无关。
@@ -37,7 +38,7 @@
 ## §维护
 
 - 版本变更记录见 `CHANGELOG.md`；格式规则变更只改 `ibd-doc-review` 的 annotations.md 与 revisions.md
-- 自测：`python scripts/tests/test_fix_missing_ranges.py`（后处理脚本 8 项；须装 python-docx，未装则整类 SKIP）
+- 自测：`python scripts/tests/test_fix_missing_ranges.py`（后处理脚本 8 项；须装 python-docx，未装则整类 SKIP）／`test_annotate_docx.py`（7 项）／`test_review_report_to_xlsx.py`（8 项；须装 openpyxl）／`test_validate_issues.py`（10 项；跨包项未装 `ibd-doc-review` 则 SKIP）
 
 ## §踩坑全文分布（按主题归册，不重复维护）
 

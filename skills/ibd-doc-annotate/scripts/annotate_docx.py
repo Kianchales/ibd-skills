@@ -26,7 +26,8 @@ issues.json（数组，每元素一条复核关注点）:
   - 边界：锚点段落含复杂 run（换行 w:br / 制表 w:tab / 多 w:t 的 run 等）或锚点骑跨超链接 →
     不自动注入，记入总览「未锚定」清单（人工定位），不报错中断
   - 输出：<原文名>_批注版.docx（或 --out）+ <输出>_批注总览.md
-    （总览默认只产 md；如需 Word 版须显式加 --overview-docx；编号一一对应）
+    （总览**恒只产 md**、为**中间件**——不交付用户；人读报告 = 复核报告 Excel，
+     由 review_report_to_xlsx.py 生成。编号一一对应）
   - 批注正文 4 行紧凑：标签行/标题行整行加粗，问题描述/建议仅引导词加粗
   - 只注入批注，不修改原文文字
 
@@ -55,59 +56,10 @@ REL_NS = 'http://schemas.openxmlformats.org/package/2006/relationships'
 XML_SPACE = '{http://www.w3.org/XML/1998/namespace}space'
 NSMAP = {'w': W}
 
-def _derive_code(it):
-    """编号前缀推导：清单 code 字段 > ASCII 复核人名首字母 > 回退 U（提示补 code）。
-
-    前缀语义由复核流程自定义（如 J=财务复核人），脚本不内置任何团队映射——
-    方法层只认结构，人名/代号对应关系是上游清单的内容。
-    """
-    code = str(it.get("code") or "").strip().upper()
-    code = "".join(ch for ch in code if ch.isascii() and ch.isalpha())[:2]  # 规范化：仅 A-Z、≤2 位（对齐门禁 LABEL_PAT）
-    if code:
-        return code
-    author = str(it.get("author") or "").strip()
-    if author and author[0].isascii() and author[0].isalpha():
-        return author[0].upper()
-    print(f"[warn] 编号前缀回退 U：author「{author}」非拉丁名且清单未提供 code 字段"
-          f"（建议每条加 \"code\": \"J\" 等，规范见 ibd-doc-review references/annotations.md §3）",
-          file=sys.stderr)
-    return "U"
-
-
-def _full_label(code, n):
-    """前缀-序号合成：序号恒 2 位（对齐门禁 LABEL_PAT 的 \\d{2}，位数单一事实源在门禁侧，
-    本函数只适配、不放宽门禁）。同前缀超 99 条顺延双字母分段（J-99 → JA-01…JA-99，
-    单字母前缀容量 26×99）；双字母前缀无顺延空间，超 99 条直接报错提示拆分清单——
-    静默改写显式前缀＝编号漂移，禁。
-    """
-    seg, k = divmod(n - 1, 99)
-    if seg == 0:
-        return f"{code}-{k + 1:02d}"
-    if len(code) >= 2:
-        raise ValueError(f"编号前缀 {code} 为双字母，超 99 条无法分段顺延（第 {n} 条）"
-                         f"——请拆分清单或改用单字母前缀")
-    if seg > 26:
-        raise ValueError(f"编号前缀 {code} 分段容量穷尽（27×99=2673 条）——请拆分清单")
-    return f"{code}{chr(ord('A') + seg - 1)}-{k + 1:02d}"
-
-
-def assign_numbers(issues):
-    """编号分配 + 结构校验（方法层只查结构必填，不做内容判断）。
-
-    类型/严重度词表归 ibd-doc-review references/annotations.md §4 定义，本脚本不校验词表、
-    不维护词表副本（复核分类属上游清单内容）；type/sev 缺省仅以「-」作显示兜底。
-    """
-    seen = {}
-    for it in issues:
-        for f in ("author", "anchor", "title"):
-            if not str(it.get(f) or "").strip():
-                raise ValueError(f"条目缺必填字段 {f}: {json.dumps(it, ensure_ascii=False)[:100]}")
-        code = _derive_code(it)
-        seen[code] = seen.get(code, 0) + 1
-        it["full"] = _full_label(code, seen[code])
-        it["type"] = it.get("type") or "-"
-        it["sev"] = it.get("sev") or "-"
-    return issues
+# 编号分配（前缀推导 / 两位序号 / 超 99 条双字母分段）＝ issue_numbering.py 单一事实源，
+# 与 annotate_pdf.py、review_report_to_xlsx.py 三处共用（2026-10-07 抽出——此前两脚本各存一份）。
+# 勿在本文件重建副本：「报告编号 ↔ 批注编号 一一对应」是交付契约核心，副本漂移即断约。
+from issue_numbering import assign_numbers
 
 
 # ---------------- 段落遍历（正文 + 表格单元格，不含页眉页脚） ----------------
@@ -365,7 +317,7 @@ def write_overview(out_docx, issues, misses):
     out = base + "_批注总览.md"
     lines = ["# 复核批注总览", "",
              f"> 批注版：`{os.path.basename(out_docx)}`（Word/WPS 审阅面板查看，支持回复/解决流转）",
-             "> 本总览与批注编号一一对应（双轨兜底）；未自动锚定条目仅在下方列出，请人工定位。", "",
+             "> 本总览与批注编号一一对应，为**中间件**（不交付用户；人读报告＝复核报告 Excel）；未自动锚定条目仅在下方列出，请人工定位。", "",
              "| 编号 | 类型·严重度 | 锚点摘要 | 作者 | 状态 |",
              "|---|---|---|---|---|"]
     miss_full = {m["full"] for m in misses}
@@ -398,8 +350,6 @@ def main():
                     help="只报「命中／未锚定」统计与目标路径，**不写任何文件**（锚点质量预检）")
     ap.add_argument("--force", action="store_true",
                     help="目标文件已存在时覆盖（默认拒绝，防误盖既有交付物）")
-    ap.add_argument("--overview-docx", action="store_true",
-                    help="总览另产 Word 版（默认只产 md；总览 Word 版须显式要求）")
     args = ap.parse_args()
 
     with open(args.issues, encoding="utf-8") as fh:
@@ -462,9 +412,7 @@ def main():
         print("[DRY-RUN] 未写任何文件。目标路径：%s" % out_docx)
         print("[DRY-RUN] 命中 %d 条 ／ 未锚定 %d 条（未锚定明细见上方逐条 [MISS]）"
               % (len(issues) - len(misses), len(misses)))
-        print("[DRY-RUN] 正式运行将另产：<输出>_批注总览.md"
-              + (" ＋ <输出>_批注总览.docx（--overview-docx）" if args.overview_docx
-                 else "（默认只产 md；如需 Word 版加 --overview-docx）"))
+        print("[DRY-RUN] 正式运行将另产：<输出>_批注总览.md（中间件，恒只产 md）")
         return 0
 
     tmp = out_docx + ".tmp"
@@ -490,18 +438,9 @@ def main():
     os.remove(tmp)
     overview = write_overview(out_docx, issues, misses)
     print("saved:", out_docx)
-    if args.overview_docx:
-        # 总览 Word 版为显式 opt-in（默认只产 md，2026-09-29 口径；原「双格式默认」已废止）
-        try:
-            from overview_to_docx import convert as _md2docx
-        except ImportError:
-            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-            from overview_to_docx import convert as _md2docx
-        overview_docx = os.path.splitext(overview)[0] + ".docx"
-        _md2docx(overview, overview_docx)
-        print("overview:", overview, "+", overview_docx)
-    else:
-        print("overview:", overview)
+    # 总览**恒只产 md**（中间件，不交付用户）——2026-10-07 撤除 Word 版链路与 --overview-docx 开关；
+    # 人读报告改由 review_report_to_xlsx.py 出 Excel 复核报告（规格 ibd-doc-review delivery.md §八之二）。
+    print("overview:", overview)
     print(f"未锚定 {len(misses)} 条（详见总览）" if misses else "全部锚定 ✅")
     return 0
 

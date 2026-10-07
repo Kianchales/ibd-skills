@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E8%B4%A2%E5%8A%A1%E7%AB%A0%E8%8A%82%E6%B7%B1%E5%BA%A6%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.15.2-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.15.3-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E8%BD%AF%E4%BB%B6%E4%BE%9D%E8%B5%96-3776AB" alt="no-deps">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -38,7 +38,7 @@
 
 **场景：招股书财务章节逐段复核 → 批注交付**
 
-锁定章节与数据基准（审计报告为唯一事实源）→ 范围内每数必核（先机械扫、人工核语义）→ 16 维逐维问三件事：数据齐不齐、口径对不对、披露够不够 → 命中关注信号即起草问题（不硬凑）→ 清单按字段规范汇总 → 交 doc-annotate 原位批注，交付批注版原文 + 精简总览。
+锁定章节与数据基准（审计报告为唯一事实源）→ 范围内每数必核（先机械扫、人工核语义）→ 16 维逐维问三件事：数据齐不齐、口径对不对、披露够不够 → 命中关注信号即起草问题（不硬凑）→ 清单按字段规范汇总 → 交 doc-annotate 原位批注，交付批注版原文 + 复核报告（Excel，按问题性质分表）。
 
 ## 🔗 与生态内其他 skill 的分工
 
@@ -73,6 +73,7 @@ ibd-finance-review/
 
 ## 📌 近期更新
 
+- **2026-10-07 · v0.15.3**：**交付形态对齐（复核报告改 Excel）**——承 `ibd-doc-review` 0.32.0 新口径，交付形态由「批注版原文 + 精简总览」改为「批注版原文 + **复核报告（Excel，按问题性质分表）**」，批注总览 md 降为中间件；`issue-list-format.md` §1 字段表增可选 `nature`（性质分表轴）／`line`（行号）。零脚本改动
 - **2026-10-02 · v0.15.0**：**清单字段名对齐契约**——`severity`→`sev`、`description`→`desc`、`suggestion`→`advice`，并补 `rev`（`advice`/`rev` 二者至少其一）；去掉「本 skill 单一事实源」自称、回指 `ibd-doc-review` 的 `interface.md` §3。修正前按本册字段名产出的清单会被下游校验器双拦（schema `additionalProperties:false`）
 - **2026-10-02 · v0.14.0**：**库调用治理**——加维门槛判据上提 `docs/CONVENTIONS.md`（消两消费包重复）、新增检索预算（防无界查询）与库对账巡检（零脚本）、与 `ibd-legal-review` 族回环标「同构件·改动须同批」
 - **2026-10-02 · v0.13.0**：**接方法论库 ＋ 建「蒸馏 → 复核维度」回环**——依据链**第 2 顺位「同类案例」升级为两级**：① 先查**方法论库财务域**（已蒸馏的同类案例，按卷组织）→ ② 再取**公开原文核验**；两者**同源**（库条目实证栏即公开问询与回复），是**加速而非替代**，**引用一律回源**。新增 **§3.1 维度演进回环**（`蒸馏 → 库新增条目/卷 → 本包巡检 → 回填维度 或 登记新维度候选`）＋ **§3.2 新维度候选表**（加维判据：≥3 案例复现）。依赖面加 `ibd-methods-query`（🟢）与 `ibd-methods-ops`，**皆缺时按原路径运行**——**仍为零硬依赖**

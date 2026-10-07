@@ -14,7 +14,7 @@ python scripts/annotate_docx.py --docx <原文.docx> --issues issues.json [--out
 python scripts/annotate_pdf.py --pdf <原文.pdf> --issues issues.json [--pages "5-6"] [--out <输出.pdf>]
 ```
 
-批注脚本自动完成：编号分配（按清单顺序，作者代号+序号；同前缀超 99 条顺延双字母分段，序号恒两位）→ 锚点定位 → 批注注入（正文 4 行紧凑排版；段落内非文本内容原位保留）→ 总览生成（**默认只产 md**；如需 Word 版须显式加 `--overview-docx`）。
+批注脚本自动完成：编号分配（按清单顺序，作者代号+序号；同前缀超 99 条顺延双字母分段，序号恒两位）→ 锚点定位 → 批注注入（正文 4 行紧凑排版；段落内非文本内容原位保留）→ 总览生成（**恒只产 md、为中间件不交付用户**；人读报告改由 `review_report_to_xlsx.py` 出复核报告 Excel）。
 
 后处理：`scripts/fix_missing_ranges.py` 补插丢失的批注 range（同段多批注冲突），详见本册 §五。
 
