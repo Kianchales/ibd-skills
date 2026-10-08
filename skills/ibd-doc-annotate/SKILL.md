@@ -21,7 +21,7 @@ description: >
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「出复核报告」「Excel 复核报告」「复核报告按性质分表」
   「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.12.0
+version: 0.12.1
 agent_created: true
 ---
 
@@ -113,7 +113,7 @@ python scripts/review_report_to_xlsx.py --issues issues.json [--meta report-meta
 
 ## 依赖与工具
 
-**判据**：Python 3 ＋ `python-docx`、`lxml`（docx 链路）／`pymupdf`（pdf 链路）／`openpyxl`（xlsx 链路·复核报告生成）按载体按需装；**外部依赖 `ibd-doc-review ≥ 0.19.0`**（规范单一事实源 ＋ 校验门禁；**下限登记 → `ibd-doc-review/references/interface.md` §6**）**不随包携带**，断链按自助指引从集合仓补齐——本 skill 单跑注入不受影响，仅门禁不可用。详表与断链自助见 [ops-notes.md](references/ops-notes.md) §依赖与工具。
+**判据**：Python 3 ＋ `python-docx`、`lxml`（docx 链路）／`pymupdf`（pdf 链路）／`openpyxl`（xlsx 链路·复核报告生成）按载体按需装；**外部依赖 `ibd-doc-review ≥ 0.32.0`**（规范单一事实源 ＋ 校验门禁；下限＝所引能力的引入版之**最大值**，最严一条为**复核报告（Excel）形态 ≥0.32.0**；**下限登记 → `ibd-doc-review/references/interface.md` §7**）**不随包携带**，断链按自助指引从集合仓补齐——本 skill 单跑注入不受影响，仅门禁不可用。详表与断链自助见 [ops-notes.md](references/ops-notes.md) §依赖与工具。
 
 ## 边界与协作
 

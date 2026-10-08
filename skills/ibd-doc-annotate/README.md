@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%89%B9%E6%B3%A8%E4%B8%8E%E4%BF%AE%E8%AE%A2%E4%BA%A4%E4%BB%98-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.12.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.12.1-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -51,7 +51,7 @@ finance-review 16 维复核产出问题清单（J-01 起编号）→ 本 skill �
 ## 📦 安装与依赖
 
 - 🔴 **必须**：Python 3 + `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）、`openpyxl`（xlsx 链路·复核报告生成）——按载体装
-- 🔴 **外部依赖**：`ibd-doc-review ≥ 0.19.0`（格式规范 + 校验门禁 + 交付口径 `delivery.md`，不随本包携带）——缺依赖时可执行注入/修订/出报告，但交付前规范校验不可用，按断链自助指引从集合仓库补齐
+- 🔴 **外部依赖**：`ibd-doc-review ≥ 0.32.0`（格式规范 + 校验门禁 + 交付口径 `delivery.md` + 复核报告（Excel）形态 §八之二；下限＝所引能力的引入版之最大值，登记表 → `ibd-doc-review/references/interface.md` §7；不随本包携带）——缺依赖时可执行注入/修订/出报告，但交付前规范校验不可用，按断链自助指引从集合仓库补齐
 
 ## 📁 目录结构
 
@@ -85,6 +85,7 @@ ibd-doc-annotate/
 
 ## 📌 近期更新
 
+- **2026-10-09 · v0.12.1**：**依赖下限上收至 `ibd-doc-review ≥ 0.32.0`（原 0.19.0）＋ 登记指针订正**——下限口径＝**所引能力的引入版之最大值**：本包 0.12.0 起交付**复核报告（Excel）**，其形态规格出自上游 `delivery.md` **§八之二（≥0.32.0）**，严于单入口路由语义（≥0.19.0）／类型词表 12 类与清单 `anyOf`（≥0.26.2）／三形态交付路由与深度三档（≥0.26.0）；**低于 0.32.0 时报告形态无据可依**。同步订正**过期指针**——三处所指 `interface.md` **§6 → §7**（0.26.2 新增 §5 后原 §6 顺延为 §7，指针未跟改）。三处（`SKILL.md`／`README.md`／`references/ops-notes.md`）统一；零脚本改动
 - **2026-10-07 · v0.12.0**：**复核报告改 Excel 交付形态，总览 md 降为中间件**——原「批注版 + 总览 md/Word」双轨改为「批注版原文 + **复核报告 Excel**（按问题性质分工作表，人读报告）」，形态规格见 `ibd-doc-review` delivery.md §八之二。新增 `review_report_to_xlsx.py`（清单 → xlsx：封面与汇总／按性质分页／全部；`--split nature|type|code|sev`；封面**仅主标题居中**（其余标题左对齐、**所有行铺满 A:C 上下等宽**）、含**「复核声明」节**——`--meta .declaration` 落「检查／不查／特别专项／交付前将跑」四栏，**声明随报告走**）与 `issue_numbering.py`（**编号单一事实源**，批注／修订／报告三处共用，防漂移）。**撤除总览 Word 版**：删 `overview_to_docx.py` 与 `--overview-docx` 开关（旧调用显式报错、不静默失效）；总览 md 恒只产、为中间件不交付用户。清单 schema 增可选 `nature`（性质分表轴）／`line`（回复行号）。自测新增 `test_review_report_to_xlsx.py`（9 项）
 - **2026-10-02 · v0.11.1**：**入口校验对齐契约**——`advice`/`rev` 改 **anyOf 条件必填**（原先无条件要 `advice`，把「文本定稿/修订」形态清单判死、且与 doc-review 的 `validate_schema.py` 结论相反）；补 `scripts/tests/test_validate_issues.py`（10 项：rev-only 回归 ＋ 契约一致性 ＋ **双校验器同输入同结论**）
 - **2026-09-29 · v0.11.0**：**批注链修复三件**——①注入器段落重建改**原位保留**（同段他人批注锚点/书签/`w:tab` 兄弟 run 不再被静默删除，支持在已带批注文档上二次批注）；②既有批注内容**合并保留**＋新批注 id 接续（`comments.xml` 不再整体覆写）；③编号同前缀超 99 条**顺延双字母分段**（J-99→JA-01，序号恒两位，不再与门禁冲突）；④**总览默认只产 md**（Word 版须显式 `--overview-docx`）。新增自测 7 项，存量 8 项回归全过

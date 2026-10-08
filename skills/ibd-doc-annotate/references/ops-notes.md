@@ -30,7 +30,7 @@
 |---|---|
 | 🔴 必须（Python 库） | `python-docx`、`lxml`（docx 链路）、`pymupdf`（pdf 链路）、`openpyxl`（xlsx 链路·复核报告生成）——仅用到对应载体时按需安装；Python 3 |
 | 使用者资产 | **无需自备**——任务输入 = 原文 docx/PDF + 复核问题清单 JSON（模板随包），不依赖方法论库 / KB 后端；接入点总表见 ibd-skills 集合仓 `ATTACHMENT-POINTS.md` |
-| 🔴 必须（skill 依赖） | `ibd-doc-review` skill：格式规范单一事实源（annotations.md、revisions.md）+ 校验门禁（check_annotations.py、check_revisions.py）均在该 skill 内，本 skill 不重复维护、不随包携带。**依赖声明制**：本 skill 按「引用外部依赖」发布——使用方在缺少 `ibd-doc-review` 的环境（断链）自行下载安装该依赖后即可完整运行；获取途径 = `ibd-doc-review` 同渠道发布物（GitHub：Kianchales/ibd-skills 集合仓库），版本兼容见该 skill CHANGELOG。**版本下限：`ibd-doc-review ≥ 0.19.0`**（0.6.0 起对齐单入口路由语义引入版——旧版 interface.md 仍声明 PDF 侧直接调用，与本 skill 单入口契约冲突；低于此版须升依赖。**下限登记 → `ibd-doc-review/references/interface.md` §6**。任一 skill 升版后须复核并同步下限） |
+| 🔴 必须（skill 依赖） | `ibd-doc-review` skill：格式规范单一事实源（annotations.md、revisions.md）+ 校验门禁（check_annotations.py、check_revisions.py）均在该 skill 内，本 skill 不重复维护、不随包携带。**依赖声明制**：本 skill 按「引用外部依赖」发布——使用方在缺少 `ibd-doc-review` 的环境（断链）自行下载安装该依赖后即可完整运行；获取途径 = `ibd-doc-review` 同渠道发布物（GitHub：Kianchales/ibd-skills 集合仓库），版本兼容见该 skill CHANGELOG。**版本下限：`ibd-doc-review ≥ 0.32.0`**（下限＝所引能力的引入版之**最大值**——最严一条为**复核报告（Excel）形态 ≥0.32.0**〔本包 0.12.0 起的交付形态，规格出自上游 `delivery.md` §八之二〕，另压 0.26.2 类型词表 12 类·清单 `anyOf`／0.26.0 三形态交付路由·深度三档／0.19.0 单入口路由语义；低于此版报告形态无据可依。**下限登记 → `ibd-doc-review/references/interface.md` §7**。任一 skill 升版后须复核并同步下限） |
 | 运行模式 | 单机直接调用；也可作为投行复核流水线（专家团/人工审查）的落地执行器 |
 
 **断链自助指引**：若执行校验门禁报「找不到 ibd-doc-review / check_annotations.py」，说明使用环境缺外部依赖——按 `ibd-doc-review` 的 GitHub 发布渠道（与获取本技能同一来源：Kianchales/ibd-skills 集合仓库 `skills/` 子目录）自行安装即可，无需等待组合包；本技能单跑注入脚本不受影响，仅规范合规校验（门禁）依赖该 skill。
