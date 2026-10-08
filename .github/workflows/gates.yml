@@ -41,9 +41,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: quality-gates 自测（反模式/绝对化/AI 痕迹，5 用例）
+      - name: quality-gates 自测（反模式/绝对化/AI 痕迹/输出契约，9 用例）
         run: python skills/ibd-quality-gates/scripts/tests/test_check_gates.py
-      - name: doc-review 自测（样式/核对/修订 18 用例，纯 stdlib）
+      - name: doc-review 自测（样式/核对/修订 22 用例，纯 stdlib）
         run: python skills/ibd-doc-review/scripts/tests/test_check_styles.py
 
   consistency:
