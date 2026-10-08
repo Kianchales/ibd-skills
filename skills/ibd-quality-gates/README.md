@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E8%B4%A8%E9%87%8F%E6%A0%A1%E9%AA%8C-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.15.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.16.0-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E7%AC%AC%E4%B8%89%E6%96%B9%E4%BE%9D%E8%B5%96-3776AB" alt="stdlib">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -71,7 +71,7 @@ ibd-quality-gates/
 ├── references/
 │   ├── wordlist-absolute.txt      # 绝对化用词表（G2）
 │   ├── wordlist-ai-flavor.txt     # AI 痕迹词表
-│   ├── antipatterns.md            # 反模式清单（四类 23 条）
+│   ├── antipatterns.md            # 反模式清单（四类 30 条）
 │   ├── rules.md                   # 完整规则（含 G1-G5 定义 + §7 Excel 交付门禁）
 │   ├── task-core.md               # 动笔前准备骨架
 │   └── examples.md                # 最小复现示例
@@ -80,6 +80,7 @@ ibd-quality-gates/
 
 ## 📌 近期更新
 
+- **2026-10-08 · v0.16.0**：**表述类反模式补 6 条中文 AI 味句式**——S-7 长定语链（层叠的「的」）／S-8 套话式开场（「随着……的发展」）／S-9 预告式铺垫（「以下将从……展开」）／S-10 句尾拔高（「……充分彰显了……」）／S-11 假对比抬高（「不仅……更是……」）／S-12 客服腔与草稿残留；`wordlist-ai-flavor.txt` 补 **至关重要／深入探讨／无缝** 3 词（**25 → 28 词**，机器扫描直接命中）。**顺带修正既存计数漂移**：清单实际为 24 条而表头写 22、README 写 23 —— 本次统一为 **30 条**
 - **2026-10-06 · v0.15.0**：**输出契约补齐（报告落盘）** —— `check_gates.py` 新增 `--out`（**报告全文默认落盘**，`<%TEMP%>/<文件名>.check_gates.log`）并在末行回路径；`--json` 契约扩展 `detail_log` 指针。默认文本报告格式**不变**（仅追加路径行）。依据 = 上下文卫生（`docs/ENGINEERING.md` §1 P10 ＋ §4.4 三则③「工具明细默认落盘」）；自测 **5 → 9 例**（新增 4 例输出契约）
 - **2026-10-02 · v0.14.0**：**依赖面接线** —— 🟢 可选层的「方法论库」补**取用通道点名**（建库/蒸馏/维护 → `ibd-methods-ops`；按问题查库 → `ibd-methods-query`）；**层级不变**，仍无需任何外部依赖即可完成校验
 - **2026-09-18 · v0.11.0**：新增 rules.md **§8 改写既有工作簿四条纪律**——改前体检结构（表头/列序/公式引用）、写后读回验证（工具「返回成功」≠ 已落盘）、汇总默认全公式（静态快照须标注取值时点）、构造参照值前先分离「明细」与「合计」行；源自 I-0008~I-0011 四连事故

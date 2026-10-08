@@ -16,7 +16,7 @@ description: >
   （写入形态 A 裸写／B 前缀写／C 静态写 ＋ 改写四条纪律）。
   触发词：「质量校验」「这篇能不能交」「交付前检查」「数字五要素」
   「绝对化扫描」「反模式扫描」「质量自评」「这篇打几分」「Excel 交付检查」
-version: 0.15.0
+version: 0.16.0
 agent_created: true
 ---
 
@@ -130,7 +130,7 @@ Excel 文件含公式的，**先跑交付门禁**：`ibd-excel-ops/scripts/xlsx_
 |------|------|
 | [rules.md](references/rules.md) | 四类检查 + 五项判据的完整规则，每条配正反例；§7 为 Excel 交付门禁（重算 ＋ 交稿前检查）；§8 操作层已按层拆出至 `ibd-excel-ops`；**§附一** 依赖层级说明 ／ **§附二** G4 引用可追溯执行细则（自 SKILL.md 下沉） |
 | [task-core.md](references/task-core.md) | 动笔前准备的通用骨架与多角色参数表 |
-| [antipatterns.md](references/antipatterns.md) | 反模式清单（四类 23 条），每条含"为什么不行、怎么改" |
+| [antipatterns.md](references/antipatterns.md) | 反模式清单（四类 30 条），每条含"为什么不行、怎么改" |
 | [wordlist-absolute.txt](references/wordlist-absolute.txt) | 绝对化用词黑名单（G2 用，本 skill 独有） |
 | [wordlist-ai-flavor.txt](references/wordlist-ai-flavor.txt) | AI 写作痕迹词黑名单 |
 | [examples.md](references/examples.md) | 最小复现示例（对话触发 / 命令 / 期望输出） |
