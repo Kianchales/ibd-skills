@@ -61,7 +61,7 @@ python skills/ibd-doc-review/scripts/tests/test_deliver_gate.py
 
 | 类型 | 谁需要 | 怎么装 | 不装会怎样 |
 |---|---|---|---|
-| **Python 库**（docx／pdf） | `ibd-doc-annotate` | `pip install python-docx lxml pymupdf` | 批注／PDF 相关功能不可用，**其余照常** |
+| **Python 库**（docx／pdf／xlsx） | `ibd-doc-annotate` | `pip install python-docx lxml pymupdf openpyxl` | 批注／PDF／复核报告 Excel 相关功能不可用，**其余照常** |
 | **Python 库**（PDF 取件） | `ibd-legal-review`（**仅 PDF 路径**） | `pip install pymupdf` | HTML 取件照常；遇 PDF 会**明确提示**，不会静默失败 |
 | **平台工具**（docx 处理） | `ibd-doc-review` 的**套样式** | 任一 docx 处理工具或本地 Office | **套样式**不可用，**格式核对**照常 |
 | **方法论库**（**要你自己建**） | `ibd-methods-query` ／ `ibd-legal-review`（B 档）／ `ibd-finance-review`（可选） | 用 `ibd-methods-ops` **建库**（首次检索会走冷启动引导） | 检索无结果／惯例对照退 A 档 —— **这是设计内的降级，不是报错** |

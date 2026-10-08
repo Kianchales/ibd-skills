@@ -165,7 +165,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | 依赖类型 | 说明 |
 |---|---|
 | 外部 skill 依赖 | doc-write / doc-annotate 声明依赖同族公开包（不随包携带），从本仓库 `skills/` 目录获取对应包即可 |
-| Python 库 | doc-annotate 的 docx/pdf 链路按需装 `python-docx`/`lxml`/`pymupdf`（SKILL.md 已声明）；methods-ops 的 15 个脚本为纯标准库；其余脚本零依赖 |
+| Python 库 | doc-annotate 的 docx/pdf/xlsx 链路按需装 `python-docx`/`lxml`/`pymupdf`/`openpyxl`（SKILL.md 已声明）；methods-ops 的 15 个脚本为纯标准库；其余脚本零依赖 |
 | 平台工具 | 样式套用依赖任一 docx 处理工具（tencent-docx / minimax-docx / 本地 Office），按 SKILL.md 依赖表自备 |
 
 ### 依赖关系图（谁依赖谁）
