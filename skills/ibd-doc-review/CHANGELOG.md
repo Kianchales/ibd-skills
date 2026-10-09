@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.32.2] - 2026-10-09
+
+### 修复：禁词「唯一」档位被 legacy_ban 静默击穿（装载优先级）
+
+- **根因**：`deliver_gate.load_ban_rules` 原为「**先到先得**」（`seen` 去重）——先装 `legacy_ban`（硬编码 `IMPORTANT`），后装 `absolute` 时因词已存在而装不进去。于是**同词兼顾两层的词，`absolute` 的档位与说明被 `legacy_ban` 静默覆盖**。
+- **受影响 5 词**：`唯一`（`absolute` 声明 **MINOR** → 实际 **IMPORTANT**，**功能性击穿**——客观事实语境（如「唯一通过××认证」）被误判 **FAIL**，与 2026-10-05「降档＋上下文输出」的设计意图直接相悖）；`世界第一`／`国内首创`／`填补空白`／`最先进`（声明 CRITICAL → 实际 IMPORTANT，功能同属阻断档、仅标签失真）。
+- **修法**：改为 **`legacy_ban` < `absolute` < `behavior` 优先级覆盖（高者胜）**；`behavior` 不适用该场景时不参与，此时由 `absolute` 覆盖 `legacy_ban`。**零词表内容变更**（仅装载次序语义）。
+- **回归护栏 2 例**（`scripts/tests/test_deliver_gate.py` A2）：24「唯一」降档须生效（PASS ＋ 提示可见）、25 同族反向——`CRITICAL` 不被覆盖放松（仍 FAIL）。自测 **39 项 OK**。
+- **口径固化**（B2 议题裁定，2026-10-09）：`references/banned-terms.json` 增 `_口径_装载优先级`（并立纪律：**带精确档位的新词一律写 `absolute`/`behavior`，`legacy_ban` 只留无档位的兜底词**）与 `_口径_自身与他人`（**描述对象区分不做自动豁免**——实体识别把红线误判为第三方而放行属漏报，代价高于误报；维持「降档 ＋ 命中处上下文输出 ＋ 复核者判读」）。
+
 ## [0.32.1] - 2026-10-09
 
 ### 文档：§7 下限登记表补登下游消费方（`ibd-finance-review`）

@@ -113,6 +113,8 @@ def load_ban_rules(scenario=None):
       理由：「经核查，保荐机构认为……」是**反馈回复规范句式**，却是**招股书正文零容忍禁区**
       ——同一词表的合法性随文档类型变化，摊平到全场景即大面积假阳性（2026-09-28 回归事故）。
     - scenario 为 None（模块级默认）时按「最严场景」装载，行为禁语全带上。
+    - **同词多层命中 ⇒ 按 legacy_ban < absolute < behavior 优先级覆盖（高者胜）**；
+      behavior 不适用该场景时不参与，此时 absolute 覆盖 legacy_ban。
     - json 缺失/损坏 ⇒ 兜底 legacy 13 词（纯词，无档位，按 IMPORTANT 计）。
     """
     try:
@@ -121,36 +123,44 @@ def load_ban_rules(scenario=None):
     except (OSError, ValueError):
         return [(w, "IMPORTANT", "兜底内置红线", "") for w in DEFAULT_BAN_FALLBACK]
 
-    rules = []
-    seen = set()
+    # 装载优先级（低 → 高）：legacy_ban < absolute < behavior；同词被**更高优先级**
+    # 定义命中时**覆盖**前者。原实现「先到先得（seen 去重）」会让先装的 legacy_ban
+    # 泛化 IMPORTANT 静默吃掉后装 absolute 的档位与说明——「唯一」在 absolute 里已
+    # 降 MINOR（提示·不阻断），却被覆盖回 IMPORTANT 变成硬阻断，与 2026-10-05
+    # 「降档＋上下文输出」的设计意图相悖（静默失效，2026-10-09 修）。
+    ordered = {}          # pattern -> (level, note, suggestion)；dict 保序，重复键原位覆盖
 
-    def _add(p, level, note, suggestion):
-        if p and p not in seen:
-            seen.add(p)
-            rules.append((p, level, note, suggestion))
+    def _put(p, level, note, suggestion):
+        if p:
+            ordered[p] = (level, note, suggestion)
 
+    # ① 最低：legacy_ban（纯词 + 泛化说明）
     for w in data.get("legacy_ban", []):
-        _add(str(w), "IMPORTANT", "宣传语/承诺语红线（全场景）", "改为事实陈述或删除")
+        _put(str(w), "IMPORTANT", "宣传语/承诺语红线（全场景）", "改为事实陈述或删除")
 
+    # ② 中：absolute（显式档位 + 说明）
+    abs_grp = data.get("absolute")
+    if isinstance(abs_grp, list):
+        for item in abs_grp:
+            if isinstance(item, dict):
+                _put(item.get("pattern", ""), item.get("level", "IMPORTANT"),
+                     item.get("note", ""), item.get("suggestion", ""))
+            else:
+                _put(str(item), "IMPORTANT", "", "")
+
+    # ③ 最高：behavior（文档类型敏感 · 显式档位 + 说明 · 仅适用场景装载）
     beh = data.get("behavior") if isinstance(data.get("behavior"), dict) else {}
     beh_scope = beh.get("applies_to")
     beh_on = (beh_scope is None) if scenario is None else (scenario in (beh_scope or []))
-    groups = [("behavior", beh, beh_on), ("absolute", data.get("absolute"), True)]
-    for _, grp, enabled in groups:
-        if not enabled:
-            continue
-        if isinstance(grp, dict):
-            items = list(grp.get("strong", [])) + list(grp.get("weak", []))
-        elif isinstance(grp, list):
-            items = grp
-        else:
-            continue
-        for item in items:
+    if beh_on:
+        for item in list(beh.get("strong", [])) + list(beh.get("weak", [])):
             if isinstance(item, dict):
-                _add(item.get("pattern", ""), item.get("level", "IMPORTANT"),
+                _put(item.get("pattern", ""), item.get("level", "IMPORTANT"),
                      item.get("note", ""), item.get("suggestion", ""))
             else:
-                _add(str(item), "IMPORTANT", "", "")
+                _put(str(item), "IMPORTANT", "", "")
+
+    rules = [(p, lv, nt, sg) for p, (lv, nt, sg) in ordered.items()]
     if not rules:
         return [(w, "IMPORTANT", "兜底内置红线", "") for w in DEFAULT_BAN_FALLBACK]
     return rules

@@ -13,6 +13,8 @@ test_deliver_gate.py — deliver_gate.py 自测（含批注/修订挂载开关�
     21. 绝对化用语 / legacy 宣传语 → 全场景 FAIL
     22. MINOR 档（提示类）→ 不阻断，但提示可见
     23. --ban 追加词 → 按阻断档生效
+    24. 「唯一」同见 legacy_ban/absolute → absolute 的 MINOR 生效（装载优先级回归 2026-10-09）
+    25. 同族反向：CRITICAL 不被 legacy 覆盖放松 → 仍阻断
   B. --annotated 挂载（批注三项）
      4. 合规批注件（2 条）→ 十二项全 PASS
      5. 批注结构违规（段落数≠4 / 标签行未加粗 / 编号格式错 / 编号重复）→ FAIL
@@ -337,6 +339,23 @@ class TestBanScope(TmpDirMixin, unittest.TestCase):
         self.assertIn("全球第一", out)          # 提示不得静默丢弃
         self.assertIn("…", out)                 # 须带上下文片段（供核对描述对象）
         self.assertEqual(rc, 0, out)
+
+    def test_03d_downgraded_absolute_not_defeated_by_legacy_ban(self):
+        """「唯一」同见 legacy_ban 与 absolute：absolute 的 MINOR 须生效（回归护栏 2026-10-09）
+
+        原装载为「先到先得（seen 去重）」——legacy_ban 先入，其 IMPORTANT 静默吃掉
+        后装 absolute 的 MINOR，「唯一」在客观事实语境（如「唯一通过××认证」）被误判 FAIL。
+        """
+        rc, out = self._gate("公司采用国际唯一通过SVAC2.0认证的方案。", "招股书")
+        self.assertEqual(line_of(out, "禁用词红线").group(1), "PASS", out)
+        self.assertIn("唯一", out)              # 提示不得静默丢弃
+        self.assertEqual(rc, 0, out)
+
+    def test_03e_critical_absolute_survives_legacy_override(self):
+        """同族反向：优先级覆盖不得放松红线——absolute 的 CRITICAL（世界第一）仍须阻断"""
+        rc, out = self._gate("公司为世界第一的供应商。", "招股书")
+        self.assertEqual(line_of(out, "禁用词红线").group(1), "FAIL", out)
+        self.assertEqual(rc, 1, out)
 
     def test_03b_legacy_ban_banned_in_all_scenarios(self):
         """legacy 宣传语红线同为全场景 → 回复场景 FAIL"""
