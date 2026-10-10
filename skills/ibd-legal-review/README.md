@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%8A%95%E8%A1%8C%E6%B3%95%E5%BE%8B%E4%BE%8B%E5%AF%B9%E7%85%A7-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.3.1-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.3.2-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -52,7 +52,7 @@
 
 | 须自备资产 | 挂载方式 | 缺失降级 |
 |---|---|---|
-| ① **法规依据源**（🟡推荐；**可自举**）② **方法论库**（🟡推荐，用 `{METHODS_ROOT}` 占位符）③ 包间依赖 `ibd-doc-review`（**不随包携带**）④ **随包自带**取件脚本（无需自备） | 方法论库用 `{METHODS_ROOT}` 占位符；**法规源不设占位符**——无源时按 `references/sources.md` 规程从**官方公开源**实时取 | ① **无法规源** → 官方公开源实时取自举；**取不到 ⇒ 标注「未核实」**，不得据以定性；② **无方法论库** → **B 档退档为 A 档**，如实交付「无例可取」，**B 档不在承诺内**；③ 缺 `ibd-doc-review` → 断链，按包内自助指引补装 |
+| ① **法规依据源**（🟡推荐；**可自举**）② **方法论库**（🟡推荐，用 `{METHODS_ROOT}` 占位符）③ 包间依赖 `ibd-doc-review` **≥ 0.26.2**（**不随包携带**；下限 ＝ 所引能力（清单 §3 结构 ＋ 多 skill 合并清单约定）引入版之最大值，登记 → 对方 `references/interface.md` §7）④ **随包自带**取件脚本（无需自备） | 方法论库用 `{METHODS_ROOT}` 占位符；**法规源不设占位符**——无源时按 `references/sources.md` 规程从**官方公开源**实时取 | ① **无法规源** → 官方公开源实时取自举；**取不到 ⇒ 标注「未核实」**，不得据以定性；② **无方法论库** → **B 档退档为 A 档**，如实交付「无例可取」，**B 档不在承诺内**；③ 缺 `ibd-doc-review` → 断链，按包内自助指引补装 |
 
 **承诺边界**（三段）：
 

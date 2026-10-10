@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.12.3] - 2026-10-10
+
+### 修订 · 错误提示改走 stderr（清工程层范式 A6）
+
+- **A6 归零**：`scripts/annotate_docx.py` 的 3 处与 `scripts/annotate_pdf.py` 的 2 处「作者显式错误标记的 print」（`[ERROR]`——清单入口校验未过、编号分配失败、目标已存在拒绝覆盖）**由 stdout 改走 `sys.stderr`**。此前错误文本与正常输出混在同一通道，按 stdout 取产物的上层管道会把错误提示一并吞下去。
+- **行为零变化**：调用契约不变，退出码 2 语义不变；仅输出通道归位（错误走 stderr、正常走 stdout）。
+- 动因：2026-10-10 skill 体系全库普查 **②-3**（`check_conformance` 工程层 WARN 4 处之 A6×2）。
+
 ## [0.12.2] - 2026-10-09
 
 ### 修正：`references/examples.md` 依赖下限同步（0.16.2 → 0.32.0 · 0.12.1 漏网第四处）

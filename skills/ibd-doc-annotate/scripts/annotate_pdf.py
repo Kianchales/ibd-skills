@@ -132,14 +132,15 @@ def main():
     for _w in _warns:
         print(f"[WARN] {_w}")
     if _errs:
-        print(f"[ERROR] issues 清单未通过入口校验（{len(_errs)} 项）——不注入，请修正后重试：")
+        print(f"[ERROR] issues 清单未通过入口校验（{len(_errs)} 项）——不注入，请修正后重试：",
+              file=sys.stderr)
         for _e in _errs:
-            print(f"  - {_e}")
+            print(f"  - {_e}", file=sys.stderr)
         sys.exit(2)
     try:
         issues = assign_numbers([dict(x) for x in raw])
     except ValueError as exc:
-        print(f"[ERROR] 编号分配失败：{exc}")
+        print(f"[ERROR] 编号分配失败：{exc}", file=sys.stderr)
         sys.exit(2)
     date_iso = args.date or _now_iso()
     out_pdf = args.out or os.path.splitext(args.pdf)[0] + "_批注版.pdf"

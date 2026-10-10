@@ -360,22 +360,24 @@ def main():
     for _w in _warns:
         print(f"[WARN] {_w}")
     if _errs:
-        print(f"[ERROR] issues 清单未通过入口校验（{len(_errs)} 项）——不注入，请修正后重试：")
+        print(f"[ERROR] issues 清单未通过入口校验（{len(_errs)} 项）——不注入，请修正后重试：",
+              file=sys.stderr)
         for _e in _errs:
-            print(f"  - {_e}")
+            print(f"  - {_e}", file=sys.stderr)
         sys.exit(2)
     try:
         issues = assign_numbers([dict(x) for x in raw])
     except ValueError as exc:
-        print(f"[ERROR] 编号分配失败：{exc}")
+        print(f"[ERROR] 编号分配失败：{exc}", file=sys.stderr)
         sys.exit(2)
     out_docx = args.out or os.path.splitext(args.docx)[0] + "_批注版.docx"
     date_iso = args.date or _now_iso()
     # 覆盖保护（2026-09-23 补）：目标已存在时默认拒绝——本脚本是投行产线里唯一直写交付件的环节，
     # 误盖既有批注版＝静默丢失上一轮复核结果。要覆盖须显式 --force。
     if (not args.dry_run) and os.path.exists(out_docx) and not args.force:
-        print(f"[ERROR] 目标已存在，拒绝覆盖：{out_docx}")
-        print("        如需覆盖请显式加 --force；或先用 --dry-run 预检、或改 --out 换路径。")
+        print(f"[ERROR] 目标已存在，拒绝覆盖：{out_docx}", file=sys.stderr)
+        print("        如需覆盖请显式加 --force；或先用 --dry-run 预检、或改 --out 换路径。",
+              file=sys.stderr)
         return 2
 
     doc = Document(args.docx)
