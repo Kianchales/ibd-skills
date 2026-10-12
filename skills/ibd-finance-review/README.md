@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E8%B4%A2%E5%8A%A1%E7%AB%A0%E8%8A%82%E6%B7%B1%E5%BA%A6%E5%A4%8D%E6%A0%B8-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-0.15.4-green" alt="version">
+  <img src="https://img.shields.io/badge/version-0.15.5-green" alt="version">
   <img src="https://img.shields.io/badge/%E9%9B%B6%E8%BD%AF%E4%BB%B6%E4%BE%9D%E8%B5%96-3776AB" alt="no-deps">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
@@ -73,7 +73,8 @@ ibd-finance-review/
 
 ## 📌 近期更新
 
-- **2026-10-09 · v0.15.4**：**依赖下限口径修正**——包内两处活指针的 `ibd-doc-review` 下限由 `≥0.16.2`（0.8.5 时代按交付口径 `delivery.md` 引入版所定）上收至 **`≥0.32.0`**（＝本包所引能力的引入版之最大值：清单可选字段 `nature`／`line` 与复核报告（Excel）形态引入于 0.32.0）。同批订正两处「下限登记」指针 `§6 → §7`（0.26.2 新增 §5 后节号顺延）。联动 `ibd-doc-review` §7 登记表补登本包为其下游消费方（原漏列）
+- **2026-10-11 · v0.15.5**：**文档卫生**——订正两处悬空节名引用写法（0.15.4 条目与本列表中的版本下限登记处引用，改以节名标注、节号括注保留）。零内容变更
+- **2026-10-09 · v0.15.4**：**依赖下限口径修正**——包内两处活指针的 `ibd-doc-review` 下限由 `≥0.16.2`（0.8.5 时代按交付口径 `delivery.md` 引入版所定）上收至 **`≥0.32.0`**（＝本包所引能力的引入版之最大值：清单可选字段 `nature`／`line` 与复核报告（Excel）形态引入于 0.32.0）。同批订正两处「下限登记」指针 `§6 → §7`（0.26.2 新增 §5 后节号顺延）。联动 `ibd-doc-review` §「版本下限速查」（§7）登记表补登本包为其下游消费方（原漏列）
 - **2026-10-07 · v0.15.3**：**交付形态对齐（复核报告改 Excel）**——承 `ibd-doc-review` 0.32.0 新口径，交付形态由「批注版原文 + 精简总览」改为「批注版原文 + **复核报告（Excel，按问题性质分表）**」，批注总览 md 降为中间件；`issue-list-format.md` §1 字段表增可选 `nature`（性质分表轴）／`line`（行号）。零脚本改动
 - **2026-10-02 · v0.15.0**：**清单字段名对齐契约**——`severity`→`sev`、`description`→`desc`、`suggestion`→`advice`，并补 `rev`（`advice`/`rev` 二者至少其一）；去掉「本 skill 单一事实源」自称、回指 `ibd-doc-review` 的 `interface.md` §3。修正前按本册字段名产出的清单会被下游校验器双拦（schema `additionalProperties:false`）
 - **2026-10-02 · v0.14.0**：**库调用治理**——加维门槛判据上提 `docs/CONVENTIONS.md`（消两消费包重复）、新增检索预算（防无界查询）与库对账巡检（零脚本）、与 `ibd-legal-review` 族回环标「同构件·改动须同批」

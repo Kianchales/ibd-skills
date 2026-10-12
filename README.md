@@ -97,11 +97,11 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 |---|---|---|---|
 | [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.19.1 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
 | [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.16.0 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
-| [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.15.4 | 🟢 doc-review ≥0.32.0（交付口径单一事实源 + 三形态路由/深度三档/类型词表 12 类/清单 anyOf + 复核报告 Excel 形态；缺则只产清单不落地）；🟢 方法论库财务域（同类案例「先库后源」）+ methods-query（缺则直查公开问询件） |
+| [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.15.5 | 🟢 doc-review ≥0.32.0（交付口径单一事实源 + 三形态路由/深度三档/类型词表 12 类/清单 anyOf + 复核报告 Excel 形态；缺则只产清单不落地）；🟢 方法论库财务域（同类案例「先库后源」）+ methods-query（缺则直查公开问询件） |
 | [ibd-legal-review](skills/ibd-legal-review/README.md) | **法律惯例对照复核**：把本稿与同类情形的市场惯例并排比，出对照标注；**只对照、不定性**（法律判断归签字人） | 0.3.2 | 🔴 doc-review ≥0.26.2（复核链清单汇总口，不随包携带）；🟢 方法论库（B 档惯例取例，缺则退 A 档） |
 | [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.32.3 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份复核报告（Excel，按问题性质分工作表） | 0.12.3 | 🔴 doc-review ≥0.32.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md + 清单 anyOf + 复核报告 Excel 形态；单入口路由） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.35.14 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.35.15 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.6 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]
@@ -186,8 +186,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | ibd-doc-annotate | ibd-doc-review | ≥ 0.32.0 | 0.32.3 | ✅ |
 | ibd-finance-review | ibd-doc-review（可选） | ≥ 0.32.0 | 0.32.3 | ✅ |
 | ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.32.3 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.35.14 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.35.14 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.35.15 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.35.15 | ✅ |
 | ibd-doc-review（样式套用/新建 docx） | **平台 docx 工具**〔`tencent-docx`／`minimax-docx`／本地 Office 任选其一〕 | 无版本约束 | — | 🔴 必备 |
 
 > **下限口径（＝契约完整版，非「最低可跑版」）**：本表下限取「**依赖方用到的全部契约能力的最大引入版本**」，故可能高于任一单项能力的引入版。
@@ -207,6 +207,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 - 集合 Release：`ibd-skills-vX.Y.Z`，zip 含 `README.md` + `QUICKSTART.md` + `LICENSE` + `assets/`（README 引用的依赖图等） + `skills/` 全部包
 
 ## 📌 近期更新
+
+- **2026-10-12 · v0.5.11**：**2 包上提（借住版本收口 ＋ 悬空引用写法订正）**——① **`ibd-methods-ops` 1.35.14 → 1.35.15**（**补承 `distill-methods.md` §S3 材料校验增补**：2026-10-03 立项／10-10 北交所增补的四条规程随蒸馏批入库时未立版本条目、借住于 1.35.14，发布侧 P0.9 覆盖核对判「同版本号两处内容不同」——本版立目承载，内容零新增。四条要点：乐享件首页校验／同案 md5 互查防串档／**北交所案强制验内文抬头**（KB 标注双向实证不可信）／BSE 403 时全量切乐享通道）；② **`ibd-finance-review` 0.15.4 → 0.15.5**（**文档：订正两处悬空节名引用写法**——按「包名＋§」须紧跟节名的锚点写法约定，0.15.4 条目与 README 引用 `ibd-doc-review` 版本下限登记处的简写被解析为节名致判悬空，改以节名标注＋节号括注；零内容零判据变更）。版本矩阵与依赖兼容矩阵同步。
 
 - **2026-10-10 · v0.5.10**：**3 包上提（错误提示通道归位 ＋ 跨包依赖双向登记 ＋ 包数量表述订正）**——① **`ibd-doc-annotate` 0.12.2 → 0.12.3**（**错误提示改走 stderr**：`scripts/annotate_docx.py` 三处、`scripts/annotate_pdf.py` 两处「作者显式错误标记的 print」（`[ERROR]`——清单入口校验未过／编号分配失败／目标已存在拒绝覆盖）由 stdout 改走 `sys.stderr`。此前错误文本与正常输出混在同一通道，按 stdout 取产物的上层管道会把错误提示一并吞下去；**调用契约与退出码 2 语义不变，仅输出通道归位**。零逻辑改动）；② **`ibd-doc-review` 0.32.2 → 0.32.3**（**§7 下游登记补漏**：`references/interface.md` §7「版本下限速查（下游契约登记处）」的「**多 skill 合并清单约定 ≥ 0.26.2**」行补入下游消费方 `ibd-legal-review`——该包自 0.3.0 起声明的角色即「格式复核包声明单 D 域的执行承载、产出交回复核包汇总」，**必然并入同一份汇总清单**，却从未登记。同型＝ 0.32.1 刚补过的 `ibd-finance-review` 漏登。**判据提醒**：凡包内**已声明**与某包存在「上游声明单／下游汇总口」关系的，即应在对方 §7 对应行登记——漏登的后果是上游升版时该下游**永不被回改**）；③ **`ibd-legal-review` 0.3.1 → 0.3.2**（**补声明跨包依赖下限**：`SKILL.md`／`README.md` 原只写「包间依赖 `ibd-doc-review`（不随包携带）」而**无版本下限数字**，现补为 **≥ 0.26.2**（下限＝本包所引能力的引入版之最大值：清单 §3 结构 `problems.schema.json` ＋ 多 skill 合并清单约定），并附登记指针 → 对方 §7；与 ② 构成**双向登记**）。版本矩阵与依赖兼容矩阵同步。
 
