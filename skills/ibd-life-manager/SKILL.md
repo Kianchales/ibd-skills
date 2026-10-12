@@ -4,7 +4,7 @@ slug: ibd-life-manager
 displayName: 个人知识库操作规则（Personal Library）
 summary: "使用者私人 Obsidian 库操作规则——AI 工作日志铁律与办结归档、待办写入三路径（含对话/手机快速加待办）、新会话接续、工作区边界铁律、AI 工作区目录约定。"
 description: "操作用户的私人 Obsidian 库（库名与库根由本包 [library.config.json](references/library.config.json) 解析）：AI 工作日志记录铁律与办结归档（双文件：当月 YYYY-MM-待办.md + 办结 YYYY-MM-办结.md，零未完成且距今 ≥7 天的节整节迁出）、待办写入三路径（Action 定稿，含对话/手机快速加待办的完整规则）、团队任务统计视图定位、边界铁律（02 工作=用户业务跟踪区 AI 不跟踪）、新会话接续三入口、04 AI Work 目录约定（只放活文件；交接单放面上用完即删、发布档案不留本地）。当任务涉及该库的写入/待办管理/日志记录时，必须先加载本 skill。"
-version: 0.36.0
+version: 0.36.1
 agent_created: true
 ---
 
@@ -140,7 +140,14 @@ agent_created: true
 > 依赖来源标注：⬛=随包/本地自建；🟢=可选；🟦=内置。
 
 - **Markdown 库本体**〔⬛随包/本地自建：`{LIB_ROOT}`〕：本 skill 的操作对象；库根由本包 [library.config.json](references/library.config.json) 的 `root` 字段解析（模板 [library.config.template.json](references/library.config.template.json)），文档中记作 `{LIB_ROOT}`、库显示名记作 `{LIB_NAME}`
-- **库侧环境（Obsidian 本体 ＋ Tasks / dataview 插件）**〔🟢可选·使用者自备〕：Tasks 提供待办语法与查询、dataview 提供待办看板
+- **库侧环境（Obsidian ＋ 插件）**〔🟢可选·使用者自备〕——**推荐装齐**（骨架 33 件里 29 个查询块/看板靠它们渲染），**全不装也能用**（所有规则不依赖插件即可照做，md 源文件是唯一事实源）：
+  - **Tasks**〔推荐·必需级〕：待办语法与查询（日志/看板/日报 11 个查询块）——缺则待办退回纯 markdown 清单，失去截止日期标记与聚合视图
+  - **Dataview**〔推荐·必需级〕：数据查询（18 个查询块 ＋ Overview 的 dataviewjs）——**须在设置里开启 JavaScript 查询**；缺则查询块显示为代码、**不报错只返空**
+  - **Kanban**〔推荐〕：项目看板拖拽交互——缺则看板退化为普通列表
+  - **Periodic Notes ＋ Templater**〔推荐〕：日报/周报/月报一键创建套模板——缺则手动复制模板
+  - **Buttons**〔推荐〕：首页周期按钮——缺则手动建日报
+  - **Bases**〔内置，Obsidian 1.7+ 自带〕：日报数据库 `.base`——版本过低可忽略该文件
+  - 清单与配置步骤 → [bootstrap.md](references/bootstrap.md) §2/§4
 - **`obsidian` skill**〔🟦内置工具〕：Obsidian CLI / 文件直连的通用操作
 - **本机专属补充**〔🟢可选·使用者自备〕：**实测拿不到**的本机事实（如本机 junction 映射）存放在 [library.config.json](references/library.config.json) 的 `local_notes`；**跨机一致**的私有约定（判机／跨机渠道／私有指针等）放**使用者自备的私有文档层**；**身份事实**（哪台是主机、各机能力面）一律**实测**、只落其单一维护处——三者均不入本字段（见「本机专属补充」节）
 

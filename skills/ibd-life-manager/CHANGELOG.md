@@ -2,6 +2,13 @@
 
 > 本 skill 的版本记录。**公开发布版只保留通用能力里程碑**；早期内部开发历程不随包分发（其内容为实现环境与内部流程细节，对使用者无意义）。
 
+## [0.36.1] - 2026-10-12
+
+### 文档 · 依赖声明补全（插件清单写实）
+
+- **问题**：README「从零建库/安装与依赖」与 `SKILL.md` §依赖与工具把 Obsidian 插件依赖压成一行（「Tasks/dataview 插件」），**未写清**：各插件缺了会怎样、Dataview 须开 JavaScript 查询（否则 Overview 的 dataviewjs 静默返空）、Bases 为 1.7+ 内置无需安装、Kanban/Buttons/Periodic Notes/Templater 的具体作用；且 SKILL.md 旧表述「🟢可选」与 bootstrap「必需」档口径打架。
+- **修法**：README 插件清单表格化（必要性×6 行＋「缺了会怎样」列）；安装与依赖改三层表（库本体/库侧插件/其他 skill）；SKILL.md §依赖与工具按六插件逐条写实（必需级/推荐/内置三档＋缺失降级＋指向 bootstrap §2/§4）。骨架实测依据：dataview 18 块＋dataviewjs 1＋tasks 11＋kanban 1。零规则变更（纯展示面）。
+
 ## [0.36.0] - 2026-10-12
 
 ### 单一事实源（规则双写收口）

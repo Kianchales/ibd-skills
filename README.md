@@ -104,7 +104,7 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份复核报告（Excel，按问题性质分工作表） | 0.12.3 | 🔴 doc-review ≥0.32.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md + 清单 anyOf + 复核报告 Excel 形态；单入口路由） |
 | [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.35.15 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.6 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
-| [ibd-life-manager](skills/ibd-life-manager/README.md) | **个人工作/生活库管理**：从零建库（含空白骨架）、AI 工作日志与待办、项目七件套、同步域管理（多机判机/权限/管辖档位） | 0.36.0 | 零外部 skill 依赖（🟢 obsidian skill 可选，缺则文件系统直连；需 Obsidian 用户） |
+| [ibd-life-manager](skills/ibd-life-manager/README.md) | **个人工作/生活库管理**：从零建库（含空白骨架）、AI 工作日志与待办、项目七件套、同步域管理（多机判机/权限/管辖档位） | 0.36.1 | 零外部 skill 依赖（🟢 obsidian skill 可选，缺则文件系统直连；需 Obsidian 用户） |
 
 > [!WARNING]
 > **`ibd-doc-write` 尚不成熟，无法满足「独立撰写整段投行文件」的要求。**
@@ -216,6 +216,8 @@ life-manager 建库（bootstrap + 骨架）→ AI 日志/待办 → 项目七件
 - 集合 Release：`ibd-skills-vX.Y.Z`，zip 含 `README.md` + `QUICKSTART.md` + `LICENSE` + `assets/`（README 引用的依赖图等） + `skills/` 全部包
 
 ## 📌 近期更新
+
+- **2026-10-12 · v0.5.13**：**`ibd-life-manager` 0.36.0 → 0.36.1**（**依赖声明补全**——Obsidian 插件清单写实：README 表格化 6 行×「缺了会怎样」（Tasks/Dataview 必需级、Dataview 须开 JavaScript 查询否则 dataviewjs 静默返空、Bases 为 1.7+ 内置、Kanban/Buttons/Periodic Notes＋Templater 推荐级）＋「安装与依赖」三层表（库本体／库侧插件——**全不装也能用**，md 源文件＝唯一事实源／obsidian skill 可选）；SKILL.md §依赖与工具同口径，消与 bootstrap「必需」档的口径差。零规则变更）。同版 QUICKSTART/README 补 **`ibd-life-manager` 可选性提示**（⭐ 唯一可跳过项：不在投行生产线上、投行线 8 包零依赖它、不想要就删该目录零影响）。
 
 - **2026-10-12 · v0.5.12**：**新增 `ibd-life-manager`（个人工作/生活库管理）——集合 8 → 9 包**。新包做的是「**把个人 Obsidian 库的日常运转管起来**」：从零建库（`references/bootstrap.md` 五步引导 ＋ `assets/starter-kit/` 33 件空白骨架，复制即用）；AI 工作日志／待办三路径／周月报起草；项目七件套（面板／待办／进程／纪要等）与**同步域管理**（`references/domains.md` 九字段 schema：多机判机纯实测、写入权/提交权按域登记、AI 管辖五档逐档放开）。**零外部 skill 依赖**（🟢 obsidian skill 可选，缺则文件系统直连；面向 Obsidian 用户，非投行文档线，与其他 8 包无依赖关系）。版本矩阵与依赖兼容矩阵同步；QUICKSTART 场景表与零依赖安全牌（三条 → 四条）同步。
 
