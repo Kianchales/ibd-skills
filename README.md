@@ -53,6 +53,7 @@
 
 1. 从 [Releases](https://github.com/Kianchales/ibd-skills/releases/latest) 下载最新 zip（内含全部 9 个 skill）
 2. 解压后，把需要的 `skills/<包名>/` 目录拷贝到你的 AI 工作台技能目录（各客户端按自身规范放置）
+   > 💬 **只要投行线、不想要 `ibd-life-manager`？** 直接不拷（或删掉）这个目录即可——它做的是个人 Obsidian 库管理，**不在投行生产线上，其余 8 包对它零依赖**。
 3. 对你的 AI 说一句触发语，流水线即启动：
 
 ```
