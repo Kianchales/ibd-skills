@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/Kianchales/ibd-skills/releases/latest"><img src="https://img.shields.io/github/v/release/Kianchales/ibd-skills?color=blue&label=Latest%20Release" alt="latest release"></a>
   <a href="https://github.com/Kianchales/ibd-skills/stargazers"><img src="https://img.shields.io/github/stars/Kianchales/ibd-skills?style=flat&label=Stars" alt="stars"></a>
-  <img src="https://img.shields.io/badge/skills-9%20%E5%8C%85-4e6b99" alt="9 packages">
+  <img src="https://img.shields.io/badge/skills-8%20%E5%8C%85-4e6b99" alt="8 packages">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT license">
   <img src="https://img.shields.io/badge/Python-3%20%E6%A0%87%E5%87%86%E5%BA%93-3776AB" alt="python stdlib">
 </p>
@@ -19,7 +19,6 @@
   <a href="skills/ibd-doc-annotate/README.md">批注交付</a> |
   <a href="skills/ibd-methods-ops/README.md">方法论沉淀</a> |
   <a href="skills/ibd-methods-query/README.md">方法论检索</a>
-  <br><sub>独立基座：<a href="skills/ibd-life-manager/README.md">个人库管理</a></sub>
 </h4>
 
 <details open>
@@ -27,7 +26,7 @@
 
 - 💡 [这是什么？](#-这是什么)
 - ✨ [快速开始（30 秒）](#-快速开始30-秒)
-- 🧩 [集合内 9 个 skill](#-集合内-9-个-skill)
+- 🧩 [集合内 8 个 skill](#-集合内-8-个-skill)
 - 🔗 [工作链路](#-工作链路)
 - 🚀 [典型场景](#-典型场景)
 - 🛡 [设计原则](#-设计原则)
@@ -41,21 +40,19 @@
 
 ## 💡 这是什么？
 
-**ibd-skills** 是一套给 A 股投行人的 AI 技能集合：让 AI 帮你**起草文件、挑错复核、排版交付，把项目经验沉淀成团队知识库**——八个技能串成一条完整的投行文档生产线；另有 1 个独立基座 `ibd-life-manager`（个人 Obsidian 库的日常管理，与投行线零依赖）。
+**ibd-skills** 是一套给 A 股投行人的 AI 技能集合：让 AI 帮你**起草文件、挑错复核、排版交付，把项目经验沉淀成团队知识库**——八个技能串成一条完整的投行文档生产线。
 
-投行线覆盖从**写作、质量把关、财务复核、格式落地、批注交付到方法论沉淀与检索**的全链路；`ibd-life-manager` 另覆盖**个人库建库、AI 工作日志与待办、项目管理**的日常面，为「让 AI 写出能直接申报的文件」提供一套**可复现、可校验、有纪律**的方法论载体——每个技能只负责一件事，规则单一事实源、不重复维护。
+本集合覆盖从**写作、质量把关、财务复核、格式落地、批注交付到方法论沉淀与检索**的全链路，为「让 AI 写出能直接申报的文件」提供一套**可复现、可校验、有纪律**的方法论载体——每个技能只负责一件事，规则单一事实源、不重复维护。
 
 > 一句话：**写作像投行人，把关像质控组，交付像申报文件。**
 
 ## ✨ 快速开始（30 秒）
 
-> **⚠️ 最容易踩的坑**：**投行线那 8 个包互相依赖**——**只装你要用的那一个，多半跑不起来**（缺的是**依赖包**，不是功能）。
-> **第 9 个 `ibd-life-manager` 不在这张依赖网里**：它与 8 个投行包**零依赖**，唯一的（可选）依赖是 **`obsidian` skill**（缺则退为文件系统直连）——单装它一个、或只装投行线，都成立。
+> **⚠️ 最容易踩的坑**：**8 个包互相依赖**——**只装你要用的那一个，多半跑不起来**（缺的是**依赖包**，不是功能）。
 > **装之前先看 [QUICKSTART.md](QUICKSTART.md)**：它用一张表回答「**我想做的事 → 必须装哪些包**」，并给出**装完自检**与**四类非技能包依赖**的清单——3 分钟装齐，不用翻文档。
 
-1. 从 [Releases](https://github.com/Kianchales/ibd-skills/releases/latest) 下载最新 zip（内含全部 9 个 skill）
+1. 从 [Releases](https://github.com/Kianchales/ibd-skills/releases/latest) 下载最新 zip（内含全部 8 个 skill）
 2. 解压后，把需要的 `skills/<包名>/` 目录拷贝到你的 AI 工作台技能目录（各客户端按自身规范放置）
-   > 💬 **只要投行线、不想要 `ibd-life-manager`？** 直接不拷（或删掉）这个目录即可——它做的是个人 Obsidian 库管理，**不在投行生产线上，其余 8 包对它零依赖**。
 3. 对你的 AI 说一句触发语，流水线即启动：
 
 ```
@@ -94,7 +91,7 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 > [!NOTE]
 > docx 套样式需一个 docx 处理工具（见「安装与依赖」平台工具行）；**格式核对与批注校验本身零依赖**，装完即可用。
 
-## 🧩 集合内 9 个 skill
+## 🧩 集合内 8 个 skill
 
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
@@ -106,7 +103,6 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份复核报告（Excel，按问题性质分工作表） | 0.12.3 | 🔴 doc-review ≥0.32.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md + 清单 anyOf + 复核报告 Excel 形态；单入口路由） |
 | [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.35.15 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.6 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
-| [ibd-life-manager](skills/ibd-life-manager/README.md) | **个人工作/生活库管理**：从零建库（含空白骨架）、AI 工作日志与待办、项目七件套、同步域管理（多机判机/权限/管辖档位） | 0.36.1 | 与 8 个投行包**零依赖**（独立岛）；唯一（可选）依赖 🟢 `obsidian` skill（缺则文件系统直连；需 Obsidian 用户） |
 
 > [!WARNING]
 > **`ibd-doc-write` 尚不成熟，无法满足「独立撰写整段投行文件」的要求。**
@@ -114,12 +110,11 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 
 ## 🔗 工作链路
 
-投行侧三条接力流水线：每条都从材料进、从文件出，中间的检查关口由 AI 一道一道把守；另有 1 条**独立基座线**（**不依赖任何投行包**，仅可选依赖 `obsidian` skill，可单独使用）。
+三条接力流水线：每条都从材料进、从文件出，中间的检查关口由 AI 一道一道把守。
 
 - **写作线**：起草初稿 → 自动挑错 → 套版式核对 → 交付供你审改的正式稿
 - **复核线**：AI 逐段挑错 → 问题原位批注进原文 → 合规校验把关 → 交付批注版原文 + 一页总览
 - **方法论线（积累与复用）**：做完项目把经验蒸馏入库 → 下次按问题一查即得 → 经验反哺写作与复核，团队越做越强
-- **个人库管理线（独立基座）**：从零建库 → AI 日志/待办/项目管理 → 多机同步按域管权限——与投行侧三条线**零依赖**（唯一的可选依赖是 `obsidian` skill），装它一个就能跑
 
 <details>
 <summary><b>对应到具体技能包（点击展开）</b></summary>
@@ -136,9 +131,6 @@ finance-review 16 维复核 ／ legal-review 法律惯例对照 → 产出问题
 ──────────── 方法论线（沉淀 ⇄ 检索，供写作线消费）────────────
 methods-ops 蒸馏沉淀（S0-S7：材料来源与库由用户定）→ 库（本地/Obsidian/云知识库任选）
 methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（doc-write 查库、引用自检）
-
-──────────── 个人库管理线（独立 · 依赖 obsidian 可选）────────────
-life-manager 建库（bootstrap + 骨架）→ AI 日志/待办 → 项目七件套 → 同步域（判机/权限/档位）
 ```
 
 </details>
@@ -156,9 +148,6 @@ life-manager 建库（bootstrap + 骨架）→ AI 日志/待办 → 项目七件
 
 **场景四：方法论沉淀与检索（越用越强的库）**
 每做完一个项目，把踩过的坑和好写法存进团队知识库；下次写文件按问题一查即得，团队越做越快。
-
-**场景五：个人工作/生活库管理（独立于投行线）**
-换新电脑想十分钟搭好个人 Obsidian 工作台：AI 按引导建库、复制空白骨架（日志/待办/项目模板全带齐）；日常帮你记工作日志、管待办、维护项目面板；多机使用时按同步域规则判机分权。装 `ibd-life-manager` 一个包即可。
 
 ## 🛡 设计原则
 
@@ -184,7 +173,7 @@ life-manager 建库（bootstrap + 骨架）→ AI 日志/待办 → 项目七件
 ![ibd-skills 依赖关系图](assets/dependency-graph.svg)
 
 > **箭头方向 ＝ 依赖方向**：`A → B` 表示 **A 依赖 B**。实线＝**硬依赖**（缺则核心功能不可用），虚线＝**可选 / 汇总口**（缺则降级）。
-> **结构上是两套**：投行线 **8 个包互相依赖**成一张网；`ibd-life-manager` 是**独立岛**，与投行网**零连线**，它唯一（可选）依赖的是外部 **`obsidian` skill**。
+> **结构上是一张网**：**8 个包互相依赖**，形成一条完整的投行文档生产线。
 > 本图只表达**结构**，各包版本下限见下方兼容矩阵；接口细节（门禁 CLI / 清单 schema / 词表）见 `skills/ibd-doc-review/references/interface.md`（对外契约单一事实源）。
 
 ### 依赖版本兼容矩阵（单包安装时对照）
@@ -219,6 +208,8 @@ life-manager 建库（bootstrap + 骨架）→ AI 日志/待办 → 项目七件
 - 集合 Release：`ibd-skills-vX.Y.Z`，zip 含 `README.md` + `QUICKSTART.md` + `LICENSE` + `assets/`（README 引用的依赖图等） + `skills/` 全部包
 
 ## 📌 近期更新
+
+- **2026-10-12 · v0.5.15**：**撤出 `ibd-life-manager`（集合 9 → 8 包）**——该包已**更名 `life-manager` 并独立成仓**（发布通道迁至 [Kianchales/life-manager](https://github.com/Kianchales/life-manager)）：其所做（个人 Obsidian 库运维）与投行线零依赖、零业务关联，单独成仓后本集合专注投行线。README 计数徽章／导航行／「这是什么」／依赖表／工作链路／ASCII 图／图注 ＋ QUICKSTART 首段／场景表／零依赖安全牌**全部回到 8 包口径**；`assets/dependency-graph.svg` 去掉 life-manager 节点与 obsidian 连线。八包版本矩阵与兼容矩阵不变。
 
 - **2026-10-12 · v0.5.14**：**门面文档修正（九包内容零变更）**——① **计数徽章** `skills-8 包 → 9 包`、**导航行**补 `ibd-life-manager`（独立基座，小字与投行线区分）；② **纠正依赖关系表述**（原「9 个包互相依赖」不准确）：改为「**投行线那 8 个包互相依赖**」＋「**第 9 个 `ibd-life-manager` 不在依赖网里**——与 8 个投行包零依赖，唯一（可选）依赖是外部 **`obsidian` skill**」，README 依赖表／工作链路／ASCII 图／图注 ＋ QUICKSTART 首段／场景表多处同步；③ **依赖关系图** `assets/dependency-graph.svg` 补 `obsidian skill` 节点与 life-manager→obsidian 可选连线（此前只有独立岛、未画其外部依赖）。九包版本矩阵与兼容矩阵不变。
 - **2026-10-12 · v0.5.13**：**`ibd-life-manager` 0.36.0 → 0.36.1**（**依赖声明补全**——Obsidian 插件清单写实：README 表格化 6 行×「缺了会怎样」（Tasks/Dataview 必需级、Dataview 须开 JavaScript 查询否则 dataviewjs 静默返空、Bases 为 1.7+ 内置、Kanban/Buttons/Periodic Notes＋Templater 推荐级）＋「安装与依赖」三层表（库本体／库侧插件——**全不装也能用**，md 源文件＝唯一事实源／obsidian skill 可选）；SKILL.md §依赖与工具同口径，消与 bootstrap「必需」档的口径差。零规则变更）。同版 QUICKSTART/README 补 **`ibd-life-manager` 可选性提示**（⭐ 唯一可跳过项：不在投行生产线上、投行线 8 包零依赖它、不想要就删该目录零影响）。
