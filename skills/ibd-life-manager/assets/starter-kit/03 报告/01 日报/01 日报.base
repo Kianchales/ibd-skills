@@ -1,0 +1,14 @@
+filters:
+  and:
+    - file.hasTag("Periodic/daily-note")
+views:
+  - type: table
+    name: 日报列表
+    order:
+      - file.name
+      - full-date
+      - week
+      - month
+      - year
+    columnSize:
+      note.year: 204

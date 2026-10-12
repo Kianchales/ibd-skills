@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="610" viewBox="0 0 1180 610" role="img" aria-labelledby="dgTitle dgDesc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="700" viewBox="0 0 1180 700" role="img" aria-labelledby="dgTitle dgDesc">
   <title id="dgTitle">ibd-skills 依赖关系图</title>
   <desc id="dgDesc">箭头方向为依赖方向，A 指向 B 表示 A 依赖 B。实线为硬依赖，虚线为可选或汇总口。</desc>
 
@@ -11,7 +11,7 @@
     </marker>
   </defs>
 
-  <rect x="0" y="0" width="1180" height="610" rx="18" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+  <rect x="0" y="0" width="1180" height="700" rx="18" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
 
   <!-- ============ 图例 ============ -->
   <g font-family="'PingFang SC','Microsoft YaHei',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
@@ -106,6 +106,11 @@
     <rect x="920" y="360" width="210" height="70" rx="14" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1.5"/>
     <text x="938" y="392" font-size="14.5" font-weight="600" fill="#047857">ibd-legal-review</text>
     <text x="938" y="414" font-size="11.5" fill="#6b7280">法律域复核 · 惯例对照</text>
+
+    <!-- 生活库管理（独立岛 · 零依赖） -->
+    <rect x="920" y="495" width="210" height="70" rx="14" fill="#fdf2f8" stroke="#f9a8d4" stroke-width="1.5"/>
+    <text x="938" y="527" font-size="14.5" font-weight="600" fill="#be185d">ibd-life-manager</text>
+    <text x="938" y="549" font-size="11.5" fill="#6b7280">个人库管理 · 独立基座</text>
 
   </g>
 </svg>
