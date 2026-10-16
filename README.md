@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/Kianchales/ibd-skills/releases/latest"><img src="https://img.shields.io/github/v/release/Kianchales/ibd-skills?color=blue&label=Latest%20Release" alt="latest release"></a>
   <a href="https://github.com/Kianchales/ibd-skills/stargazers"><img src="https://img.shields.io/github/stars/Kianchales/ibd-skills?style=flat&label=Stars" alt="stars"></a>
-  <img src="https://img.shields.io/badge/skills-9%20%E5%8C%85-4e6b99" alt="9 packages">
+  <img src="https://img.shields.io/badge/skills-8%20%E5%8C%85-4e6b99" alt="8 packages">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT license">
   <img src="https://img.shields.io/badge/Python-3%20%E6%A0%87%E5%87%86%E5%BA%93-3776AB" alt="python stdlib">
 </p>
@@ -26,7 +26,7 @@
 
 - 💡 [这是什么？](#-这是什么)
 - ✨ [快速开始（30 秒）](#-快速开始30-秒)
-- 🧩 [集合内 9 个 skill](#-集合内-9-个-skill)
+- 🧩 [集合内 8 个 skill](#-集合内-8-个-skill)
 - 🔗 [工作链路](#-工作链路)
 - 🚀 [典型场景](#-典型场景)
 - 🛡 [设计原则](#-设计原则)
@@ -91,7 +91,7 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 > [!NOTE]
 > docx 套样式需一个 docx 处理工具（见「安装与依赖」平台工具行）；**格式核对与批注校验本身零依赖**，装完即可用。
 
-## 🧩 集合内 9 个 skill
+## 🧩 集合内 8 个 skill
 
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
@@ -103,7 +103,6 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份复核报告（Excel，按问题性质分工作表） | 0.12.3 | 🔴 doc-review ≥0.32.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md + 清单 anyOf + 复核报告 Excel 形态；单入口路由） |
 | [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.35.15 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.6 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
-| [ibd-expert-team-public](skills/ibd-expert-team-public/README.md) | **团队框架**：7 角色投行专家团（主理人＋财务/法律/行业＋采集/归档/写作），平台无关内核＋双适配器，开箱即用 | 1.1.0 | 零外部 skill 依赖（纯 markdown 内核；办公工具按平台能力接入） |
 
 > [!WARNING]
 > **`ibd-doc-write` 尚不成熟，无法满足「独立撰写整段投行文件」的要求。**
@@ -209,8 +208,6 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 - 集合 Release：`ibd-skills-vX.Y.Z`，zip 含 `README.md` + `QUICKSTART.md` + `LICENSE` + `assets/`（README 引用的依赖图等） + `skills/` 全部包
 
 ## 📌 近期更新
-
-- **2026-10-16 · v0.6.0**：**新纳管 `ibd-expert-team-public`（集合 8 → 9 包）＋ `ibd-quality-gates` 0.16.0 → 0.17.0**——① 新增团队框架包：7 角色投行专家团（主理人＋三专家＋采集/归档/写作），平台无关内核＋WorkBuddy/Claude Code 双适配器，解依赖零外部 skill，开箱即用；含引用忠实性定向核对与自评防虚高机制（G5 反向面＋周期对账）。② quality-gates 升 0.17.0：新增 G4 方法论引用勾稽脚本（`check_method_refs.py` 编号格式/存在性/使用位置三查）。README 计数徽章/导航行/「这是什么」/集合表 8→9 包口径；兼容矩阵不变（新包零 skill 依赖）。
 
 - **2026-10-12 · v0.5.15**：**撤出 `ibd-life-manager`（集合 9 → 8 包）**——该包已**更名 `life-manager` 并独立成仓**（发布通道迁至 [Kianchales/life-manager](https://github.com/Kianchales/life-manager)）：其所做（个人 Obsidian 库运维）与投行线零依赖、零业务关联，单独成仓后本集合专注投行线。README 计数徽章／导航行／「这是什么」／依赖表／工作链路／ASCII 图／图注 ＋ QUICKSTART 首段／场景表／零依赖安全牌**全部回到 8 包口径**；`assets/dependency-graph.svg` 去掉 life-manager 节点与 obsidian 连线。八包版本矩阵与兼容矩阵不变。
 
