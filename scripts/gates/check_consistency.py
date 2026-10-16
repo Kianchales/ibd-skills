@@ -23,19 +23,24 @@ import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+def resolve_layout(root):
+    """按 `<root>` 判定布局，返回 `(技能根, 是否单包仓)`。
+
+    · 集合布局 = `<root>/skills/<pkg>/`（发布仓）
+    · 平铺布局 = `<root>/<pkg>/`（真身仓）
+    · 单包仓   = `<root>/` 本身即包（仓根即包，无 `skills/` 子层）
+    判据：`skills/` 子目录存在且至少含一个 `SKILL.md` ⇒ 集合；否则回退 `<root>`；
+          回退后 `<root>/SKILL.md` 存在 ⇒ 单包仓。
+    """
+    skills = os.path.join(root, 'skills')
+    if os.path.isdir(skills) and any(
+            os.path.exists(os.path.join(skills, p, 'SKILL.md')) for p in os.listdir(skills)):
+        return skills, False
+    return root, os.path.isfile(os.path.join(root, 'SKILL.md'))
+
+
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-SKILLS = os.path.join(ROOT, 'skills')
-# 布局自适应（2026-09-15；2026-10-12 补「单包仓」）：
-#   · 集合布局 = <root>/skills/<pkg>/（发布仓）
-#   · 平铺布局 = <root>/<pkg>/（真身仓）
-#   · 单包仓   = <root>/ 本身即包（仓根即包，无 skills/ 子层）
-# 判据：skills/ 子目录存在且至少含一个 SKILL.md 才走集合布局，否则回退平铺；
-#       非集合且仓根有 SKILL.md ⇒ 单包仓。
-_COLLECTION = os.path.isdir(SKILLS) and any(
-    os.path.exists(os.path.join(SKILLS, p, 'SKILL.md')) for p in os.listdir(SKILLS))
-if not _COLLECTION:
-    SKILLS = ROOT
-SINGLE = (not _COLLECTION) and os.path.isfile(os.path.join(ROOT, 'SKILL.md'))
+SKILLS, SINGLE = resolve_layout(ROOT)
 
 
 def load_matrix_versions(readme_path):
@@ -88,7 +93,12 @@ def load_compat_matrix(readme_path):
 def main():
     ap = argparse.ArgumentParser(description="集合一致性门禁（版本/README 矩阵/发布渠道/变更留痕）")
     ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
+    ap.add_argument("--root", default="", help="技能根目录（默认＝按脚本位置推断；单包仓可直指仓根）")
     args = ap.parse_args()
+    global ROOT, SKILLS, SINGLE
+    if args.root:
+        ROOT = os.path.abspath(args.root)
+        SKILLS, SINGLE = resolve_layout(ROOT)
     fails = []
     pkg_ver = {}
     matrix = load_matrix_versions(os.path.join(ROOT, 'README.md'))
