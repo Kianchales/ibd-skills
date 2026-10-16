@@ -95,11 +95,11 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
-| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.19.1 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
+| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.19.2 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
 | [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.16.0 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.15.5 | 🟢 doc-review ≥0.32.0（交付口径单一事实源 + 三形态路由/深度三档/类型词表 12 类/清单 anyOf + 复核报告 Excel 形态；缺则只产清单不落地）；🟢 方法论库财务域（同类案例「先库后源」）+ methods-query（缺则直查公开问询件） |
 | [ibd-legal-review](skills/ibd-legal-review/README.md) | **法律惯例对照复核**：把本稿与同类情形的市场惯例并排比，出对照标注；**只对照、不定性**（法律判断归签字人） | 0.3.2 | 🔴 doc-review ≥0.26.2（复核链清单汇总口，不随包携带）；🟢 方法论库（B 档惯例取例，缺则退 A 档） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.32.3 | 零外部 skill 依赖（基座） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.33.0 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份复核报告（Excel，按问题性质分工作表） | 0.12.3 | 🔴 doc-review ≥0.32.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md + 清单 anyOf + 复核报告 Excel 形态；单入口路由） |
 | [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.35.15 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.6 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
@@ -183,7 +183,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
 | ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.16.0 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.32.3 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.33.0 | ✅ |
 | ibd-doc-annotate | ibd-doc-review | ≥ 0.32.0 | 0.32.3 | ✅ |
 | ibd-finance-review | ibd-doc-review（可选） | ≥ 0.32.0 | 0.32.3 | ✅ |
 | ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.32.3 | ✅ |
