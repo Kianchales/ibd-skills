@@ -184,9 +184,9 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 |---|---|---|---|---|
 | ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.16.0 | ✅ |
 | ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.33.0 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.32.0 | 0.32.3 | ✅ |
-| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.32.0 | 0.32.3 | ✅ |
-| ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.32.3 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.32.0 | 0.33.0 | ✅ |
+| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.32.0 | 0.33.0 | ✅ |
+| ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.33.0 | ✅ |
 | ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.35.15 | ✅ |
 | ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.35.15 | ✅ |
 | ibd-doc-review（样式套用/新建 docx） | **平台 docx 工具**〔`tencent-docx`／`minimax-docx`／本地 Office 任选其一〕 | 无版本约束 | — | 🔴 必备 |
