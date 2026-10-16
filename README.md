@@ -96,7 +96,7 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
 | [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.19.2 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
-| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.16.0 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
+| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.17.0 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.15.5 | 🟢 doc-review ≥0.32.0（交付口径单一事实源 + 三形态路由/深度三档/类型词表 12 类/清单 anyOf + 复核报告 Excel 形态；缺则只产清单不落地）；🟢 方法论库财务域（同类案例「先库后源」）+ methods-query（缺则直查公开问询件） |
 | [ibd-legal-review](skills/ibd-legal-review/README.md) | **法律惯例对照复核**：把本稿与同类情形的市场惯例并排比，出对照标注；**只对照、不定性**（法律判断归签字人） | 0.3.2 | 🔴 doc-review ≥0.26.2（复核链清单汇总口，不随包携带）；🟢 方法论库（B 档惯例取例，缺则退 A 档） |
 | [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.33.0 | 零外部 skill 依赖（基座） |
@@ -182,7 +182,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
-| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.16.0 | ✅ |
+| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.17.0 | ✅ |
 | ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.33.0 | ✅ |
 | ibd-doc-annotate | ibd-doc-review | ≥ 0.32.0 | 0.33.0 | ✅ |
 | ibd-finance-review | ibd-doc-review（可选） | ≥ 0.32.0 | 0.33.0 | ✅ |
@@ -208,6 +208,8 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 - 集合 Release：`ibd-skills-vX.Y.Z`，zip 含 `README.md` + `QUICKSTART.md` + `LICENSE` + `assets/`（README 引用的依赖图等） + `skills/` 全部包
 
 ## 📌 近期更新
+
+- **2026-10-16 · v0.5.16**：**`ibd-quality-gates` 0.16.0 → 0.17.0**——新增 **G4 引用勾稽脚本** `scripts/check_method_refs.py`：对「问询问题类型 → 条目编号 → 使用位置」对照表做三查（编号格式 `域-族号2位-族内4位` / 编号存在性（对自建方法库全集，索引经 `~/.config/gates-index.json` 配置）/ 使用位置非空——「待补」冒充与空挂编号报 HIGH）；附阳阴性测试夹具。SKILL.md 第 6 步与 rules.md §附二挂接机检用法；语义判断（引用是否恰当）仍须人工。
 
 - **2026-10-12 · v0.5.15**：**撤出 `ibd-life-manager`（集合 9 → 8 包）**——该包已**更名 `life-manager` 并独立成仓**（发布通道迁至 [Kianchales/life-manager](https://github.com/Kianchales/life-manager)）：其所做（个人 Obsidian 库运维）与投行线零依赖、零业务关联，单独成仓后本集合专注投行线。README 计数徽章／导航行／「这是什么」／依赖表／工作链路／ASCII 图／图注 ＋ QUICKSTART 首段／场景表／零依赖安全牌**全部回到 8 包口径**；`assets/dependency-graph.svg` 去掉 life-manager 节点与 obsidian 连线。八包版本矩阵与兼容矩阵不变。
 
