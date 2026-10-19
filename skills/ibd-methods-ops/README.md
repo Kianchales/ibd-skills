@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BB%B4%E6%8A%A4-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-1.36.6-green" alt="version">
+  <img src="https://img.shields.io/badge/version-1.37.0-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -18,7 +18,7 @@
 
 - **蒸馏域**：S0-S7 全流程——**材料来源由用户定**（单文件/文件夹/项目/已接入的库）→ 材料准备（三阅读包）→ 多专家并行蒸馏 → 综合成文（写作范式）→ 模拟回复演练 → 共通点蒸馏 → 沉淀入库（索引刷新 + 护栏校验）
 - **维护域**：库结构健康——26 项护栏体检 → 修复工具箱（先 dry-run）→ 复验幂等
-- **随包工具链**：32 个脚本（索引体系 / 落库 / 门禁 / 修复 / 拆分 / 迁移），全部支持 `--methods-root` 或 `$METHODS_ROOT`
+- **随包工具链**：33 个脚本（索引体系 / 落库 / 门禁 / 修复 / 拆分 / 迁移 / 快照对比），全部支持 `--methods-root` 或 `$METHODS_ROOT`
 - **库规范单一事实源**：[references/methods-guide.md](references/methods-guide.md)（目录结构 / 条目结构 / 索引机制 / 规模化拆分）
 
 ## ✨ 快速开始
@@ -67,7 +67,7 @@ python scripts/update_expert_md.py --entries batch.json --methods-root ~/methods
 
 ```
 SKILL.md                 双域流程 SOP（蒸馏域 S0-S7 + 维护域 3 步）
-scripts/                 32 个随包脚本（下表为示例；全量清单见 references/methods-guide.md）
+scripts/                 33 个随包脚本（下表为示例；全量清单见 references/methods-guide.md）
   refresh_index.py         索引一键刷新（parse→gen_index→gen_toc→gen_entry）
   parse_titles.py          条目解析 → parsed_titles.txt
   gen_index.py             生成 _generated/方法论调用索引.md
@@ -88,6 +88,7 @@ CHANGELOG.md             版本记录
 
 ## 📌 近期更新
 
+- **2026-10-19 · v1.37.0**：**新增 `snapshot_entries.py`（批量改动的条目级差异视图）** —— 改动前后各拍一次快照（正文段 sha256 ＋ 实证案名集合），`--diff` 直接列出「正文变更／实证少案／条目消失／条目搬家」，免通读比对。只读脚本、不写库；全库 8,575 条扫描 0.9 秒；阳性（改 1 字／删 1 案名）与阴性（还原后 0 差异）对照均通过。
 - **2026-10-19 · v1.36.6**：**入口瘦身 13,807 → 9,998 字符（−27.6%）** —— 只留「路由 ＋ 判据 ＋ 指针」：两张表的「详规」列由逐行重复全路径改为表头一次说明＋行内节号；体检判据不再罗列 26 项护栏（清单唯一事实源回 `health-check.md`）；「协作模式」独立节取消，三条协作铁律并入蒸馏域抬头；资源索引改分组式。S0-S7 判据、维护域三步、降级路径零变更。
 - **2026-10-12 · v1.36.2**：补承 `distill-methods.md` §S3 材料校验增补（首页校验／md5 防串档／**北交所案强制验内文抬头**——KB 标注双向实证不可信／BSE 403 切乐享通道），内容随 10-03/10-10 蒸馏批入库、本条立目承载。
 

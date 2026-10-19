@@ -262,9 +262,9 @@
 
 ---
 
-## 附：随包脚本全量清单（32 个 · 含 `gen_refgraph.py`／`check_index_idempotent.py`／`log_event.py`／`gen_source_map.py`／`gen_schema.py`／`check_evidence.py` · 自 `SKILL.md`「随包脚本」节原样迁入）
+## 附：随包脚本全量清单（33 个 · 含 `gen_refgraph.py`／`check_index_idempotent.py`／`log_event.py`／`gen_source_map.py`／`gen_schema.py`／`check_evidence.py`／`snapshot_entries.py` · 自 `SKILL.md`「随包脚本」节原样迁入）
 
-> **计数定义**：**32 个 ＝ `scripts/*.py`**（不含 `scripts/_lib/` 的 3 个内部模块）；其中 `add_fm_single.py` **已退役** ⇒ **在用 31 个**。⚠️ 本计数**曾四度漂移**（历史 25／26／27／28／29 并存）⇒ 现由**体检第 20 项**（文档计数一致性）机器守着，改计数会当场报错。
+> **计数定义**：**33 个 ＝ `scripts/*.py`**（不含 `scripts/_lib/` 的 3 个内部模块）；其中 `add_fm_single.py` **已退役** ⇒ **在用 32 个**。⚠️ 本计数**曾四度漂移**（历史 25／26／27／28／29 并存）⇒ 现由**体检第 20 项**（文档计数一致性）机器守着，改计数会当场报错。
 
 > 本附是**脚本用途与命令形态**的事实源；`SKILL.md` 只留四类分组摘要 ＋ 指向本节。脚本本体单一事实源仍是 `scripts/`。
 
@@ -299,6 +299,8 @@ python scripts/check_entry_contract.py [--json]                # 书写契约自
 python scripts/replay_gate_report.py ...                       # S7 收尾：回写硬门禁四项指标 dry-run 报告（软执行·不阻断）
 
 # —— 维护域 ——
+python scripts/snapshot_entries.py ... --out <json>          # 改动前拍快照（条目 → 正文段 hash ＋ 实证案名集合；只读）
+python scripts/snapshot_entries.py ... --diff <json>         # 改动后对比：正文变更／实证少案／条目消失·搬家（--json 取全量，--fail-on-change 供闸门）
 python scripts/check_methods_health.py ...                    # 26 项护栏体检（0 ERROR 交付）
 python scripts/add_frontmatter.py ...      [--dry-run]         # 修复：补 frontmatter
 python scripts/add_fm_single.py ...        [--dry-run]         # 修复：单份细分版补 frontmatter（该载体 2026-09-23 停用 ⇒ 脚本已退役）

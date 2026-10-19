@@ -3,9 +3,9 @@ name: ibd-methods-ops
 slug: ibd-methods-ops
 displayName: IBD 方法论学习与维护
 description: 方法论知识库「生产 + 维护」双域全流程。生产域=案例蒸馏沉淀（选材→材料准备→三专家并行蒸馏→写作角色综合成文→共通点蒸馏→沉淀入库→索引刷新→护栏校验），触发词「执行蒸馏学习XX次」「蒸馏学习XX次」；维护域=方法论库结构健康（护栏体检/编号归一/去重/修复工具箱），触发词「方法论体检」「方法论治理」「库结构检查」。方法论库路径可配置（METHODS_ROOT），知识库后端可配；支持单用户模式（默认）与团队模式（可选）。
-summary: 方法论知识库「学习（产知识）+ 维护（保健康）」一体化——案例蒸馏沉淀新方法论 + 库结构健康护栏 + 随包脚本工具链（32 个），路径与知识库后端可配置。
+summary: 方法论知识库「学习（产知识）+ 维护（保健康）」一体化——案例蒸馏沉淀新方法论 + 库结构健康护栏 + 随包脚本工具链（33 个），路径与知识库后端可配置。
 agent_created: true
-version: 1.36.6
+version: 1.37.0
 ---
 
 # ibd-methods-ops
@@ -73,7 +73,7 @@ version: 1.36.6
 ## 维护域：护栏体检 + 修复（3 步）
 
 > **触发节奏**：并入批量蒸馏——每累计满 N 案例（建议 40）、S7 完成后顺带跑一次（计数文件 `<工作区根>/state/维护体检计数.md`）；亦可按触发词随时发起。
-> **同节奏议题**：**行业分类的合并评估只在本体检触发时进行**（平时蒸馏只管归口、不管合并；单案也正常新立类）——规则见 [library-rules.md](references/library-rules.md) §2.5。
+> **同节奏议题**：行业分类合并评估只在本体检触发（平时只归口、不合并；单案正常新立类）——规则见 [library-rules.md](references/library-rules.md) §2.5。
 > **体检前置 · 审计面**：**作用面须显式枚举**，不得默认等同 `methods/`——① 库内正文（`40_单案/`／`50_分卷/`／`30_行业版/`）② 库内归档 `cases_md/` ③ **蒸馏现场 `{工作区}/cases/`**。**凡查产出件／案目录，① ③ 并查**（「库内搜不到」≠「不存在」）。
 > **详规在册**：[govern/health-check.md](references/govern/health-check.md) 附：维护域三步执行详规；步骤名是导航、不下沉。
 
@@ -85,16 +85,16 @@ version: 1.36.6
 
 > **全库编号迁移踩坑实录**（案号 2→4 位化：正则 `\b` 汉字漏匹配／迁移脚本幂等／表行国标码误伤／四门复验）→ [govern/fix-tools.md](references/govern/fix-tools.md) 附。
 
-## 随包脚本（32 个 · 全部支持 `--methods-root`（传**工作区根**）／`$METHODS_ROOT`）
+## 随包脚本（33 个 · 参数与 §执行目录约定 同）
 
-> **计数口径**：32 ＝ `scripts/*.py`（用户面可执行，不含 `scripts/_lib/` 内部模块）；`add_fm_single.py` 已随「单份细分版」载体停用 ⇒ **在用 31 个**。计数由护栏「文档计数一致性」项对账。**逐条用途与命令形态** → [methods-guide.md](references/methods-guide.md) 附：脚本全量清单。
+> **计数口径**：33 ＝ `scripts/*.py`（用户面可执行，不含 `scripts/_lib/` 内部模块）；`add_fm_single.py` 已随「单份细分版」载体停用 ⇒ **在用 32 个**。计数由护栏「文档计数一致性」项对账。**逐条用途与命令形态** → [methods-guide.md](references/methods-guide.md) 附：脚本全量清单。
 > **适用范围**：面向 **A 档（文件型）库**（索引与体检基于文件，Markdown 载体同构）；**B 档（检索型）**下索引类脚本不适用（结构由连接器管理）。
 
 | 组 | 脚本（概要不展开） |
 |---|---|
 | **索引体系** | `parse_titles`／`gen_index`／`gen_toc`／`gen_entry`／`refresh_index`（一键编排）／`gen_refgraph`／`gen_schema`（库内 `SCHEMA.md`）／`check_index_idempotent`／`gen_source_map`（材料变更后跑） |
 | **落库与门禁** | `update_expert_md`／`check_expert_output`（S4.5 门禁）／`gen_replay_worksheet`／`check_entry_contract`／`replay_gate_report`／`check_evidence`（溯源·门禁外只报不改）／`gen_recon_anchors`／`check_index_locator` |
-| **维护域** | `check_methods_health`／`add_frontmatter`／`add_fm_single`（已退役）／`b_fmt_unify`／`c_scale_dedup`／`normalize_case_names`／`apply_case_no`／`backfill_volume_refs`／`fix_volume_case_by_segment`／`sync_cases_md`／`log_event` |
+| **维护域** | `snapshot_entries`（改动前后快照 diff）／`check_methods_health`／`add_frontmatter`／`add_fm_single`（已退役）／`b_fmt_unify`／`c_scale_dedup`／`normalize_case_names`／`apply_case_no`／`backfill_volume_refs`／`fix_volume_case_by_segment`／`sync_cases_md`／`log_event` |
 | **库演进** | `split_domains`／`split_domain_by_family`（按族外置）／`normalize_pl_s`／`apply_rewrite`（S7 回写） |
 
 - **书写契约**：条目实证项字段模型／三种排布／来源标注／标签禁用四条 → [entry-contract.md](references/entry-contract.md)（v1.0 · 用户裁定 D1–D5）；自检门禁 `check_entry_contract.py`
@@ -103,7 +103,7 @@ version: 1.36.6
 
 > 依赖来源标注：⬛=随包/本地自建；🟢=可选；🟦=内置。
 
-- **Python 3**〔🟦内置〕：32 个随包脚本（零第三方依赖）
+- **Python 3**〔🟦内置〕：33 个随包脚本（零第三方依赖）
 - **方法论库 `{METHODS_ROOT}`**〔⬛随包/本地自建〕：库规范见 [methods-guide.md](references/methods-guide.md)
 - **KB 后端**〔🟢可选〕：默认本地目录；可接入 MCP 知识库／云文档连接器（见「库配置」）
 - **团队协作工具**〔🟢可选〕：团队模式用 TeamCreate／Agent 消息；单用户模式无需
