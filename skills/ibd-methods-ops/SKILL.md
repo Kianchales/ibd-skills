@@ -2,25 +2,24 @@
 name: ibd-methods-ops
 slug: ibd-methods-ops
 displayName: IBD 方法论学习与维护
-description: 方法论知识库「生产 + 维护」双域全流程。生产域=案例蒸馏沉淀（选材→材料准备→三专家并行蒸馏→写作角色综合成文→共通点蒸馏→沉淀入库→索引刷新→护栏校验），触发词「执行蒸馏学习XX次」「蒸馏学习XX次」；维护域=方法论库结构健康（护栏体检/编号归一/去重/修复工具箱），触发词「方法论体检」「方法论治理」「库结构检查」。方法论库路径可配置（METHODS_ROOT），知识库后端可配（默认本地目录，可选连接器）；支持单用户模式（默认）与团队模式（可选）。
+description: 方法论知识库「生产 + 维护」双域全流程。生产域=案例蒸馏沉淀（选材→材料准备→三专家并行蒸馏→写作角色综合成文→共通点蒸馏→沉淀入库→索引刷新→护栏校验），触发词「执行蒸馏学习XX次」「蒸馏学习XX次」；维护域=方法论库结构健康（护栏体检/编号归一/去重/修复工具箱），触发词「方法论体检」「方法论治理」「库结构检查」。方法论库路径可配置（METHODS_ROOT），知识库后端可配；支持单用户模式（默认）与团队模式（可选）。
 summary: 方法论知识库「学习（产知识）+ 维护（保健康）」一体化——案例蒸馏沉淀新方法论 + 库结构健康护栏 + 随包脚本工具链（32 个），路径与知识库后端可配置。
 agent_created: true
-version: 1.35.15
+version: 1.36.6
 ---
 
 # ibd-methods-ops
 
 ## 定位简介
 
-> **设计原则 · 双向开放**：**资料来源与沉淀去向都由用户自己确定**——材料从哪来（对话给文件/文件夹/项目，或已接入的库）、知识沉淀到哪去（本地/Obsidian/云知识库等接入的库），全部由用户定；skill 只提供流程、规范与工具，不绑定任何私有环境、不自行扩大范围。
+> **设计原则 · 双向开放**：**资料来源与沉淀去向都由用户定**——材料从哪来（对话给文件／文件夹／项目，或已接入的库）、沉淀到哪去（本地／Obsidian／云知识库）；skill 只提供流程、规范与工具，不绑定私有环境、不自行扩大范围。
 
-方法论知识库「学习（产知识）+ 维护（保健康）」一体化 skill——学习域把案例（招股书 + 问询回复）蒸馏沉淀为新方法论，维护域保证方法论库结构健康；二者操作同一库（`{METHODS_ROOT}`）、频率同频（批量学习后随即导入维护），合并为一个 skill 实现连续工作流。
+方法论知识库「学习（产知识）+ 维护（保健康）」一体化——学习域把案例蒸馏为新方法论，维护域保证库结构健康；二者操作同一库（`{METHODS_ROOT}`）、频率同频（批量学习后随即导入维护），故合并为一个 skill。
 
-- **运行模式**：① **单用户模式（默认）**——本人按 S1-S7 串跑全流程，材料自备或手工准备；② **团队模式（可选）**——主理人编排 + 多角色协作（专家 Agent 并行蒸馏 → 写作角色综合），见「协作模式」
-- **路径可配置**：全流程以 `{METHODS_ROOT}`（**方法论正文根**，＝库根/methods）为基准，示例 `~/methods/`；**库根＝工作区根**（正文根的上一层，`app/`·`scripts/`·`state/`·`tasks/` 所在）——两词勿混；库结构规范见 [methods-guide.md](references/methods-guide.md)
-- **规则地图**：库的全部规则（四层：体系层判据／库层契约与编号／执行层门禁／触发层流程）已收敛为可查阅导航 → [library-rules.md](references/library-rules.md)，**含冲突裁决顺序与 12 条易误解点**；本文件与各 references 为细则事实源，规则总览只做导航
-- **学习范围由用户自己确定**：材料来源开放——**单文件 / 文件夹 / 项目目录 / 已接入的库** 任选（可组合），skill 不自行扩大；未指定时才走候选池
-- **库接入开放后端 · 首次引导配置**：方法论库**不锁定产品**——本地目录 / Obsidian / 乐享 / ima / 任意 MCP 知识库 / 云文档等皆可接入（示例非穷举，**由用户自行接入**）；首次使用按「库配置」节四问引导接入并记录，此后按能力档位（A 文件型 / B 检索型）分派读写
+- **路径可配置**：全流程以 `{METHODS_ROOT}`（**方法论正文根**，＝库根/methods）为基准；**库根＝工作区根**（正文根的上一层，`app/`·`scripts/`·`state/`·`tasks/` 所在）——两词勿混；库结构规范见 [methods-guide.md](references/methods-guide.md)
+- **规则地图**：库规则（体系层判据／库层契约与编号／执行层门禁／触发层流程）收敛为导航 → [library-rules.md](references/library-rules.md)（含冲突裁决顺序与 12 条易误解点）；细则事实源在本文件与各 references，总览只做导航
+- **学习范围由用户自己确定**：材料来源开放（单文件／文件夹／项目目录／已接入的库，可组合），skill 不自行扩大；未指定时才走候选池
+- **库接入开放后端**：不锁定产品（本地目录／Obsidian／乐享／ima／任意 MCP 知识库）；首次按「库配置」四问接入，此后按能力档位（A 文件型／B 检索型）分派读写
 - 分合决策与改名记录见 CHANGELOG.md
 
 ## 何时使用（双触发域路由）
@@ -28,135 +27,125 @@ version: 1.35.15
 | 触发语 | 域 | 入口 |
 |--------|-----|------|
 | 「执行蒸馏学习XX次」「蒸馏学习XX次」 | 蒸馏域 | 走下方 S0-S7 全流程 |
-| **指定学习范围**：「蒸馏学习这个文件 / 这个文件夹 / 这个项目 / 库里这批材料」（对话给文件、目录、项目路径，或指定库内范围） | 蒸馏域 | **范围由用户自己确定**，从 S0 起（跳过候选池选材） |
+| **指定学习范围**（对话给文件／目录／项目路径，或指定库内范围） | 蒸馏域 | **范围由用户定**，从 S0 起（跳过候选池选材） |
 | 「方法论体检」「方法论治理」「库结构检查」「护栏检查」 | 维护域 | 走下方「维护域」3 步 |
-| automation 按配置触发（批量） | 蒸馏域 | 按 automation 提示词执行（频次/标的数以提示词为准） |
+| automation 触发（批量） | 蒸馏域 | 按 automation 提示词执行（频次／标的数以提示词为准） |
 
 ## 库配置（首次使用必配 · 开放后端）
 
-> **不锁定产品**：库可为本地目录 / Obsidian / 乐享 / ima / 任意 MCP 知识库 / 云文档……（示例非穷举，**由用户自行接入**）——能力档位与完整配置见 [methods-guide.md](references/methods-guide.md) §二。
+> **不锁定产品**：库可为本地目录／Obsidian／乐享／ima／任意 MCP 知识库（示例非穷举，**由用户自行接入**）——能力档位与完整配置见 [methods-guide.md](references/methods-guide.md) §二。
 
-**首次接触任一库（含已配好的库）· 先读库根 `SCHEMA.md`**：它是**库自描述入口**——一页回答「**本库由谁管、当前 schema 版本水位、规矩在哪读、机器会拦什么**」。**「这个库的规矩在哪」不必问使用者**：库自己说得清（这正是不把 schema 只留在库外的理由）。该文件由 `gen_schema.py` 派生生成、随索引刷新自动跟上，**勿手改**。
+**首次接触任一库（含已配好的库）· 先读库根 `SCHEMA.md`**：**库自描述入口**——一页回答「本库由谁管、schema 版本水位、规矩在哪读、机器会拦什么」，**规矩在哪不必问使用者**。由 `gen_schema.py` 派生、随索引刷新自动跟上，**勿手改**。
 
-**首次接入**：检查本 skill 安装目录下 `library.config.json`（模板 [library.config.template.json](references/library.config.template.json)）——存在且字段完整 → 直接进流程；缺失 → 按「四问引导」接入（库在哪／怎么读写／自带检索吗／已有库还是从零建）→ 定能力档位（A 文件型 / B 检索型）→ 生成配置 → **连通性验证**（读写成功 / 可检索）。
-
-**四问逐条原文与按档位分派表**：[methods-guide.md](references/methods-guide.md) 附：首次接入引导流程（四问）。
-**从零建库 → 就绪验证 → 沉淀 → 检索 的串联示例（首次上手先看这里）** → [examples.md](references/examples.md)。
+**首次接入**：查本 skill 安装目录 `library.config.json`（模板 [library.config.template.json](references/library.config.template.json)）——字段完整 → 直接进流程；缺失 → 按「四问」（库在哪／怎么读写／自带检索吗／已有还是从零建）→ 定档位（A 文件型／B 检索型）→ 生成配置 → **连通性验证**。四问原文与分派表 → [methods-guide.md](references/methods-guide.md) 附：首次接入引导流程。
+**从零建库 → 就绪验证 → 沉淀 → 检索 的串联示例** → [examples.md](references/examples.md)。
 
 ## 执行目录约定（违反即报错）
 
 - 库读写**一律以 `{METHODS_ROOT}` 为基准**（脚本、材料、方法论只读写该目录）
-- automation/会话平台 cwd（如 `WorkBuddy/YYYY-MM-DD-HHMMSS/…`）仅为壳，**不得在会话目录新建/修改库数据**
-- 命令前先 `cd {METHODS_ROOT}`；本 skill 随包脚本统一支持 `--methods-root <工作区根>` 或环境变量 `METHODS_ROOT`
-  - 🔔 **参数语义**：`--methods-root` 传**库所在的工作区根**（非库本身）——直传库会得到 `<库>/methods` 并报「未找到方法论库」；`library.config.json` 的 `root` 字段＝库目录本身，与脚本参数语义不同，勿混用。实测校正与分派表见 [methods-guide.md](references/methods-guide.md) §一／§二
-- **用户提供的材料路径**（S0 的文件/文件夹/项目）不受库目录限制——按用户给定路径只读读取，不写入、不搬移；**从库取材料**时同样只读（A 档读文件 / B 档走连接器检索）；蒸馏产出统一落库（按库配置档位）
+- automation／会话平台 cwd 仅为壳，**不得在会话目录新建或修改库数据**
+- 命令前先 `cd {METHODS_ROOT}`；随包脚本统一支持 `--methods-root <工作区根>` 或 `$METHODS_ROOT`
+  - 🔔 **参数语义**：`--methods-root` 传**工作区根**（非库本身）——直传库会得到 `<库>/methods` 并报「未找到方法论库」；`library.config.json` 的 `root` ＝库目录本身，两者不同。校正与分派表 → [methods-guide.md](references/methods-guide.md) §一／§二
+- **用户提供的材料路径**不受库目录限制——按给定路径只读，不写入不搬移；**从库取材料**同样只读（A 档读文件／B 档检索）；蒸馏产出统一落库
 
-## 蒸馏域：全流程（S0-S7，团队模式由主理人编排：TeamCreate → Agent spawn → SendMessage 正式协作；单用户模式本人串跑）
+## 蒸馏域：全流程（S0-S7）
 
-> **学习范围由用户自己确定**（库既是沉淀目的地、也是材料来源），skill 不自行扩大范围。
-> **详规在册**：每步详规全在 [distill-methods.md](references/distill-methods.md)——**S0–S7 步骤执行卡片**见「附 A」（答「谁做／做什么」）；**S3.5／S4／S5／S5.5／S6 提炼方法详表**见同名 §（答「怎么做」）。本表只留「步骤 ＋ 执行者 ＋ 一句话判据 ＋ 册指针」。
+> **学习范围由用户自己确定**；skill 不自行扩大范围。
+> **详规在册**：每步详规全在 [distill-methods.md](references/distill-methods.md)——**步骤执行卡片**见「附 A」（答「谁做／做什么」），**提炼方法详表**见同名 §（答「怎么做」）。本表只留「步骤 ＋ 执行者 ＋ 一句话判据 ＋ 册节号」。
+> **团队模式**：主理人编排（TeamCreate → Agent spawn → SendMessage），三专家并行；单用户模式本人分角色串跑。**协作铁律**：TeamCreate 必须主理人执行；三专家 spawn 须同一条消息并行；跨成员信息一律经主理人中转，不得直连；角色定义见各步「执行者」列。
 
 | 步骤 | 执行者 | 判据（一句话） | 详规 |
 |------|--------|------|------|
-| **S0** 材料来源与范围（用户确定 · 起点） | 用户 | 范围由**用户**给定（单文件／文件夹／项目／已接入的库，可组合）；**未指定时才走候选池 S1** | [distill-methods.md](references/distill-methods.md) 附 A §S0 |
-| **S1** 范围确定与选材（来源为候选池时） | 主理人（可选脚本） | 用户已给明确范围 → **跳过本步**；候选池路径下候选须已有「上会稿」，并先读 `state/待补学清单.md` | 附 A §S1 |
-| **S1.5** 审完校验 | 主理人 | 审完标志＝**材料齐备**（有最终稿）；未齐登记至 `state/待补学清单.md`，已披露最终稿者优先补学（笔记标题后缀 `_补学`） | 附 A §S1.5 |
-| **S2** 行业定位 | 主理人 | 记录**证监会行业分类 ＋ 国民经济行业分类**（无数据终端则降级：披露口径 ＋ 公开信息交叉验证） | 附 A §S2 |
-| **S3** 材料准备 | 主理人（可选自动化脚本） | ①只读最新稿（注册稿＞上会稿＞申报稿，同 stage 取披露日期最新）②每轮回复只读最新版 → 生成**财务包／法律包／行业包**三包（S4 输入降约 2/3） | 附 A §S3 |
-| **S3.5** 旧条目预取 | 主理人 | 按 **28Q 问题域** ＋ 行业类预取 5-10 条旧条目（编号＋标题＋一行摘要）注入阅读包头部「既有方法论速览」；S4 产出自带关系标注 | [distill-methods.md](references/distill-methods.md) §S3.5 |
-| **S4** 三专家并行蒸馏 | 财务/法律/行业专家（团队模式：Agent spawn 同一条消息并行；单用户模式：本人分角色自评） | 三段式产出落 `产出_<维度>_蒸馏.md`；**S4.5 门禁** [check_expert_output.py](scripts/check_expert_output.py) **0 FAIL 才进 S5** | [distill-methods.md](references/distill-methods.md) §S4（门禁 §S4.5） |
-| **S5** 综合成文 ＋ 写作范式 | 写作角色（writer） | **五步提炼法**综合三方 ＋ 亲自研读原文提炼「投行语言」词汇句法库 → 通用方法论 ＋ 行业方法论（单案范式七节骨架）；三轨产出后由主理人跑 [normalize_pl_s.py](scripts/normalize_pl_s.py) **归一 PL/S 编号**（族内连续·零撞号·幂等） | [distill-methods.md](references/distill-methods.md) §S5 |
-| **S5.5** 模拟回复演练 | 写作角色 | 独立撰写 → 回查原文补齐 → 与真实回复对比，**差距清单 ≥3 条**并写回 | [distill-methods.md](references/distill-methods.md) §S5.5 |
-| **S6** 共通点蒸馏 | 主理人（可委写作角色） | **S6a 轻量映射 ≤50 行每轮必做**（校验＋补漏＋定稿分级）；「本次＋历史未复盘」≥10 触发 **S6b** 全量蒸馏 | [distill-methods.md](references/distill-methods.md) §S6 |
-| **S7** 沉淀入库 | 主理人 | 落库 ＋ **回写池三过滤（复现 2 次即并入 / 冲突改旧 / 用户裁定再裁定）** → [apply_rewrite.py](scripts/apply_rewrite.py) **执行回写**（高→实证区／中高→独立段；`--repair` 修截断行）→ [refresh_index.py](scripts/refresh_index.py) **必刷索引** → [check_methods_health.py](scripts/check_methods_health.py) **0 ERROR** ＋ [check_index_locator.py](scripts/check_index_locator.py) **抽查 12 条行号** → **待补学销项**；任一不过即转维护域修复 | 附 A §S7 ＋ [entry-contract.md](references/entry-contract.md) 附：S7 回写执行纪律（12 条） |
+| **S0** 材料来源与范围（起点） | 用户 | 范围由**用户**给定（单文件／文件夹／项目／已接入的库，可组合）；**未指定时才走候选池 S1** | 附 A §S0 |
+| **S1** 范围确定与选材（候选池来源） | 主理人（可选脚本） | 用户已给范围 → **跳过**；候选须已有「上会稿」，并先读 `state/待补学清单.md` | 附 A §S1 |
+| **S1.5** 审完校验 | 主理人 | 审完标志＝**材料齐备**（有最终稿）；未齐登记 `state/待补学清单.md`，已披露最终稿者优先补学（笔记后缀 `_补学`） | 附 A §S1.5 |
+| **S2** 行业定位 | 主理人 | 记录**证监会 ＋ 国民经济行业分类**（无数据终端则降级：披露口径 ＋ 公开信息交叉验证） | 附 A §S2 |
+| **S3** 材料准备 | 主理人（可选脚本） | ①只读最新稿（注册稿＞上会稿＞申报稿，同 stage 取披露最新）②每轮回复只读最新版 → 生成**财务／法律／行业三包**（S4 输入降约 2/3） | 附 A §S3 |
+| **S3.5** 旧条目预取 | 主理人 | 按 **28Q 问题域** ＋ 行业类预取 5-10 条旧条目（编号＋标题＋一行摘要）注入阅读包头部；S4 产出自带关系标注 | §S3.5 |
+| **S4** 三专家并行蒸馏 | 财务/法律/行业专家 | 三段式产出落 `产出_<维度>_蒸馏.md`；**S4.5 门禁** `check_expert_output.py` **0 FAIL 才进 S5** | §S4（门禁 §S4.5） |
+| **S5** 综合成文 ＋ 写作范式 | 写作角色 | **五步提炼法**综合三方 ＋ 亲读原文提炼「投行语言」词汇句法库 → 通用 ＋ 行业方法论（单案范式七节骨架）；三轨产出后跑 `normalize_pl_s.py` **归一 PL/S 编号**（族内连续·零撞号·幂等） | §S5 |
+| **S5.5** 模拟回复演练 | 写作角色 | 独立撰写 → 回查原文补齐 → 与真实回复对比，**差距清单 ≥3 条**并写回 | §S5.5 |
+| **S6** 共通点蒸馏 | 主理人（可委写作角色） | **S6a 轻量映射 ≤50 行每轮必做**（校验＋补漏＋定稿分级）；「本次＋历史未复盘」≥10 触发 **S6b** 全量蒸馏 | §S6 |
+| **S7** 沉淀入库 | 主理人 | 落库 ＋ **回写池三过滤**（复现 2 次即并入／冲突改旧／用户裁定再裁定）→ `apply_rewrite.py` 回写（高→实证区／中高→独立段）→ `refresh_index.py` **必刷索引** → `check_methods_health.py` **0 ERROR** ＋ `check_index_locator.py` 抽查 12 条行号 → **待补学销项**；任一不过转维护域 | 附 A §S7 ＋ [entry-contract.md](references/entry-contract.md) 附：S7 回写执行纪律 |
 
-> **库主从关系**：**本地 `{METHODS_ROOT}` = 单一事实源**——索引刷新、护栏校验、S6/S7 机制均以本地为准；**乐享等云知识库后端 = 只读发布镜像/检索前端**，向其写入属**同步动作、非创作动作**——禁止在云侧直接修订方法论内容，发现本地有误回本地改后重新同步；双侧分叉时以本地为准整体覆盖。
+> **库主从关系**：**本地 `{METHODS_ROOT}` ＝ 单一事实源**——索引刷新、护栏校验、S6/S7 机制均以本地为准；**云知识库后端 ＝ 只读发布镜像／检索前端**，向其写入属**同步动作、非创作**——禁止在云侧直接改方法论内容，发现本地有误回本地改后重新同步；双侧分叉以本地为准整体覆盖。
 
 ## 维护域：护栏体检 + 修复（3 步）
 
-> **触发节奏建议**：并入批量蒸馏节奏——每累计蒸馏满 N 案例（建议 40），S7 沉淀完成后顺带执行一次（计数文件 `<工作区根>/state/维护体检计数.md`）；人工亦可随时按触发词发起。
+> **触发节奏**：并入批量蒸馏——每累计满 N 案例（建议 40）、S7 完成后顺带跑一次（计数文件 `<工作区根>/state/维护体检计数.md`）；亦可按触发词随时发起。
 > **同节奏议题**：**行业分类的合并评估只在本体检触发时进行**（平时蒸馏只管归口、不管合并；单案也正常新立类）——规则见 [library-rules.md](references/library-rules.md) §2.5。
-> **体检前置 · 审计面**：体检/审计的**作用面须显式枚举**，不得默认等同 `methods/` —— ① 库内正文面（含 `40_单案/`／`50_分卷/`／`30_行业版/`）② 库内归档面 `cases_md/` ③ **蒸馏现场面 `{工作区}/cases/`**。**凡查产出件/案目录，① 与 ③ 两处并查**（「库内搜不到」≠「不存在」）。
-> **详规在册**：三步的动作详规见 [govern/health-check.md](references/govern/health-check.md) 附：维护域三步执行详规；**步骤名与一句话判据留在本表**（步骤名是导航、不下沉）。
+> **体检前置 · 审计面**：**作用面须显式枚举**，不得默认等同 `methods/`——① 库内正文（`40_单案/`／`50_分卷/`／`30_行业版/`）② 库内归档 `cases_md/` ③ **蒸馏现场 `{工作区}/cases/`**。**凡查产出件／案目录，① ③ 并查**（「库内搜不到」≠「不存在」）。
+> **详规在册**：[govern/health-check.md](references/govern/health-check.md) 附：维护域三步执行详规；步骤名是导航、不下沉。
 
 | 步骤 | 动作 | 判据（一句话） | 详规 |
 |------|------|------|------|
-| **1 体检** | `cd {METHODS_ROOT} && python <skill>/scripts/check_methods_health.py` | **26 项护栏 0 ERROR**（frontmatter＋单案必填字段／空 h3／编号连续唯一／路由表计数 vs 实算／parsed TOTAL／回写清单／W 编号唯一／交叉引用／体积警戒／**索引行号定位抽查**／**单案内容范围（四域齐备）**／**I-CL 条目位置**／**候选段残留**／**骨架合规**／**标签形态集一致性**／**撤除载体不得重建**／**编号提取正则左界元自检**／**分卷卷号唯一性＋段号连续性**／**条目契约全库校验**／**文档计数一致性（元自检）**／**入库强制字段·互见（增量水位）**／**登记表完整性对账**／**库内 schema 水位＋导航完整性**／**增量裸页码**／**skills 消费侧库事实引用**／**占位符残留**） | [govern/health-check.md](references/govern/health-check.md) |
-| **2 修复** | 按体检 ERROR 类型选修复脚本（add_frontmatter／b_fmt_unify／c_scale_dedup；`add_fm_single` 已随「单份细分版」载体停用而退役） | **先 dry-run 后执行**；工具箱索引与三个单一事实源边界 | [govern/fix-tools.md](references/govern/fix-tools.md) |
-| **3 复验** | 重跑 [refresh_index.py](scripts/refresh_index.py)（刷新生成物）＋ 复跑护栏 | **0 ERROR 且幂等** | [govern/health-check.md](references/govern/health-check.md) 附 §3 复验 |
+| **1 体检** | `cd {METHODS_ROOT} && python <skill>/scripts/check_methods_health.py` | **26 项护栏 0 ERROR**——结构／编号唯一连续／路由表计数 vs 实算／索引行号／条目契约／骨架／登记表对账／schema 水位等；**逐项与阈值以册为准** | [health-check.md](references/govern/health-check.md) |
+| **2 修复** | 按 ERROR 类型选脚本（`add_frontmatter`／`b_fmt_unify`／`c_scale_dedup` 等） | **先 dry-run 后执行**；工具箱索引与三个单一事实源边界见册 | [fix-tools.md](references/govern/fix-tools.md) |
+| **3 复验** | 重跑 `refresh_index.py` ＋ 复跑护栏 | **0 ERROR 且幂等** | health-check.md 附 §3 |
 
-> **全库编号迁移踩坑实录**（案号 2→4 位化实证 · 4 条：正则 `\b` 汉字漏匹配／迁移脚本幂等／表行国标码误伤／四门复验）——[govern/fix-tools.md](references/govern/fix-tools.md) 附：全库编号迁移踩坑实录。
+> **全库编号迁移踩坑实录**（案号 2→4 位化：正则 `\b` 汉字漏匹配／迁移脚本幂等／表行国标码误伤／四门复验）→ [govern/fix-tools.md](references/govern/fix-tools.md) 附。
 
-## 随包脚本（32 个 · 全部支持 `--methods-root`（传**工作区根**）/ `$METHODS_ROOT`）
+## 随包脚本（32 个 · 全部支持 `--methods-root`（传**工作区根**）／`$METHODS_ROOT`）
 
-> **计数定义**：**32 个 ＝ `scripts/*.py`**（用户面可执行；**不含** `scripts/_lib/` 的 3 个内部模块）。其中 **`add_fm_single.py` 已退役**（随「单份细分版」载体 2026-09-23 停用）⇒ **在用 31 个**。新增 7 个：`gen_refgraph.py`（反向视图）／`check_index_idempotent.py`（重跑校验（旧称：幂等自证）＋条目数对账（旧称：守恒对账））／`log_event.py`（操作日志（旧称：事件流）追加＋`--stats` 派生视图）／**`gen_source_map.py`**（来源代号映射 · G1 前置）／**`gen_schema.py`**（**库内 schema 入口** `SCHEMA.md` · 库自描述 ＋ 版本水位 · **已并入一键链**）／**`check_evidence.py`**（**溯源校验** · 门禁外工具 · 只报不改）／**`gen_recon_anchors.py`**（**B 对账锚点生成器** · 段界按标题层级修正 ＋ 实证/互见分角色标注）。
-> ⚠️ **本计数已三度漂移**（历史值 25／26／27 三种口径并存）⇒ 人工维护不可靠；**「文档计数一致性」护栏项**已登记为下批待办（见 `tasks/20260926_方法论库治理工单总表.md` §四）。
+> **计数口径**：32 ＝ `scripts/*.py`（用户面可执行，不含 `scripts/_lib/` 内部模块）；`add_fm_single.py` 已随「单份细分版」载体停用 ⇒ **在用 31 个**。计数由护栏「文档计数一致性」项对账。**逐条用途与命令形态** → [methods-guide.md](references/methods-guide.md) 附：脚本全量清单。
+> **适用范围**：面向 **A 档（文件型）库**（索引与体检基于文件，Markdown 载体同构）；**B 档（检索型）**下索引类脚本不适用（结构由连接器管理）。
 
-> **适用范围**：脚本面向 **A 档（文件型）库**（索引体系与体检均基于文件，Obsidian 等 Markdown 载体同构适用）；**B 档（检索型）**下索引类脚本不适用（检索与结构由连接器管理，见 methods-guide §二分派表）。
+| 组 | 脚本（概要不展开） |
+|---|---|
+| **索引体系** | `parse_titles`／`gen_index`／`gen_toc`／`gen_entry`／`refresh_index`（一键编排）／`gen_refgraph`／`gen_schema`（库内 `SCHEMA.md`）／`check_index_idempotent`／`gen_source_map`（材料变更后跑） |
+| **落库与门禁** | `update_expert_md`／`check_expert_output`（S4.5 门禁）／`gen_replay_worksheet`／`check_entry_contract`／`replay_gate_report`／`check_evidence`（溯源·门禁外只报不改）／`gen_recon_anchors`／`check_index_locator` |
+| **维护域** | `check_methods_health`／`add_frontmatter`／`add_fm_single`（已退役）／`b_fmt_unify`／`c_scale_dedup`／`normalize_case_names`／`apply_case_no`／`backfill_volume_refs`／`fix_volume_case_by_segment`／`sync_cases_md`／`log_event` |
+| **库演进** | `split_domains`／`split_domain_by_family`（按族外置）／`normalize_pl_s`／`apply_rewrite`（S7 回写） |
 
-- **四类分组**：① **索引体系**（`refresh_index.py` 一键编排 parse_titles→gen_index→gen_toc→gen_entry→**gen_refgraph**（反向视图 · **非阻断**诊断件）；另有 **`check_index_idempotent.py`**（重跑校验＋条目数对账 · 只读）／**`gen_source_map.py`**（来源代号映射 → `_generated/来源代号映射.json` · **材料变更后跑，不入一键链**）／**`gen_schema.py`**（**库内 schema 入口** `SCHEMA.md` · **已并入一键链**））② **落库与门禁**（`update_expert_md`／`check_expert_output`／`gen_replay_worksheet`（含 **`--echo` 回响检查** · 级联）/ `check_entry_contract`／`replay_gate_report`／**`check_evidence.py`**（**溯源校验 · 门禁外** · 只报不改））③ **维护域**（`check_methods_health` ＋ add_frontmatter／b_fmt_unify／c_scale_dedup（`add_fm_single` 已随「单份细分版」载体 2026-09-23 停用而退役）＋ `normalize_case_names`／`apply_case_no`／`backfill_volume_refs`／`fix_volume_case_by_segment`／`sync_cases_md`／**`log_event.py`**（操作日志追加））④ **库演进**（`split_domains`／`split_domain_by_family`（**新增·按族外置**）／`normalize_pl_s`；**编号迁移两脚本已 2026-09-23 退役**，见 [govern/fix-tools.md](references/govern/fix-tools.md) 附）
-- **全量清单与命令形态（32 个逐条用途）**：[methods-guide.md](references/methods-guide.md) 附：随包脚本全量清单
-- **书写契约**：条目实证项字段模型／三种排布／来源标注／标签禁用四条 → [entry-contract.md](references/entry-contract.md)（v1.0 · 用户裁定 D1–D5）；自检门禁 [check_entry_contract.py](scripts/check_entry_contract.py)
+- **书写契约**：条目实证项字段模型／三种排布／来源标注／标签禁用四条 → [entry-contract.md](references/entry-contract.md)（v1.0 · 用户裁定 D1–D5）；自检门禁 `check_entry_contract.py`
 
 ## 依赖与工具
 
 > 依赖来源标注：⬛=随包/本地自建；🟢=可选；🟦=内置。
 
-- **Python 3**〔🟦内置运行时〕：32 个随包脚本（零第三方依赖）
+- **Python 3**〔🟦内置〕：32 个随包脚本（零第三方依赖）
 - **方法论库 `{METHODS_ROOT}`**〔⬛随包/本地自建〕：库规范见 [methods-guide.md](references/methods-guide.md)
-- **KB 后端**〔🟢可选〕：默认为本地目录；可接入 MCP 知识库/云文档等连接器（见「库配置」四问引导）
-- **团队协作工具**〔🟢可选〕：团队模式使用 TeamCreate/Agent 消息机制；单用户模式无需（本人串跑）
+- **KB 后端**〔🟢可选〕：默认本地目录；可接入 MCP 知识库／云文档连接器（见「库配置」）
+- **团队协作工具**〔🟢可选〕：团队模式用 TeamCreate／Agent 消息；单用户模式无需
 
-**缺失降级**：无方法论库 → **空库起步档**（`methods-guide.md` 空库模板 + 边用边长）；维护域无库可检时如实报告「无对象」，不报错、不阻断；无 KB 后端 → 本地目录照常跑，仅失去镜像同步；无团队协作工具 → 单用户模式串跑（默认）。
+**缺失降级**：无库 → **空库起步档**（`methods-guide.md` 空库模板 ＋ 边用边长）；维护域无库可检时如实报「无对象」，不阻断；无 KB 后端 → 本地照常跑，仅失去镜像同步；无团队工具 → 单用户串跑。
 
 ## 资源索引（skill 只引用路径，不复制内容）
 
-> 依赖来源标注：⬛=随包/本地自建；🔵=连接器（可选）；🟦=内置；🟨=官方市场。
+- **[methods-guide.md](references/methods-guide.md)**〔⬛随包〕：**库规范单一事实源**（目录／条目／建立与演进）＋ 脚本全量清单 ＋ 首次接入四问
+- **[distill-methods.md](references/distill-methods.md)**〔⬛随包〕：蒸馏**提炼方法**单一事实源（S4 三段式／S5 写作范式／S5.5 演练／S6 共通点）＋ 附 A 执行卡片 ＋ 附 B 角色定义
+- **[entry-contract.md](references/entry-contract.md)**〔⬛随包〕：条目与回写书写契约（四字段模型／三种排布／来源标注／标签禁用）＋ S7 回写纪律 12 条
+- **[library-rules.md](references/library-rules.md)**〔⬛随包〕：库规则总览（四层地图 · 裁决顺序 · 12 条易误解点）——只做导航
+- **[examples.md](references/examples.md)**〔⬛随包〕：上手串联示例 ＋ 三个易踩坑（空库不跑全库体检／配置是本机文件／缺口登记勿另起名目）
+- **govern/**〔⬛随包〕：[health-check.md](references/govern/health-check.md) 护栏 26 项＋三步详规｜[fix-tools.md](references/govern/fix-tools.md) 修复工具箱＋编号迁移踩坑｜[adversarial-review.md](references/govern/adversarial-review.md) 对抗性复核判据（S7 复盘，只标不改）｜[design-boundaries.md](references/govern/design-boundaries.md) 设计边界 15 条
+- **[templates/](references/templates/README.md)**〔⬛随包〕：**骨架模板单一事实源**（4 份：单案范式／行业合并版／跨案域条目块／蒸馏笔记）——新建从此复制
+- **方法论库 `{METHODS_ROOT}`**〔自建〕：`_generated/通用方法论_最终版.md`（路由入口）＋ 各域正文 ＋ 调用索引 ＋ 条目标题目录 ＋ 引用图谱（反向视图＋对账）＋ 来源代号映射；生成物统一隔离于 `methods/_generated/`
+- **KB 后端**〔🟢〕：笔记默认落 `{METHODS_ROOT}/60_notes/`；可选外部连接器
 
-- **[methods-guide.md](references/methods-guide.md)**〔⬛随包〕：**方法论库规范单一事实源**（目录/条目/建立与演进）；**附**：随包脚本全量清单（32 个）／首次接入引导流程（四问）
-- **[distill-methods.md](references/distill-methods.md)**〔⬛随包〕：蒸馏「提炼方法」单一事实源（S4 三段式/S5 写作范式/S5.5 演练/S6 共通点判定）；**附 A**：S0–S7 步骤执行卡片；**附 B**：关键要点（蒸馏域）
-- **[entry-contract.md](references/entry-contract.md)**〔⬛随包〕：条目与回写书写契约（四字段模型／三种排布／来源标注／标签禁用）；**附**：S7 回写执行纪律（12 条）
-- **[references/govern/health-check.md](references/govern/health-check.md)**〔⬛随包〕：护栏体检 26 项 + 脚本用法 + 排除目录；**附**：维护域三步详规／关键要点（护栏与解析口径）
-- **[references/govern/fix-tools.md](references/govern/fix-tools.md)**〔⬛随包〕：修复工具箱索引 + 三个单一事实源边界 + 修复后验证清单；**附**：编号迁移踩坑实录／关键要点（库演进安全）
-- **[references/govern/adversarial-review.md](references/govern/adversarial-review.md)**〔⬛随包〕：**对抗性复核判据**（过度宣称三判据／阈值 **1**／排除项／**为何不落脚本的实测依据**）——落 **S7 复盘**环节（AI 判读＋人裁定，只标不改）
-- **[references/govern/design-boundaries.md](references/govern/design-boundaries.md)**〔⬛随包〕：**设计边界 · 本库明确「不做」的事**（15 条：引用模型／读取检索／校验台账／变更节奏）——凡「反向结论」一律追加至此，**防膨胀页**
-- **[references/templates/](references/templates/README.md)**〔⬛随包〕：**骨架模板单一事实源**（4 份可复制骨架：单案范式文件／行业合并版／跨案域条目块／蒸馏笔记）——规则在册、**骨架在此**，新建文件一律从这里复制
-- **[library-rules.md](references/library-rules.md)**〔⬛随包〕：方法论库规则总览（四层地图 · 冲突裁决顺序 · 12 条易误解点）——只做导航，细则事实源在各册
-- **[examples.md](references/examples.md)**〔⬛随包〕：**首次上手串联示例**（建库 → 就绪验证 → 沉淀 → 检索 → 缺口登记）＋ 三个新用户易踩坑（**空库不该跑全库体检**／配置为**本机文件**／缺口登记勿另起名目）——规则本体在各册，本册只给串联
-- **方法论库（`{METHODS_ROOT}`）**〔使用者自建〕：核心文件 = `_generated/通用方法论_最终版.md`（路由入口）+ `通用方法论_<域>域.md`（各域正文）+ `_generated/方法论调用索引.md` + `_generated/方法论_条目标题目录.md` + `_generated/方法论_引用图谱.md`（**反向视图**：入度/无引用条目/失效/单向 ＋ **材料-产出对账**，只报不建议）+ `_generated/来源代号映射.json`（**来源代号的物理指向**：代号 → cases 文件 ＋ 页码可解析性；后五者由脚本生成；**脚本生成物统一隔离于 `methods/_generated/`**，C2）
-- **KB 后端**〔🟢 可选〕：蒸馏笔记落库目的地——默认本地 `{METHODS_ROOT}/60_notes/`；可选外部知识库连接器（MCP 知识库/云文档等任选，使用者自配）
+## 关键要点（纪律索引）
 
-## 协作模式（团队增强 · 可选）
+> 纪律全局导航（主题 → 哪一步 → 落点册）：大全见 [library-rules.md](references/library-rules.md) 附「纪律索引」；各步骤处已内联指针。
 
-> **本 skill 离开多角色团队也能独立运作**——团队协作只是可选增强（提升并行度与交叉校验），不是前置条件。
-
-- **团队模式**：主理人编排（TeamCreate → 三专家 Agent 并行 spawn → 写作角色综合成文 → S4.5/S7 双门禁）
-- **协作铁律**：TeamCreate 必须主理人执行；三专家并行 spawn（同一条消息）；所有跨成员信息流经主理人中转；不得互相直连
-- **角色定义**（财务/法律/行业专家 ＋ 写作角色 ＋ 主理人）：[distill-methods.md](references/distill-methods.md) 附 B
-
-## 关键要点（纪律索引 · 主题 → 落点 → 需要的那一步）
-
-> 下表是**纪律的全局导航**：`主题 → 需要在哪一步 → 落点册`。**各步骤处亦已内联对应指针**（运行到那一步即见）；逐条详规全文见 [library-rules.md](references/library-rules.md) 附「纪律索引」。
 ## 维护（何时需要改本 skill）
 
-> **沉淀后必做自检（S7）**：每轮蒸馏完成后对照本表——**方法论内容更新 → 不改本 skill**（`refresh_index.py` 自动维护）；流程/SOP/脚本命令/门禁变化 → 改本 skill；维护域体检项/修复脚本变化 → 改 `references/govern/` 下对应文件。检查结果记入蒸馏笔记。
+> **沉淀后必做自检（S7）**：每轮蒸馏后对照本表——**方法论内容更新 → 不改本 skill**（`refresh_index.py` 自动维护）；流程／脚本／门禁变化 → 改本 skill；体检项／修复脚本变化 → 改 `references/govern/`。结果记入蒸馏笔记。
 
-| 变化类型 | 需要改 skill？ | 动作 |
-|---------|---------------|------|
-| 方法论内容更新（蒸馏新案、升版、索引刷新） | ❌ 不改 | 运行 [refresh_index.py](scripts/refresh_index.py)（自动维护索引/目录/入口） |
-| 流程/SOP 变化（S 步骤、脚本命令、门禁变更） | ✅ 改 | 同步更新本 skill 对应章节 |
-| 蒸馏提炼方法变化（三段式/范式提炼/共通点判定） | ✅ 改 | 更新 [distill-methods.md](references/distill-methods.md)（单一事实源） |
-| 库结构规范变化（目录/条目结构） | ✅ 改 | 更新 [methods-guide.md](references/methods-guide.md)（单一事实源） |
-| 护栏体检项/修复脚本变化 | ✅ 改 | 更新 `references/govern/` 下对应文件 |
-| 新踩坑/反模式 | ✅ 追加 | 在册的对应「附」节追加（本表只留索引） |
+| 变化类型 | 改 skill？ | 动作 |
+|---------|-----------|------|
+| 方法论内容更新（新案、升版、索引刷新） | ❌ | 跑 `refresh_index.py`（自动维护索引／目录／入口） |
+| 流程／SOP（S 步骤、脚本命令、门禁） | ✅ | 改本 skill 对应章节 |
+| 提炼方法（三段式／范式／共通点） | ✅ | 改 [distill-methods.md](references/distill-methods.md) |
+| 库结构规范（目录／条目） | ✅ | 改 [methods-guide.md](references/methods-guide.md) |
+| 护栏项／修复脚本 | ✅ | 改 `references/govern/` 对应文件 |
+| 新踩坑／反模式 | ✅ 追加 | 在册的对应「附」节追加（本表只留索引） |
 
 ## 边界与协作
 
-- **与 ibd-methods-query 互补**：本 skill 管生产+维护（写入侧），query 管检索消费（读取侧）——查询方法论走 query 的标准检索链路，不经本 skill
-- **冷启动分工**：首次使用无库时，query 的**冷启动引导档**可就地建空库骨架（按 [methods-guide.md](references/methods-guide.md) §三「起步结构」的生成物 ＋ 最小 `library.config.json`，纯结构零内容）——建库骨架属「检索前置条件自举」，不属蒸馏生产；方法论内容生产仍归本 skill，用户随后的蒸馏/四问引导均按既有流程接管该库
-- **被依赖声明**：`ibd-doc-write` / `ibd-methods-query` 可选依赖本 skill（≥1.5.0：库规范 + 脚本工具链 + 库接入配置）
-- **库结构规范单一事实源**：本 skill 的 [methods-guide.md](references/methods-guide.md)；`ibd-doc-write` 的库指引为其消费侧精简版（无库降级），二者同源
-- **高频句法反哺 doc-write**（可选依赖，未装则跳过）：蒸馏产出的通用高频句式同步至 ibd-doc-write 的「高频句法库」（该包 references 下；本包只存通用高频，案例级条目留 `{METHODS_ROOT}/`，双轨不混）
+- **与 ibd-methods-query 互补**：本 skill 管生产＋维护（写入侧），query 管检索消费（读取侧）——查询走 query 的标准检索链路，不经本 skill
+- **冷启动分工**：首次无库时，query 的**冷启动引导档**可就地建空库骨架（[methods-guide.md](references/methods-guide.md) §三 起步结构 ＋ 最小 `library.config.json`，纯结构零内容）——属检索前置自举，内容生产仍归本 skill
+- **被依赖声明**：`ibd-doc-write`／`ibd-methods-query` 可选依赖本 skill（≥1.5.0）
+- **库结构规范单一事实源**：[methods-guide.md](references/methods-guide.md)；`ibd-doc-write` 的库指引为其消费侧精简版（含无库降级），二者同源
+- **高频句法反哺 doc-write**（可选，未装跳过）：只同步**通用高频句式**；**案例级条目留 `{METHODS_ROOT}/`**，双轨不混
 - **格式规范归 doc-review**：方法论文件的格式问题移交 `ibd-doc-review`，本 skill 不自建格式规则
-- **不设第二源**：索引刷新→[refresh_index.py](scripts/refresh_index.py)；脚本→本包 `scripts/`（详见 references/govern/fix-tools.md 边界声明）
-- **「体检」域归属（消歧）**：**方法论库体检／库结构检查** → 本包（本库的结构健康面）；**skill 体系体检**与**仓库体检**不在本包范围（各归体系治理侧专用件，本包不代跑）。本包触发词里的「体检」**只指方法论库**（⚠️ 本包为**公开包**，按发布侧内部引用约束，此处**不列私有件名**；消歧全表见体系侧同题条目）。
+- **不设第二源**：索引刷新 → `refresh_index.py`；脚本 → 本包 `scripts/`（边界声明见 [govern/fix-tools.md](references/govern/fix-tools.md)）
+- **「体检」域归属（消歧）**：**方法论库体检／库结构检查** → 本包；**skill 体系体检**与**仓库体检**不在本包范围。本包触发词里的「体检」**只指方法论库**（本包为**公开包**，按发布侧约束不列私有件名）

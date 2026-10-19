@@ -23,6 +23,21 @@ S4 专家产出自检脚本（格式门禁 · 与 distill-methods.md §S4 编号
   C5 范式条目标题：同上 + 类位白名单 A-D/F-L-I
   C6 条数与节标题计数一致
   C7 无加粗条目、无 1 位序号；案代号/2 位案号历史形态 WARN
+
+S4-pre 分析卡门禁（--stage pre · WO-34 · 2026-10-17）：
+  P1 文件头标题：`# <persona>·<维度>分析卡·<简称>`
+  P2 蒸馏人署名行：同 C2
+  P3 四节结构锁定：`## 一、本案要点` → `## 二、与既有条目的关系` → `## 三、矛盾与张力` → `## 四、建议落族`
+  P4 关系标注形态：第二节内须含 `[强化:编号]`／`[扩展:编号]`／`[新增]` 至少一处；非法编号引用 ⇒ FAIL
+  P5 篇幅上限：全文 ≤ 2000 字符（半页卡；超限 FAIL——分析卡不是成稿）
+  P6 防幻觉抽检：「据我所知」等无来源论断标记 ⇒ WARN（提示人工复核）
+
+已知边界（诚实声明）：
+  · P4 非法编号判定只查「形态合法性」（族前缀+数字位数），**不查编号是否真实在册**——
+    在册校验属 S7-a 编号分配器职责（批内 max+1 语义下分析卡引用既有条目，实际漏引由
+    主理人审卡兜底）。禁把本门禁当「编号真实性担保」。
+  · 「臆造案名」的机械判定不可行（案名空间开放），由提示词层防幻觉话术约束
+    （distill-methods.md §S4-pre 话术清单）＋主理人审卡把守；P6 的 WARN 是辅助信号非判定。
 """
 import glob as _glob
 import json
@@ -49,6 +64,68 @@ HEAD1 = re.compile(r"^# .+·.+蒸馏·.+（.+）")
 
 FAIL = []
 WARN = []
+
+
+# ── S4-pre 分析卡门禁（WO-34 · --stage pre）────────────────────────────────
+
+PRE_HEAD1 = re.compile(r"^# .+·.+分析卡·.+")
+PRE_SEC1 = re.compile(r"^## 一、本案要点")
+PRE_SEC2 = re.compile(r"^## 二、与既有条目的关系")
+PRE_SEC3 = re.compile(r"^## 三、矛盾与张力")
+PRE_SEC4 = re.compile(r"^## 四、建议落族")
+PRE_REL = re.compile(r"\[(强化|扩展):((?:[FLIW]L?|S|W)-[A-Z]{0,3}\d{2,6})\]|\[新增\]")
+PRE_BAD_REF = re.compile(r"\[(?:强化|扩展):(?!\s*(?:[FLIW]L?|S|W)-[A-Z]{0,3}\d{2,6}\s*)\][^\s\]]?")
+PRE_HEDGE = re.compile(r"据我所知|一般来说|通常认为|众所周知|不言而喻")
+
+
+def check_pre_card(path):
+    """分析卡格式门禁（P1-P6）。独立于蒸馏稿 C 系列校验——两种产出形态不同。"""
+    global FAIL, WARN
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    lines = text.splitlines()
+    base = path.replace("\\", "/").split("/")[-1]
+    tag = f"[{base}]"
+
+    if not lines or not PRE_HEAD1.match(lines[0].strip()):
+        FAIL.append(f"{tag} P1 文件头标题不合模板（应为 `# <persona>·<维度>分析卡·<简称>`）")
+    if not any("蒸馏人：" in ln for ln in lines[:30]):
+        FAIL.append(f"{tag} P2 前 30 行缺「蒸馏人：…」署名行")
+
+    has1 = has2 = has3 = has4 = False
+    for ln in lines:
+        if PRE_SEC1.match(ln):
+            has1 = True
+        elif PRE_SEC2.match(ln):
+            has2 = True
+        elif PRE_SEC3.match(ln):
+            has3 = True
+        elif PRE_SEC4.match(ln):
+            has4 = True
+    for flag, name in ((has1, "一、本案要点"), (has2, "二、与既有条目的关系"),
+                       (has3, "三、矛盾与张力"), (has4, "四、建议落族")):
+        if not flag:
+            FAIL.append(f"{tag} P3 缺「## {name}」节")
+
+    # P4：第二节内须有至少一处关系标注；非法编号引用 ⇒ FAIL
+    seg2 = ""
+    if has2:
+        i2 = next(i for i, ln in enumerate(lines) if PRE_SEC2.match(ln))
+        i3 = next((i for i, ln in enumerate(lines) if PRE_SEC3.match(ln)), len(lines))
+        seg2 = "\n".join(lines[i2:i3])
+    if seg2 and not PRE_REL.search(seg2):
+        FAIL.append(f"{tag} P4 「二、与既有条目的关系」节内无任何 [强化:编号]/[扩展:编号]/[新增] 标注")
+    if PRE_BAD_REF.search(text):
+        FAIL.append(f"{tag} P6 存在非法编号引用（[强化:x]/[扩展:x] 后编号形态不合法，禁自编形态）")
+
+    # P5：篇幅上限（半页卡）
+    if len(text) > 2000:
+        FAIL.append(f"{tag} P5 分析卡超长（{len(text)} > 2000 字符上限）——分析卡不是成稿，压缩到半页")
+
+    # P6：无来源论断标记 ⇒ WARN（提示人工复核，不阻断）
+    for i, ln in enumerate(lines, 1):
+        if PRE_HEDGE.search(ln):
+            WARN.append(f"{tag} P6 第 {i} 行含无来源论断措辞（「{PRE_HEDGE.search(ln).group(0)}」）——人工复核该句是否可溯源")
 
 
 def check_file(path):
@@ -112,15 +189,18 @@ import argparse
 
 
 def main(argv):
-    ap = argparse.ArgumentParser(description="S4 专家产出自检门禁")
+    ap = argparse.ArgumentParser(description="S4 专家产出自检门禁（--stage pre 分析卡 / 默认蒸馏稿）")
     ap.add_argument("files", nargs="*", help="待检 md 文件（可多个）")
     ap.add_argument("--dir", help="案工作目录：自动扫目录下 产出_*.md")
+    ap.add_argument("--stage", choices=["pre", "final"], default="final",
+                    help="pre=分析卡门禁（扫 分析卡_*.md）；final=蒸馏稿门禁（默认，扫 产出_*.md）")
     ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     a = ap.parse_args(argv)
     total_fail = False
     results = []
     if a.dir:
-        targets = sorted(_glob.glob(a.dir.rstrip("/\\") + "/*产出_*.md"))
+        pattern = "分析卡_*.md" if a.stage == "pre" else "*产出_*.md"
+        targets = sorted(_glob.glob(a.dir.rstrip("/\\") + "/" + pattern))
     else:
         targets = [f for f in a.files if f.endswith(".md")]
     if not targets:
@@ -129,7 +209,10 @@ def main(argv):
     for p in targets:
         FAIL.clear()
         WARN.clear()
-        check_file(p)
+        if a.stage == "pre":
+            check_pre_card(p)
+        else:
+            check_file(p)
         if FAIL:
             total_fail = True
         results.append((p, list(FAIL), list(WARN)))

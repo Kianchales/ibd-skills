@@ -11,7 +11,7 @@ description: >
   ④ 逐段协作模式（人机协作载体核心流程：写作状态双文件 + 口径漂移检测 + 敏感识别即停 + 交付四件套，references/paragraph-collab.md）
   模板触发映射见 references/templates-map.md；上下文管理/降级见 references/context-rules.md。
   触发词：「写XX的反馈回复」「起草问询回复」「写XX问询回复」「XX反馈回复怎么写」「写招股书章节」「写尽调报告」「写备忘录」「逐段写」「逐段协作」「帮我改这段」「这段怎么改」
-version: 0.19.2
+version: 0.19.5
 agent_created: true
 ---
 
@@ -68,7 +68,7 @@ A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（逐段�
 
 | 步 | 动作 | 判据（一句话） |
 |---|---|---|
-| **①** 内容质量校验 | `ibd-quality-gates` 内容质量校验（草稿阶段：数字五要素 / 反模式 / G1-G5，md 即可跑） | 内容不过门不进排版（md 阶段改零排版成本） |
+| **①** 内容质量校验 | `ibd-quality-gates` 内容质量校验（草稿阶段：数字五要素 / 反模式 / G1-G5，md 即可跑） | 内容不过门不进排版（md 阶段改零排版成本）；**判 FAIL（G1/G2）后按 [machine-check-fixmap.md](references/machine-check-fixmap.md) 换写，不靠自建扫描自证通过** |
 | **①'** 数值自洽机械门 | `ibd-quality-gates check_data.py --input <草稿.md｜docx>` | 金额文本格式 / 数值前后一致 / 表格合计勾稽 / 跨表比对全过 |
 | **①''** 文字规范机械门（**必跑 · 套样式之前**） | `ibd-doc-review deliver_gate.py --md <草稿.md> [--anchors "36,507.55;19.96"]` | md 侧预检五项（标点全半角/禁用词/占位符/锚点计数/文档结构）PASS 才进 ② |
 | **②** 声明样式场景 | 招股书版 / 反馈回复版 | 场景声明在先，套样式在后 |
@@ -78,13 +78,6 @@ A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（逐段�
 | **⑤** 交付 | 附样式应用声明 | 使用者/负责人最终确认 |
 
 > 各步命令全文、「为什么必须卡在 ①''」、「review < 0.15.7 时的降级做法」→ [delivery-chain.md](references/delivery-chain.md) §1。
-
-### 4. 协作模式（可选 · 团队增强）
-
-> 单用户模式**不需要本节**——直接按上述流程写作即可。以下仅为「多角色协作」时的增强说明。
-
-- 团队模式：TeamCreate → 多维专家并行分析（财务/法律/行业）→ 写作角色综合成文 → 负责人按 G4 引用清单自检
-- 综合成文时：按本 skill 路由（反馈回复走五步链路）+ 投行语言写作规范 + 回查原文补齐数据（**不能只写框架，每个结论要配表格数据/合同条款原文/页码；数据入表、论证成段，禁混排成大段文字**）
 
 ### G4 引用自检（使用者/负责人核对）
 
@@ -100,12 +93,13 @@ A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（逐段�
 |------|------|------|
 | [response-chain.md](references/response-chain.md) | 反馈回复 | 五步链路详表 + **语言范式取用（④ 步详规）／跨域桥接（② 步补充）／G4 降级与库更新** + 双段式/剔除还原句式 |
 | [doc-structures.md](references/doc-structures.md) | 招股书/报告 | 招股书分析报告/尽调报告/财务对比表/核对表 章节框架 |
-| [templates-map.md](references/templates-map.md) | 模板映射 | 三大类模板触发映射（招股书章节/问询回复/备忘录）+ 知识库范例锚点 |
-| [writing-style.md](references/writing-style.md) | 通用 | 写前红线 + 投行语言词汇句法库 + **高频句法库（五大类，自方法论沉淀）** + 引用规范 + 语言风格 |
-| [context-rules.md](references/context-rules.md) | 通用 | 上下文管理（长文档）+ 失败降级协议 + 输出格式 |
-| [paragraph-collab.md](references/paragraph-collab.md) | 通用（长文档逐段） | **逐段协作模式**（核心流程）：写作状态双文件（口径卡/进度）+ 口径漂移检测协议 + 敏感识别即停 + 段后自检分档 + 交付四件套；**§0.0 协作模式路由** |
-| [methods-guide.md](references/methods-guide.md) | 通用（新使用者） | **方法论库消费指引**（消费侧精简版）：最小起步结构 + 条目结构规范 + 边用边长回环 + 无库降级 + 空库模板 + **外部引用路径清单**；**完整规范**见可选依赖 ibd-methods-ops |
-| [delivery-chain.md](references/delivery-chain.md) | 通用（交付阶段） | **交付链路与通道详规**：格式落地串联全文（§1）+ 工具说明与为什么是这个层级（§2）+ 依赖声明·断链自助·版本下限（§3）+ 与 L2 的接口（§4）+ 边界与协作详规（§5） |
+| [templates-map.md](references/templates-map.md) | 模板映射 | 三大类模板触发映射 ＋ 知识库范例锚点 |
+| [writing-style.md](references/writing-style.md) | 通用 | 写前红线 ＋ 投行语言词汇句法库 ＋ **高频句法库（五大类）** ＋ 引用规范 ＋ 语言风格 |
+| [context-rules.md](references/context-rules.md) | 通用 | 上下文管理（长文档）＋ 降级协议 ＋ 输出格式 |
+| [paragraph-collab.md](references/paragraph-collab.md) | 通用（长文档逐段） | **逐段协作核心流程**：状态双文件（口径卡/进度）＋ 口径漂移检测 ＋ 敏感识别即停 ＋ 段后自检分档 ＋ 交付四件套；**§0.0 协作模式路由** |
+| [methods-guide.md](references/methods-guide.md) | 通用（新使用者） | **库消费指引**（消费侧精简版）：起步结构 ＋ 条目结构 ＋ 边用边长 ＋ 无库降级 ＋ 空库模板 ＋ **外部引用路径清单**；完整规范见 ibd-methods-ops |
+| [delivery-chain.md](references/delivery-chain.md) | 通用（交付阶段） | **交付链路与通道详规**：格式落地全文（§1）＋ 工具层级取舍（§2）＋ 依赖声明·断链自助·版本下限（§3）＋ 与 L2 接口（§4）＋ 边界协作（§5） |
+| [machine-check-fixmap.md](references/machine-check-fixmap.md) | 通用（机检 FAIL 后） | **换写表与复核 SOP**：判定口径（唯一可信＝脚本 `verdict=PASS` 且 `error=0`，自建正则不作依据）＋ 命中词→替代表述换写表 ＋ 三态复核；适用 `check_gates.py` 判 FAIL（G1 黑名单／G2 绝对化） |
 
 ### 外部引用路径（skill 只引用路径，不复制内容）
 
@@ -120,10 +114,10 @@ A股 IPO 投行文档写作总入口。**定位 = 人机协作载体**（逐段�
 
 | 维度 | 说明 |
 |---|---|
-| **运行模式** | ① **单用户模式（默认）**：任何人直接使用，自己担任写作负责人，按本文档全流程跑；② **团队模式（可选）**：配合多角色协作（见「协作模式」） |
-| 🔴 **必须** | `ibd-quality-gates`〔🔗 外部依赖·断链自助，≥0.7.0〕（内容+数值自洽校验，md 即可跑）+ `ibd-doc-review`〔🔗 外部依赖·断链自助，**≥0.15.7**〕（格式层：套样式 + text/table 核对 + **交付门禁 `deliver_gate.py`**；下限登记 → `ibd-doc-review/references/interface.md` §6）+ 任一 docx 生成工具（`tencent-docx`〔🟦内置〕 / `minimax-docx`〔🟨官方市场〕） |
-| 🔴 **必须（有条件）** | **方法论库 `{METHODS_ROOT}`**——本 skill 的**语言范式与业务方法论均取自该库**；**无库仍可写作，但只能走降级路径**（凭 skill 内 `writing-style.md` 精选句法库，语言范式覆盖率大幅下降，属「能写但不地道」档位）。**库从哪来**：起步按本包 [methods-guide.md](references/methods-guide.md)（**消费侧精简版 · 自足**，含最小起步结构与空库模板）；要**完整规范 ＋ 批量沉淀／体检／修复工具链** → `ibd-methods-ops`；**按问题查库**（② 步的标准链路）→ `ibd-methods-query` |
-| 🟡 **推荐** | `ibd-methods-query`（**检索通道**：② 步查库走其标准链路「索引路 ＋ 全文路」；**无则按其 ② 步自足执行**——功能等价、仅 token 效率差）；`ibd-methods-ops`（可选，≥1.5.0——库完整规范 ＋ 蒸馏沉淀 ＋ 维护工具链，渐进增强）；Wind 等专业数据终端（可选——增强数据支撑，无则用招股书/公开披露数据）；`sheetagent`（Excel——财务对比表/核对表产出通道，无则表格改用 Markdown 或手工制作） |
+| **运行模式** | ① **单用户模式（默认）**：任何人直接使用，自己担任写作负责人，按本文档全流程跑；② **团队模式（可选）**：TeamCreate → 财务/法律/行业专家并行 → 写作角色综合成文 → 负责人按 G4 自检 |
+| 🔴 **必须** | `ibd-quality-gates`〔🔗断链自助 ≥0.7.0〕（内容＋数值自洽，md 即可跑）＋ `ibd-doc-review`〔🔗断链自助 **≥0.15.7**〕（格式层：套样式 ＋ text/table 核对 ＋ **门禁 `deliver_gate.py`**；下限登记 → 其 `interface.md` §6）＋ 任一 docx 生成工具（`tencent-docx`〔🟦内置〕 ／ `minimax-docx`〔🟨市场〕） |
+| 🔴 **必须（有条件）** | **方法论库 `{METHODS_ROOT}`**——语言范式与业务方法论均取自该库；**无库仍可写，但只能走降级路径**（凭 `writing-style.md` 精选句法库，覆盖率大幅下降，属「能写但不地道」）。**库从哪来**：起步按 [methods-guide.md](references/methods-guide.md)（消费侧自足，含起步结构与空库模板）；完整规范 ＋ 沉淀／体检／修复工具链 → `ibd-methods-ops`；按问题查库（② 步标准链路）→ `ibd-methods-query` |
+| 🟡 **推荐** | `ibd-methods-query`（**检索通道**：② 步查库走「索引路 ＋ 全文路」；**无则按其 ② 步自足执行**，功能等价、仅效率差）；`ibd-methods-ops`（可选，≥1.5.0：库完整规范 ＋ 沉淀 ＋ 维护工具链）；Wind 等数据终端（可选：无则用招股书/公开披露数据）；`sheetagent`（Excel 产出通道：无则改 Markdown 或手工） |
 | 🟢 **可选** | 知识库后端（KB_BACKEND）——公司内部 Wiki / 云文档 / 本地目录任选；本 skill 只要求「可检索同类案例 + 可存取文件」，不绑定具体后端 |
 
 > **工具说明（安装时读 · 每个工具为什么是这个层级）** → [delivery-chain.md](references/delivery-chain.md) §2；**依赖声明（断链自助 + 版本下限与降级做法）** → §3。

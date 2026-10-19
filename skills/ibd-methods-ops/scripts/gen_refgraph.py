@@ -22,6 +22,15 @@
     另附「高入度 TOP」供观察枢纽条目；「材料-产出对账」为**库存对账**（库存
     概念）：`cases/` 已采集材料 ↔ `40_单案/` 已蒸馏产出，缺口即 **backlog 提醒**（非错误）。
 
+两列扩展（WO-36 · 2026-10-17）：
+    ④ **零出链条目** —— 条目自身无任何出边（既无出向引用、也无互见）⇒ **仅报告**，
+       与「无引用条目」（入度=0）互补：前者没人指向它，后者它不指向别人。
+       豁免：`互见：无` 显式声明者**不计**零出链（声明即合法孤岛）；index/log 类生成物不在扫描面。
+    ⑤ **案级来源聚合** —— 解析条目块内 `<案名>实证`／`<案名>（ANxxxx）` 标签与
+       `（<来源简称> P页码）` 标注，聚合「编号 → 关联案号（经 `state/单案索引对照表.md`）」。
+       **用途锚定材料缺口补蒸场景**：某案补蒸/订正时一查即得受影响条目。
+       解析失败/案名无法映射 AN 者**显式计数**（`unmapped`），**禁猜、禁静默丢弃**。
+
 重要边界（诚实声明）：
     · 本脚本**只报不建议、不阻断**：退出码恒 0（除非脚本自身异常）。
     · 引用提取正则（`RX_REF`）＝ `_lib/layout.py` 的 `RX_ID_FAMILY`（**全族单一事实源**）。
@@ -120,6 +129,43 @@ def build_graph(files, uni):
     declared = Counter()            # **已声明的历史引用**（A6 降级留痕合法形态）-> 次数
     declared_src = defaultdict(set)
     refs_total = 0
+    # WO-36（2026-10-17）：条目级扩展收集器
+    entry_out = defaultdict(set)    # 条目编号 -> {出向目标}（仅同条目块内引用）
+    entry_nomutual = set()          # 显式声明「互见：无」的条目编号
+    entry_caseann = defaultdict(set)  # 条目编号 -> {案名或 ANxxxx}（块内案证据标签）
+    entry_src_codes = defaultdict(set)  # 条目编号 -> {来源简称}（块内来源标注）
+    case_ev_hits = 0                # 案证据标签命中总数（观察值）
+    unmapped_cases = Counter()      # 无法映射 AN 的案名 -> 次数（显式计数，禁静默）
+    case_label_noise = Counter()    # 非案名标签（语法噪声）-> 次数（观察值，不计 unmapped）
+    # WO-36 标签正则（与 entry-contract §3/§4 形态对齐；1-8 字案名与回写行契约一致）
+    RX_CASE_EV = re.compile(r"\*\*(.{1,8}?)实证\*\*")
+    RX_AN_INLINE = re.compile(r"AN(\d{4})")
+    RX_SRC_CODE = re.compile(r"（([^（）]{1,20}?) P\d+")
+    RX_MUTUAL_NONE = re.compile(r"^-?\s*\*?\*?互见\*?\*?[：:]\s*无\s*$")
+    # 扩展回写行「> **适用场景扩展 2026-10-17（<案名>）**：…」的案名（2026-10-18 补）
+    RX_EXT_CASE = re.compile(r"适用场景扩展\s*\d{4}-\d{2}-\d{2}\s*（([^）]{1,8})）")
+    # 非案名标签噪声（2026-10-18）：`**强化实证**`／`**对照实证**` 等语法标签会被
+    # `**<X>实证**` 正则误捕（实测 64 个 unmapped 里绝大多数属此类）⇒ 显式排除，
+    # 但**不静默丢弃**：命中噪声词者计入 `case_label_noise` 观察值。
+    # 判据分层（2026-10-18 修订）：① 在《单案索引对照表》→ 归 AN；② 形似公司名
+    # （常见后缀）但未登记 → `unmapped`（可执行：补登记）；③ 其余 → 语法噪声观察值。
+    NOISE_WORDS = ("强化", "扩展", "对照", "反面", "正面", "差异", "修正", "修订", "冲突",
+                   "变体", "同型", "同族", "多案", "原文", "语用", "族位", "族序", "共识",
+                   "新增", "并入", "独立", "合并", "替换", "复现", "回写", "分组", "合规",
+                   "最彻底", "占位", "唯一", "反向", "扩样", "免责", "标签", "本案", "新案",
+                   "期后", "段落", "骨架", "边界", "配对", "重排", "浮动", "首案", "同条",
+                   "体例", "不重复", "两个方向")
+    COMPANY_SUFFIX = re.compile(r"(股份|科技|电子|生物|材料|集团|精密|控股|电气|智能|工业|"
+                                r"食品|医药|化学|新材|能源|环保|装备|机械|光电|医疗)$")
+
+    def _classify_label(name):
+        """返回 'case'（可映射）／'unmapped'（形似公司名未登记）／'noise'（语法噪声）。"""
+        if any(w in name for w in NOISE_WORDS) or len(name) < 2 or len(name) > 6:
+            return "noise"
+        if COMPANY_SUFFIX.search(name):
+            return "unmapped"
+        return "noise"
+
     for rel, path in files:
         cur = None
         for ln in io.open(path, encoding="utf-8", errors="replace"):
@@ -130,14 +176,42 @@ def build_graph(files, uni):
             if m:
                 cur = m.group(1)        # 本条目自身编号（定义，非引用）
                 continue
+            # WO-36 修订（2026-10-18）：案证据/案号捕捉改为**块内任意行**——
+            # 原实现只在 `#`／`>` 行捕捉，漏掉普通实证行（实测全库 **3,398 行**
+            # 含 `ANxxxx` 的列表行未被计入，致案级聚合严重低估：44 条目）。
+            # 语义界定：条目块内出现的案号即视为关联（含实证/对比/反例），
+            # 因「某案补蒸/订正」时该条目同样受影响。
+            if cur:
+                for _rx in (RX_CASE_EV, RX_EXT_CASE):
+                    for _mt in _rx.finditer(s):
+                        _nm = _mt.group(1).strip()
+                        _kind = _classify_label(_nm)
+                        if _kind == "noise":
+                            case_label_noise[_nm] += 1
+                            continue
+                        # 是否登记由 main() 查表判定（此处不预判，避免双重计数）
+                        entry_caseann[cur].add(_nm)
+                        case_ev_hits += 1
+                for anm in RX_AN_INLINE.finditer(s):
+                    entry_caseann[cur].add("AN" + anm.group(1))
             if s.startswith("#") or s.startswith(">"):
                 continue
+            # WO-36：「互见：无」显式声明（合法孤岛，豁免零出链）
+            if RX_MUTUAL_NONE.match(s) and cur:
+                entry_nomutual.add(cur)
+                continue
+            # WO-36：来源简称捕捉（块内任意行，含实证/细项行）
+            if cur:
+                for sm in RX_SRC_CODE.finditer(s):
+                    entry_src_codes[cur].add(sm.group(1).strip())
             for r in RX_REF.findall(s):
                 if r.startswith("W-00"):
                     continue            # 旧 W 系列编号＝历史注记/索引保留，跳过
                 if r == cur:
                     continue            # 自指不算引用
                 refs_total += 1
+                if cur:
+                    entry_out[cur].add(r)
                 if r in uni:
                     indeg[r] += 1
                     src_of[r].add(rel)
@@ -151,7 +225,10 @@ def build_graph(files, uni):
                     else:
                         dangling[r] += 1
                         dangling_src[r].add(rel)
-    return indeg, src_of, out_edges, dangling, dangling_src, refs_total, declared, declared_src
+    return (indeg, src_of, out_edges, dangling, dangling_src, refs_total,
+            declared, declared_src,
+            entry_out, entry_nomutual, entry_caseann, entry_src_codes,
+            case_ev_hits, unmapped_cases, case_label_noise)
 
 
 def build_inventory(cases_root):
@@ -195,13 +272,58 @@ def build_inventory(cases_root):
     return inv
 
 
+def load_an_map():
+    """WO-36：读 `state/单案索引对照表.md`（案名 → AN 号唯一反查表）。
+
+    容错：文件不存在/格式变化 ⇒ 返回空表——案级聚合降级为「仅 AN 直引」，
+    纯案名标签全部落 unmapped 计数（显式，不静默）。
+    """
+    amap = {}
+    cand = os.path.join(_ROOT, "state", "单案索引对照表.md")
+    if not os.path.exists(cand):
+        return amap
+    for ln in io.open(cand, encoding="utf-8", errors="replace"):
+        m = re.match(r"^\|\s*([^|]{1,30}?)\s*\|\s*(AN\d{4})\s*\|", ln)
+        if m:
+            amap[m.group(1).strip()] = m.group(2)
+    return amap
+
+
 def main():
     files = scan_files()
     uni = build_universe(files)
-    indeg, src_of, out_edges, dangling, dangling_src, refs_total, declared, declared_src = build_graph(files, uni)
+    (indeg, src_of, out_edges, dangling, dangling_src, refs_total,
+     declared, declared_src,
+     entry_out, entry_nomutual, entry_caseann, entry_src_codes,
+     case_ev_hits, unmapped_cases, case_label_noise) = build_graph(files, uni)
     inv = build_inventory(_args.cases_root or _ROOT)
 
     orphans = sorted(i for i in uni if indeg.get(i, 0) == 0)
+    # WO-36 零出链：条目无任何出向引用，且未显式声明「互见：无」
+    zero_out = sorted(i for i in uni
+                      if not entry_out.get(i) and i not in entry_nomutual)
+    zero_out_declared = sorted(entry_nomutual)  # 已声明互见无（豁免样本，供观察）
+
+    # WO-36 案级来源聚合：条目 → {AN 号}；案名经单案索引对照表映射，映射失败进 unmapped
+    an_map = load_an_map()
+    id_to_ans = defaultdict(set)
+    for eid, names in entry_caseann.items():
+        for nm in names:
+            if re.fullmatch(r"AN\d{4}", nm):
+                id_to_ans[eid].add(nm)
+            else:
+                mapped = an_map.get(nm)
+                if mapped:
+                    id_to_ans[eid].add(mapped)
+                else:
+                    unmapped_cases[nm] += 1
+    ans_unmapped_total = sum(unmapped_cases.values())
+
+    # WO-36 反向索引：AN → 受影响条目（补蒸场景主查询）
+    an_to_ids = defaultdict(set)
+    for eid, ans in id_to_ans.items():
+        for a in ans:
+            an_to_ids[a].add(eid)
     # 单向：A 文件 → B 编号，而 B 所在文件未回指 A 文件内任一编号
     id_to_file = {}
     for rel, path in files:
@@ -225,6 +347,16 @@ def main():
         "dangling_ids": len(dangling), "dangling_hits": sum(dangling.values()),
         "declared_ids": len(declared), "declared_hits": sum(declared.values()),
         "oneway_pairs": len(oneway),
+        # WO-36 扩展
+        "zero_out_ids": len(zero_out), "zero_out_list": zero_out[:L],
+        "mutual_none_declared": len(entry_nomutual),
+        "case_ev_hits": case_ev_hits,
+        "ids_with_case_ann": len(id_to_ans),
+        "an_to_ids_sizes": {a: len(v) for a, v in sorted(an_to_ids.items())[:L]},
+        "case_label_noise": len(case_label_noise),
+        "unmapped_case_names": len(unmapped_cases),
+        "unmapped_case_hits": ans_unmapped_total,
+        "unmapped_samples": sorted(unmapped_cases)[:10],
         "dangling_list": [{"id": k, "hits": v, "where": sorted(dangling_src[k])[:3]}
                           for k, v in sorted(dangling.items())],
         "declared_list": [{"id": k, "hits": v, "where": sorted(declared_src[k])[:3]}
@@ -254,6 +386,12 @@ def main():
     out.append("| 已声明的历史引用（**不计欠账** · A6 降级留痕合法形态） | %d 个编号 / %d 处 |"
                % (len(declared), sum(declared.values())))
     out.append("| 单向引用（A→B 而 B 未回指） | %d 对 |" % len(oneway))
+    out.append("| **零出链条目**（无出向引用且未声明互见无 · WO-36 · 仅报告） | **%d** |" % len(zero_out))
+    out.append("| 已声明「互见：无」（合法孤岛 · 豁免零出链） | %d |" % len(entry_nomutual))
+    out.append("| 案证据标签命中（<案名>实证 ＋ AN 直引） | %d |" % case_ev_hits)
+    out.append("| 有关联案号的条目数 | %d |" % len(id_to_ans))
+    out.append("| 案名无法映射 AN（unmapped · **显式计数，禁静默**） | %d 个案名 / %d 处 |"
+               % (len(unmapped_cases), ans_unmapped_total))
     out.append("")
     out.append("## 二、失效引用（需核）\n")
     if dangling:
@@ -305,6 +443,43 @@ def main():
     for k, v in top:
         out.append("| `%s` | %d |" % (k, v))
     out.append("")
+    out.append("## 五·附一、零出链条目（WO-36 · **仅报告，不强制补链**）\n")
+    out.append("> 判据：条目无任何出向引用（互见/引用均无）且未显式声明「互见：无」。")
+    out.append("> 与「无引用条目」（入度=0，没人指向它）互补——本栏是「它不指向别人」。")
+    out.append("> 豁免：`- **互见**：无` 显式声明者不计（声明即合法孤岛，共 %d 条）。\n" % len(entry_nomutual))
+    if zero_out:
+        out.append("共 **%d** 个，前 %d 个：" % (len(zero_out), min(L, len(zero_out))))
+        out.append("")
+        out.append("`" + "`　`".join(zero_out[:L]) + "`")
+        if len(zero_out) > L:
+            out.append("\n…另有 %d 个未列。" % (len(zero_out) - L))
+    else:
+        out.append("（无）")
+    out.append("")
+    out.append("## 五·附二、案级来源聚合（WO-36 · 补蒸/订正场景主查询）\n")
+    out.append("> 解析条目块内 `<案名>实证`／`ANxxxx` 标签（含表格与回写行），案名经")
+    out.append("> `state/单案索引对照表.md` 映射为 AN 号。**用途**：某案补蒸/订正时，")
+    out.append("> 一查即得全部受影响条目。解析失败者进 unmapped 计数，**禁猜禁静默**。\n")
+    if an_to_ids:
+        out.append("| 案号 | 关联条目数 | 受影响条目（前 %d） |" % min(L, 8))
+        out.append("|---|---|---|")
+        for a in sorted(an_to_ids)[:L]:
+            ids_sorted = sorted(an_to_ids[a])
+            out.append("| %s | %d | %s |" % (a, len(ids_sorted),
+                                             "、".join("`%s`" % x for x in ids_sorted[:8])
+                                             + ("…" if len(ids_sorted) > 8 else "")))
+        if len(an_to_ids) > L:
+            out.append("| … | | 另有 %d 案未列 |" % (len(an_to_ids) - L))
+    else:
+        out.append("（无——未检出任何条目-案号关联）")
+    out.append("")
+    if unmapped_cases:
+        out.append("**unmapped 案名**（共 %d 个案名 / %d 处，前 %d 个）：" %
+                   (len(unmapped_cases), ans_unmapped_total, min(L, len(unmapped_cases))))
+        out.append("")
+        out.append("`" + "`　`".join(sorted(unmapped_cases)[:L]) + "`")
+        out.append("\n> 处置：核对标签写法与《单案索引对照表》登记名；确为新案先补登记再重跑本脚本。\n")
+    out.append("")
     out.append("## 六、材料-产出对账（库存对账 · **缺口＝backlog，非错误**）\n")
     out.append("> 判据：未被加工的材料是 **backlog 提醒**，不是违规；本栏**只提示、不阻断**。")
     out.append("> 目录名归一：`cases/<板块>_<案名>_<日期>` 取中段；`_` 前缀为非案目录。\n")
@@ -334,9 +509,11 @@ def main():
     with io.open(dst, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(out))
     print("✓ 引用图谱已生成: %s（登记面 %d ｜ 引用 %d ｜ 无引用条目 %d ｜ 失效 %d ｜ 已声明 %d ｜ 单向 %d 对 ｜ "
+          "零出链 %d ｜ 案关联条目 %d ｜ unmapped 案名 %d ｜ "
           "材料 %d/未蒸馏 %d）"
           % (os.path.relpath(dst, METHODS), len(uni), refs_total, len(orphans), len(dangling),
-             len(declared), len(oneway), inv["cases_dirs"], len(inv["cases_without_output"])))
+             len(declared), len(oneway), len(zero_out), len(id_to_ans), len(unmapped_cases),
+             inv["cases_dirs"], len(inv["cases_without_output"])))
     return 0
 
 

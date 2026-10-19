@@ -95,14 +95,14 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
-| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.19.2 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
+| [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.19.5 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
 | [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.17.0 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.15.5 | 🟢 doc-review ≥0.32.0（交付口径单一事实源 + 三形态路由/深度三档/类型词表 12 类/清单 anyOf + 复核报告 Excel 形态；缺则只产清单不落地）；🟢 方法论库财务域（同类案例「先库后源」）+ methods-query（缺则直查公开问询件） |
 | [ibd-legal-review](skills/ibd-legal-review/README.md) | **法律惯例对照复核**：把本稿与同类情形的市场惯例并排比，出对照标注；**只对照、不定性**（法律判断归签字人） | 0.3.2 | 🔴 doc-review ≥0.26.2（复核链清单汇总口，不随包携带）；🟢 方法论库（B 档惯例取例，缺则退 A 档） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.33.0 | 零外部 skill 依赖（基座） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.35.3 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份复核报告（Excel，按问题性质分工作表） | 0.12.3 | 🔴 doc-review ≥0.32.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md + 清单 anyOf + 复核报告 Excel 形态；单入口路由） |
-| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.35.15 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
-| [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.6.6 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
+| [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.36.6 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
+| [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.7.0 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
 
 > [!WARNING]
 > **`ibd-doc-write` 尚不成熟，无法满足「独立撰写整段投行文件」的要求。**
@@ -183,12 +183,12 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
 | ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.17.0 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.33.0 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.32.0 | 0.33.0 | ✅ |
-| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.32.0 | 0.33.0 | ✅ |
-| ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.33.0 | ✅ |
-| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.35.15 | ✅ |
-| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.35.15 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.35.3 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.32.0 | 0.35.3 | ✅ |
+| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.32.0 | 0.35.3 | ✅ |
+| ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.35.3 | ✅ |
+| ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.36.6 | ✅ |
+| ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.36.6 | ✅ |
 | ibd-doc-review（样式套用/新建 docx） | **平台 docx 工具**〔`tencent-docx`／`minimax-docx`／本地 Office 任选其一〕 | 无版本约束 | — | 🔴 必备 |
 
 > **下限口径（＝契约完整版，非「最低可跑版」）**：本表下限取「**依赖方用到的全部契约能力的最大引入版本**」，故可能高于任一单项能力的引入版。
@@ -208,6 +208,13 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 - 集合 Release：`ibd-skills-vX.Y.Z`，zip 含 `README.md` + `QUICKSTART.md` + `LICENSE` + `assets/`（README 引用的依赖图等） + `skills/` 全部包
 
 ## 📌 近期更新
+
+- **2026-10-19 · v0.5.17**：**4 包上提（复核域 S5 前置门 ＋ 库侧瑕疵分线 ＋ 入口瘦身 5 包）**——
+① **`ibd-doc-review` 0.33.0 → 0.35.3**：新增 **域 S 第 5 道前置门「源件自相矛盾」**（`references/check-scope.md` §五 S5）——同一事实在源件不同位置取值不符（符号／数值／口径／单位）**一律指出**，进报告 `nature＝数据不一致` 表 ＋ 同步进批注 ＋ **双址标注**（两处页码 ＋ 明细佐证页）并写明我方认定取值；**分级只管是否升硬伤、不管是否指出**（口径瑕疵→低危「以某处为准、无需改写」／结论性错误→中高危进正文）；门是「发现后怎么写」的处置门、**不是「查不查」的开关**，另设**防歧义四条**（禁止以不影响结论为由少核／必写三件／分级不调写不写／与批注同纪律）。**适用面**：只覆盖我方经手件——外部已定形资料（蒸馏底稿）**不核其自身一致性，只核「我引的数与我引的页码对不对得上」**。同批禁词表增**主观辩护词族**（动机／意图／倾向于／故意／刻意／有意 ＋「动机与空间」）；`SKILL.md` **15,294 → 9,998 字符**（−34.6%），维护规程独立成册 `references/maintenance.md`。
+② **`ibd-methods-ops` 1.35.15 → 1.36.6**：库规则增**「源文件瑕疵处置 → 按谁负责分线」**（复核线我方负责⇒一律指出；入库线外部已定稿披露件⇒**无数据一致性核对义务**，不入条目、不登记、不外推，唯一例外＝该不一致会改变可复用结论时在「边界条件」写一句以何为准）；`SKILL.md` **13,807 → 9,998 字符**（−27.6%）。
+③ **`ibd-doc-write` 0.19.2 → 0.19.5**：遣词规范 **5 → 18 条**（自库内 WL／PL 遣词类提炼，剥离案名）＋「主观辩护转客观陈述」双指针；`SKILL.md` **10,415 → 9,964 字符**。
+④ **`ibd-methods-query` 0.6.6 → 0.7.0**：新增**「输出后回填」**节——检索产出满足可复用判据（跨 ≥2 案对比／条目矛盾新发现／成结构清单）且经用户同意时，落 `methods/60_notes/检索回填_YYYYMMDD_<主题>.md`（四节固定骨架）并入索引面；回填件无编号、不进分卷、不承担条目职能，**禁为凑数回填**。
+> 入口瘦身的判据同批立为体系规则：**包入口只承担「路由 ＋ 判据 ＋ 指针」**，自建包 `SKILL.md` ≤ **10,000 字符**（外部安装包不查），存量超标走**基线棘轮只许降**；本批 5 个超标包全部落进预算，基线表清零。
 
 - **2026-10-16 · v0.5.16**：**`ibd-quality-gates` 0.16.0 → 0.17.0**——新增 **G4 引用勾稽脚本** `scripts/check_method_refs.py`：对「问询问题类型 → 条目编号 → 使用位置」对照表做三查（编号格式 `域-族号2位-族内4位` / 编号存在性（对自建方法库全集，索引经 `~/.config/gates-index.json` 配置）/ 使用位置非空——「待补」冒充与空挂编号报 HIGH）；附阳阴性测试夹具。SKILL.md 第 6 步与 rules.md §附二挂接机检用法；语义判断（引用是否恰当）仍须人工。
 
