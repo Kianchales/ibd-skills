@@ -33,7 +33,11 @@
     python round_diff.py --prev a.json --cur b.json --json
     python round_diff.py --self-test          # 内置三档夹具自检
 
-退出码：0 = 正常产出；1 = 有待人工确认项（③ 档非空）；2 = 用法／环境错误。
+**清单先过 schema**：比对前按同包 `problems.schema.json` 校验两份清单（不合规直接拒绝，
+  `--no-validate` 可跳过但会留痕）——比对只认 `anchor`，台账却要渲染 `sev`／`title`，
+  坏清单会渲染出空列，读的人会误以为「这轮就这些」。
+
+退出码：0 = 正常产出；1 = 有待人工确认项（③ 档非空）；2 = 用法／环境错误（含清单未过 schema）。
   —— 把「有待核」做成退出码而不是提示，是为了让调用方**不能装作没看见**。
 """
 import argparse
@@ -82,6 +86,25 @@ def load_list(path):
         if not isinstance(it, dict) or "anchor" not in it:
             raise ValueError("第 %d 条缺 anchor：%s" % (i + 1, path))
     return data
+
+
+def schema_errors(data):
+    """清单结构校验——**判据不复制**，直接调同包 `problems.schema.json` 校验器。
+
+    为什么比对前要校验：比对只认 `anchor`，但台账还要渲染 `sev`／`title`；清单不合 schema 时
+    台账会出现空列或错值，读的人会以为「这轮就这些」——**宁可拒绝比对，不出半截台账**。
+    校验器不可用 ⇒ **降级为提示不阻断**（缺的是环境，不是数据问题），并在 stderr 留痕。
+    """
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from validate_schema import validate, SCHEMA_PATH  # noqa: E402
+        with io.open(str(SCHEMA_PATH), encoding="utf-8") as fh:
+            schema = json.load(fh)
+    except Exception as e:                                   # 校验器缺失/损坏
+        print("[WARN] 未能加载 problems.schema.json 校验器（%s）；本次跳过清单结构校验" % e,
+              file=sys.stderr)
+        return []
+    return sorted(validate(data, schema), key=lambda x: x[0])
 
 
 def match(prev, cur, hi=0.85, lo=0.60):
@@ -272,6 +295,8 @@ def main():
     ap.add_argument("--hi", type=float, default=0.85, help="高于此相似度判「未修复」（默认 0.85）")
     ap.add_argument("--lo", type=float, default=0.60, help="低于此相似度判「已修复」（默认 0.60）")
     ap.add_argument("--json", action="store_true", help="结构化输出（不写 md）")
+    ap.add_argument("--no-validate", action="store_true",
+                    help="跳过 problems.schema.json 结构校验（默认校验；不合规清单直接拒绝比对）")
     ap.add_argument("--self-test", action="store_true", help="内置夹具自检")
     a = ap.parse_args()
 
@@ -301,6 +326,22 @@ def main():
     except (OSError, ValueError) as e:
         print("错误：%s" % e, file=sys.stderr)
         return 2
+
+    if not a.no_validate:
+        bad = False
+        for label, path, data in (("上轮", a.prev, prev), ("本轮", a.cur, cur)):
+            errs = schema_errors(data)
+            if errs:
+                bad = True
+                print("错误：%s清单未过 problems.schema.json（%d 项）：%s"
+                      % (label, len(errs), os.path.basename(path)), file=sys.stderr)
+                for pa, msg in errs[:5]:
+                    print("   %s → %s" % (pa or "(根)", msg), file=sys.stderr)
+                if len(errs) > 5:
+                    print("   …另有 %d 项（加 --no-validate 可跳过校验，但不建议）"
+                          % (len(errs) - 5), file=sys.stderr)
+        if bad:
+            return 2
 
     rows, stats = match(prev, cur, hi=a.hi, lo=a.lo)
     if a.json:

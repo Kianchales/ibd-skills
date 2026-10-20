@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.37.1] - 2026-10-20
+
+### 修复 · 清单先过 `problems.schema.json`（治「比对绕开门禁」）
+
+- **病症**：0.36.0／0.37.0 的 `round_diff.py` 读清单只校验「有 anchor」——同包 `problems.schema.json` ＋ `validate_schema.py` 明明是清单的结构契约，**新脚本却绕过去自己判**。后果：清单缺 `advice`／`rev`（`anyOf` 条件）仍能出账，而台账要渲染 `sev`／`title`，坏清单会渲染出空列，读的人会误以为「这轮就这些」。
+- **改法**：比对前对**上轮与本轮两份清单**都跑 schema 校验；不合规**直接拒绝比对**（exit 2），逐条报出「第几条 → 缺什么」，透出前 5 条。校验器不可用（文件缺失/损坏）⇒ **降级为 WARN 不阻断**并在 stderr 留痕——缺的是环境，不是数据。
+- **判据不复制**：直接 `import validate_schema` 复用其 `validate()` 与 `SCHEMA_PATH`，schema 变更自动跟随（P1 单一事实源）。
+- **逃生口**：`--no-validate` 可跳过（老清单迁移期用），但提示里明确「不建议」。
+- **三态实测**：合规清单 → 正常出台账；缺 `advice`／`rev` 的坏清单 → exit 2 且逐条点名；`--no-validate` → 照常出账。`--self-test` 三项仍 PASS（自检走 `match()` 不经过 CLI 校验，不受影响）。
+
 ## [0.37.0] - 2026-10-20
 
 ### 新增 · 清单留档规约 ＋ `--find-prev`（治「多轮断链」）

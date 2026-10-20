@@ -16,7 +16,7 @@ description: >
   （写入形态 A 裸写／B 前缀写／C 静态写 ＋ 改写四条纪律）。
   触发词：「质量校验」「这篇能不能交」「交付前检查」「数字五要素」
   「绝对化扫描」「反模式扫描」「质量自评」「这篇打几分」「Excel 交付检查」
-version: 0.17.0
+version: 0.17.1
 agent_created: true
 ---
 
@@ -123,7 +123,7 @@ Excel 文件含公式的，**先跑交付门禁**：`ibd-excel-ops/scripts/xlsx_
 **判据（一句话）**：每条外部引用都能答三问——**引了什么、出处编号多少、用在正文哪个位置**，并附一张对照表。
 
 > 三问的执行细则与 `~/.config/gates-index.json` 索引配置（无索引则按通用规则人工核对）见 [rules.md](references/rules.md) §附二。
-> **编号机检**（v0.17.0）：对照表可跑 `python scripts/check_method_refs.py <对照表.md|json>` 三查——编号格式（域-族号2位-族内4位）/ 存在性（对方法库全集 ~2447 条）/ 使用位置非空；退出码 0=PASS 1=FAIL，`--json` 供上层编排。语义判断（引用是否恰当）仍须人工。
+> **编号机检**（v0.17.0）：对照表可跑同包 [check_method_refs.py](scripts/check_method_refs.py)（`python <该脚本> <对照表.md|json>`）三查——编号格式（域-族号2位-族内4位）/ 存在性（对方法库全集 ~2447 条）/ 使用位置非空；退出码 0=PASS 1=FAIL，`--json` 供上层编排。语义判断（引用是否恰当）仍须人工。
 
 ## 资源索引
 
@@ -131,7 +131,7 @@ Excel 文件含公式的，**先跑交付门禁**：`ibd-excel-ops/scripts/xlsx_
 |------|------|
 | [rules.md](references/rules.md) | 四类检查 + 五项判据的完整规则，每条配正反例；§7 为 Excel 交付门禁（重算 ＋ 交稿前检查）；§8 操作层已按层拆出至 `ibd-excel-ops`；**§附一** 依赖层级说明 ／ **§附二** G4 引用可追溯执行细则（自 SKILL.md 下沉） |
 | [task-core.md](references/task-core.md) | 动笔前准备的通用骨架与多角色参数表 |
-| scripts/check_method_refs.py | G4 对照表编号机检（v0.17.0）：格式 / 存在性（方法库全集）/ 使用位置三查；测试夹具 tests/fixtures/g4_table_*.md |
+| [check_method_refs.py](scripts/check_method_refs.py) | G4 对照表编号机检（v0.17.0）：格式 / 存在性（方法库全集）/ 使用位置三查；测试夹具 tests/fixtures/g4_table_*.md |
 | [antipatterns.md](references/antipatterns.md) | 反模式清单（四类 30 条），每条含"为什么不行、怎么改" |
 | [wordlist-absolute.txt](references/wordlist-absolute.txt) | 绝对化用词黑名单（G2 用，本 skill 独有） |
 | [wordlist-ai-flavor.txt](references/wordlist-ai-flavor.txt) | AI 写作痕迹词黑名单 |

@@ -96,10 +96,10 @@ AI 会按 `SKILL.md` 决策树走 S1-S6（识别场景 → 套样式 → 格式�
 | skill | 一句话说明 | 版本 | 依赖 |
 |---|---|---|---|
 | [ibd-doc-write](skills/ibd-doc-write/README.md) | **起草投行文件**：给它问询函或章节要求，按投行写作规范产出结构化初稿，供你逐句改定 | 0.19.5 | 🔴 quality-gates ≥0.7.0 + doc-review ≥0.15.7；🟢 methods-ops ≥1.5.0（库完整能力）+ methods-query（检索通道，缺则按本包流程自足执行） |
-| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.17.0 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
+| [ibd-quality-gates](skills/ibd-quality-gates/README.md) | **交稿前自动挑错**：数字有没有来源、表述是否绝对化、前后数据能否对上、Excel 公式能否复核，逐项过关才放行 | 0.17.1 | 零硬依赖（基座之一）；🟢 methods-ops（建库/维护）/ methods-query（查库） |
 | [ibd-finance-review](skills/ibd-finance-review/README.md) | **财务深度复核**：按会计准则与监管口径，对招股书财务内容做 16 个维度的核查 | 0.15.5 | 🟢 doc-review ≥0.32.0（交付口径单一事实源 + 三形态路由/深度三档/类型词表 12 类/清单 anyOf + 复核报告 Excel 形态；缺则只产清单不落地）；🟢 方法论库财务域（同类案例「先库后源」）+ methods-query（缺则直查公开问询件） |
 | [ibd-legal-review](skills/ibd-legal-review/README.md) | **法律惯例对照复核**：把本稿与同类情形的市场惯例并排比，出对照标注；**只对照、不定性**（法律判断归签字人） | 0.3.2 | 🔴 doc-review ≥0.26.2（复核链清单汇总口，不随包携带）；🟢 方法论库（B 档惯例取例，缺则退 A 档） |
-| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.37.0 | 零外部 skill 依赖（基座） |
+| [ibd-doc-review](skills/ibd-doc-review/README.md) | **格式排版与核对**：一键套用招股书版式，自动检查字体、编号等格式问题，产出核对报告 | 0.37.1 | 零外部 skill 依赖（基座） |
 | [ibd-doc-annotate](skills/ibd-doc-annotate/README.md) | **复核意见落地**：把发现的问题原位批注进 Word/PDF，交付批注版原文和一份复核报告（Excel，按问题性质分工作表） | 0.13.0 | 🔴 doc-review ≥0.32.0（规范 + 校验门禁内部回调 + 交付口径 delivery.md + 清单 anyOf + 复核报告 Excel 形态；单入口路由） |
 | [ibd-methods-ops](skills/ibd-methods-ops/README.md) | **经验沉淀入库**：把做过的项目蒸馏成可复用的方法论存进知识库，团队经验不流失 | 1.37.0 | 零外部 skill 依赖（需 Python 3；库与材料来源自行接入） |
 | [ibd-methods-query](skills/ibd-methods-query/README.md) | **经验随取随用**：写作复核时按问题检索知识库，直接命中历史写法，越用越顺手；**首次使用无库自动冷启动引导建档，不报错** | 0.7.0 | 🟢 methods-ops ≥1.5.0（索引资产生成） |
@@ -182,11 +182,11 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 | 依赖方 | 依赖包 | 版本下限 | 当前集合版本 | 兼容 |
 |---|---|---|---|---|
-| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.17.0 | ✅ |
-| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.37.0 | ✅ |
-| ibd-doc-annotate | ibd-doc-review | ≥ 0.32.0 | 0.37.0 | ✅ |
-| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.32.0 | 0.37.0 | ✅ |
-| ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.37.0 | ✅ |
+| ibd-doc-write | ibd-quality-gates | ≥ 0.7.0 | 0.17.1 | ✅ |
+| ibd-doc-write | ibd-doc-review | ≥ 0.15.7 | 0.37.1 | ✅ |
+| ibd-doc-annotate | ibd-doc-review | ≥ 0.32.0 | 0.37.1 | ✅ |
+| ibd-finance-review | ibd-doc-review（可选） | ≥ 0.32.0 | 0.37.1 | ✅ |
+| ibd-legal-review | ibd-doc-review（汇总口） | ≥ 0.26.2 | 0.37.1 | ✅ |
 | ibd-doc-write | ibd-methods-ops（可选） | ≥ 1.5.0 | 1.37.0 | ✅ |
 | ibd-methods-query | ibd-methods-ops | ≥ 1.5.0 | 1.37.0 | ✅ |
 | ibd-doc-review（样式套用/新建 docx） | **平台 docx 工具**〔`tencent-docx`／`minimax-docx`／本地 Office 任选其一〕 | 无版本约束 | — | 🔴 必备 |
@@ -209,6 +209,7 @@ methods-query 定向检索 → 条目编号 + 行号 → 写作/复核引用（d
 
 ## 📌 近期更新
 
+- **2026-10-20 · v0.5.20**：**2 包上提（门禁贯通 ＋ 公开包告警清零）**——① **`ibd-doc-review` 0.37.0 → 0.37.1**：`round_diff.py` 比对**前**先过 `problems.schema.json`（两份清单都校验；不合规 exit 2 并逐条点名，缺 `advice`／`rev` 这类 `anyOf` 违规不再静默通过）——**判据不复制**，直接复用同包 `validate_schema` 的 `validate()` 与 schema 路径；校验器缺失降级 WARN 不阻断；`--no-validate` 留逃生口。② **`ibd-quality-gates` 0.17.0 → 0.17.1**：`SKILL.md` 两处裸路径改 markdown 链接（命令段改为「可跑同包 [check_method_refs.py](scripts/check_method_refs.py)」，保留可复制性）⇒ 本包 P4 WARN 2→0，**公开包骨架层 WARN 归零**。判据、参数、测试夹具均未动。
 - **2026-10-20 · v0.5.19**：**2 包上提（多轮复核收敛账）**——① **`ibd-doc-review` 0.35.3 → 0.37.0**：新增 `scripts/round_diff.py` **跨轮次状态追踪**——以问题清单条目自带的 `anchor`（原文精确子串）为匹配键，比对上轮／本轮两份清单，出**五态台账**：未修复·原句未动（归一化后完全相同）／未修复·已改写（相似度 ≥0.85）／**疑似已关闭（0.60–0.85，须人工核，该档非空即退出码 1）**／已关闭／新增；配套定**清单留档规约**（`<原文名>_<YYYYMMDD>_v<N>_issues.json` 与报告同目录、全轮次不删）与 `--find-prev`（按文件名「日期＋vN」认上一轮，认不出即报错不猜）。② **`ibd-doc-annotate` 0.12.3 → 0.13.0**：复核报告生成器新增 `--round-ledger`，把台账并成报告**第二页「轮次状态」**（紧跟封面；不传则不出空页，空页会被读成「本轮无遗留」），页首固定写读法警示（「已关闭」≠「已改好」，须与封面范围声明对照）；测试 9 → 12 条。> 判据取向：**宁可报「还在」也不轻易报「关闭」**——「疑似已关闭」刻意不自动下结论，且做成退出码而非提示，让调用方不能装作没看见。
 - **2026-10-19 · v0.5.18**：**单包上提（方法论库条目快照）**——**`ibd-methods-ops` 1.36.6 → 1.37.0**：新增 `snapshot_entries.py`，批量改动（重蒸馏／回写／编号迁移／格式统一）**前后各拍一次快照**，`--diff` 直接列出「正文变更／实证减少／条目消失／条目搬家」，替代通读比对；**只读、不写库、无长期台账**（编号迁移不会让台账失效）。正文与实证以 `**…实证**：` 行分界（**正文冻结、实证可追加**，与回写动作一致），实证案名按规范表白名单提取（案名归一化不误报）；全库 8,575 条扫描 0.9 秒，与逐行扫描双向差集为空。
 - **2026-10-19 · v0.5.17**：**4 包上提（复核域 S5 前置门 ＋ 库侧瑕疵分线 ＋ 入口瘦身 5 包）**——
