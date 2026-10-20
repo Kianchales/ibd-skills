@@ -21,7 +21,7 @@ description: >
   触发词：「原位批注」「复核意见打在原文」「把审核意见做成批注」
   「批注版交付」「生成批注版」「出复核报告」「Excel 复核报告」「复核报告按性质分表」
   「生成修订稿」「出修订稿」「直接改好」「干净版」
-version: 0.12.3
+version: 0.13.0
 agent_created: true
 ---
 
@@ -74,7 +74,7 @@ python scripts/annotate_pdf.py --pdf <原文.pdf> --issues issues.json [--pages 
 # ── 修订稿（docx；形态由用户确认后传入 --mode）──
 python scripts/revise_docx.py --docx <原文.docx> --issues issues.json --mode revise|clean|both
 # ── 复核报告（Excel，默认按问题性质分表；人读交付报告；--meta 含复核声明 declaration）──
-python scripts/review_report_to_xlsx.py --issues issues.json [--meta report-meta.json] [--out <报告.xlsx>] [--split nature]
+python scripts/review_report_to_xlsx.py --issues issues.json [--meta report-meta.json] [--out <报告.xlsx>] [--split nature] [--round-ledger <台账.json>]
 ```
 
 批注脚本自动完成：**编号分配**（同前缀超 99 条顺延双字母分段，序号恒两位）→ **锚点定位** → **批注注入**（正文 4 行紧凑排版；段落内非文本内容原位保留）→ **总览生成**（恒只产 md、为中间件不交付用户）；**复核报告 Excel** 由 `review_report_to_xlsx.py` 按问题性质分表生成（人读交付报告）；修订脚本自动完成：编号分配 → 锚点定位 → 按 rev 落定 → 修改清单生成（缺 rev／复杂 run／重叠／未锚定记「待人工」不硬撑）。

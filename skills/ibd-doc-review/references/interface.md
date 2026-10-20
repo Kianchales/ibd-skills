@@ -50,6 +50,8 @@
 
 数量卫生：≤200 条/文件，>400 拆分。
 
+**跨轮比对用途（2026-10-20 起）**：清单 JSON 同时是 `round_diff.py` 的输入契约——多轮复核时用上轮与本轮两份清单比出「未修复／疑似已关闭／已关闭／新增」五态台账（判据见 [delivery.md](delivery.md) §七之二）。故 `anchor` 的**精确子串**要求在此有第二重意义：**它既是批注定位锚点，也是跨轮追踪的匹配键**——anchors 若在两轮间被随手重写，轮次台账会失真。
+
 **机器可执行版**：[problems.schema.json](problems.schema.json)——上表约束的白名单级机器校验，入口 `scripts/validate_schema.py`（返回码 0=PASS/1=FAIL/2=环境错误）。本节任何约束变更 → **同步 schema 文件 + bump 次版本**；schema 与文字描述冲突时以 annotations.md §4 / 本节语义为准并视为 schema 缺陷须即修。
 
 ## 4. 编号体系与类型词表
@@ -96,6 +98,9 @@
 | **复核深度三档**（L1/L2/L3 ＋ 报告头档位声明） | **≥ 0.26.0** | `ibd-finance-review` |
 | **禁词红线 `banned-terms.json`**（单一事实源，装载式） | **≥ 0.26.0** | `ibd-doc-write`（经 deliver_gate 传递） |
 | **禁词文档类型作用域**（行为禁语仅招股书／绝对化用语全场景） | **≥ 0.26.1** | `ibd-doc-write`、`ibd-finance-review` |
+| **跨轮次台账** `round_diff.py`（清单 `anchor` 兼作跨轮匹配键，五态） | **≥ 0.36.0** | （包内自用；`ibd-doc-annotate` 须保 anchor 稳定，勿在轮次间重写） |
+| **轮次台账自动取上一轮**（`--find-prev`）＋**清单留档规约**（`<原文名>_<YYYYMMDD>_v<N>_issues.json`） | **≥ 0.37.0** | （包内自用；清单命名变了 `--find-prev` 就认不出） |
+| **报告「轮次状态」工作表**（生成器 `--round-ledger`，第二页紧跟封面） | **≥ 0.13.0**（`ibd-doc-annotate`） | `ibd-doc-review` delivery.md §八之二 |
 | **类型词表扩至 12 类**（新增 `合规·禁用表述`／`合规·来源限定`） | **≥ 0.26.2** | `ibd-finance-review`、`ibd-doc-annotate` |
 | **严重度升档规则**（错误性质 × 监管后果 取高） | **≥ 0.26.2** | `ibd-finance-review` |
 | **清单 `advice`／`rev` 条件必填**（`anyOf`；文本定稿形态 rev 为主交付物） | **≥ 0.26.2** | `ibd-doc-annotate`、`ibd-finance-review` |

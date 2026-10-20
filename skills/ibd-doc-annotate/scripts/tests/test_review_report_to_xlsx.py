@@ -226,6 +226,54 @@ class TestReviewReport(unittest.TestCase):
             _run(td, bad, expect_rc=2)
             self.assertFalse(os.path.exists(os.path.join(td, "报告.xlsx")))
 
+    # ── 轮次状态页（2026-10-20 新增 · 规格 ibd-doc-review delivery.md §七之二）──
+
+    def test_round_ledger_sheet(self):
+        """正常：传 --round-ledger → 「轮次状态」作为**第二页**紧跟封面，且封面导航列出它。"""
+        issues = [_entry(1, "①数据不一致", "高"), _entry(2, "②表述不一致", "中")]
+        ledger = {"tool": "round_diff",
+                  "stats": {"未修复·原句未动": 1, "未修复·已改写": 0, "疑似已关闭": 0,
+                            "已关闭": 1, "新增": 0, "上轮条数": 2, "本轮条数": 2, "关闭率": 0.5},
+                  "items": [
+                      {"state": "未修复·原句未动", "score": 1.0,
+                       "prev": issues[0], "cur": issues[0]},
+                      {"state": "已关闭", "score": 0.11,
+                       "prev": {"anchor": "上轮已修掉的句子", "sev": "中", "title": "旧问题"}, "cur": None},
+                  ]}
+        with tempfile.TemporaryDirectory() as td:
+            lp = os.path.join(td, "ledger.json")
+            with open(lp, "w", encoding="utf-8") as fh:
+                json.dump(ledger, fh, ensure_ascii=False)
+            _run(td, issues, extra=("--round-ledger", lp))
+            wb = _load(td)
+            self.assertEqual(wb.sheetnames[1], "轮次状态")
+            ws = wb["轮次状态"]
+            vals = [[c for c in row if c is not None] for row in ws.iter_rows(values_only=True)]
+            flat = " ".join(str(v) for row in vals for v in row)
+            self.assertIn("上轮条数", flat)
+            self.assertIn("未修复·原句未动", flat)
+            self.assertIn("已关闭", flat)
+            cover = " ".join(str(c) for row in wb["封面与汇总"].iter_rows(values_only=True)
+                             for c in row if c is not None)
+            self.assertIn("轮次状态", cover)      # 封面工作表导航须带上它
+
+    def test_no_ledger_no_empty_sheet(self):
+        """阴性：不传台账 → **不得**出现空的「轮次状态」页（空页会被读成「本轮无遗留」）。"""
+        issues = [_entry(1, "①数据不一致", "高")]
+        with tempfile.TemporaryDirectory() as td:
+            _run(td, issues)
+            self.assertNotIn("轮次状态", _load(td).sheetnames)
+
+    def test_bad_ledger_blocked(self):
+        """阴性：台账结构不符（缺 items）→ exit 2、不出文件。"""
+        issues = [_entry(1, "①数据不一致", "高")]
+        with tempfile.TemporaryDirectory() as td:
+            lp = os.path.join(td, "bad_ledger.json")
+            with open(lp, "w", encoding="utf-8") as fh:
+                json.dump({"stats": {"上轮条数": 3}}, fh, ensure_ascii=False)
+            _run(td, issues, extra=("--round-ledger", lp), expect_rc=2)
+            self.assertFalse(os.path.exists(os.path.join(td, "报告.xlsx")))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

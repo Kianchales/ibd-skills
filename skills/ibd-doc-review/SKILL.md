@@ -18,7 +18,7 @@ description: >
   「核对格式」「格式自查」「检查序号金额日期标点」「批注格式」「校验批注」「修订稿校验」「校验修订」
   「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」「查哪些项」「本轮查什么」「检查项声明」
   「研究下XX节」「帮我看看这段」「逐段复核」「逐段顺稿」
-version: 0.35.3
+version: 0.37.0
 agent_created: true
 ---
 
@@ -46,7 +46,7 @@ agent_created: true
 ## 使用流程
 
 > 本节只留「步骤名 ＋ 一句话判据 ＋ 册指针」，执行细则 → [workflow.md](references/workflow.md)。
-> **读取前置（读源文件前必看）**：读用户／对方提供的 docx 取文本前，**先探测** `w:ins`／`w:del`／`word/comments.xml`——命中即按「接受全部修订 ＋ 剔除全部批注」取终稿，并标注「该文件原件含修订/批注」；**禁对源文件做任何写操作**。判据 → `docs/CONVENTIONS.md` §一「读取面」；细则 → [read-docx.md](references/read-docx.md)，脚本 [extract_final_text.py](scripts/extract_final_text.py)。
+> **读取前置**：读源 docx 取文本前先探测 `w:ins`／`w:del`／`word/comments.xml`——命中即按「接受全部修订＋剔除全部批注」取终稿并标注；**禁对源文件写操作**。判据 → `docs/CONVENTIONS.md` §一；细则 → [read-docx.md](references/read-docx.md)，脚本 [extract_final_text.py](scripts/extract_final_text.py)。
 
 ### 0. 进门第一档：检查项声明（先声明，再动手）
 
@@ -73,6 +73,7 @@ agent_created: true
 | **H** 交付前综合核验 | 基础十项一次跑完，三态 PASS/FAIL/SKIP | `deliver_gate.py`（`--json` 供上层消费） |
 | **I** 圈定范围的复核 | 用户**显式圈定范围**（「只核对X」「X 过一遍」） | 先进门出声明单；域路由：文字与格式→本 skill；内容质量→`ibd-quality-gates`；财务→`ibd-finance-review`；法律→`ibd-legal-review` |
 | **J** 惯例对照（只对照不定性） | 情形无明文或属灰色地带 | 四步法 → [convention-compare.md](references/convention-compare.md)；D 域执行 → `ibd-legal-review` |
+| **K** 跨轮收敛（第2轮起） | 上轮 vs 本轮清单五态台账 | `round_diff.py`（→ delivery.md §七之二） |
 
 > 决策树判定细节、工具调用顺序、失败降级协议 → [workflow.md](references/workflow.md) §零·一。
 
@@ -139,7 +140,7 @@ agent_created: true
 - 章节复核交付约定（检查项声明 · 三形态路由 · 深度三档 · 报告 Excel 形态）→ [delivery.md](references/delivery.md)
 - 对外接口契约 → [interface.md](references/interface.md)；清单 schema → [problems.schema.json](references/problems.schema.json)
 - 工具层级与踩坑全文 → [toolchain.md](references/toolchain.md)；典型用例 → [examples.md](references/examples.md)
-- 清单：禁词红线 → [banned-terms.json](references/banned-terms.json)（behavior 行为禁语·仅招股书／absolute 绝对化／legacy_ban 宣传语，按 `--scenario` 装载，改 json 即生效）｜敏感词与地理 → [sensitive-terms.json](references/sensitive-terms.json)
+- 清单：禁词红线 → [banned-terms.json](references/banned-terms.json)（三档词条·按 `--scenario` 装载，改 json 即生效）｜敏感词与地理 → [sensitive-terms.json](references/sensitive-terms.json)
 
 ## 依赖与工具
 

@@ -9,6 +9,8 @@
 
 输入：
     --issues <问题清单.json>   复核问题清单（结构契约 ibd-doc-review/references/interface.md §3）
+    --round-ledger <台账.json> **可选**——多轮复核时传 `round_diff.py --json` 的产物，
+                               追加「轮次状态」工作表（第二页；规格 delivery.md §七之二）
     --meta  <报告元信息.json>  **可选**——报告头的叙述性内容（复核对象/基准/方式/**复核声明**/
                                范围与方法/已核查通过/质量证据/行动项）；缺省时只出明细页 ＋ 自动统计。
                                模板随包：scripts/report-meta.example.json
@@ -20,14 +22,18 @@
                    ＋ 质量证据 ＋ 行动项（小节序号按**实际渲染顺序**自增，缺节不跳号；
                    **仅主标题一行居中**，其余标题一律左对齐；**所有行统一跨 A:C 合并**，
                    列宽 A:B:C 唯一一套 —— 封面上下等宽）
-    ② 按性质分页   一张工作表一个「问题性质」（--split 可换轴；nature 缺省回退 type 大类）
-    ③ 全部         不拆分的完整台账
+    ② 轮次状态      **可选**（传 --round-ledger 时才有）：跨轮五态台账 ＋ 统计；
+                   紧跟封面，便于评审一眼看到「上轮的条目这轮动了没有」。
+                   无台账时此页不出现（**不留空页**——空页会被读成「本轮无遗留」）
+    ③ 按性质分页   一张工作表一个「问题性质」（--split 可换轴；nature 缺省回退 type 大类）
+    ④ 全部         不拆分的完整台账
 
 明细列：编号｜严重度｜性质｜域｜行号｜原文片段｜问题标题｜问题描述｜建议（＋定稿文本/作者，有则加列）
 
 用法：
     python review_report_to_xlsx.py --issues issues.json [--meta meta.json]
            [--out 报告.xlsx] [--split nature] [--title "…"] [--date 20261007] [--json]
+           [--round-ledger ledger.json]
 退出码：0 = 成功；1 = 失败；2 = 用法/清单错误。
 
 依赖：openpyxl（**惰性导入**——仅本功能需要，本包其它链路不依赖）
@@ -59,6 +65,10 @@ SPLIT_CHOICES = ("nature", "type", "code", "sev")
 
 SHEET_COVER = "封面与汇总"
 SHEET_ALL = "全部"
+# 轮次状态页（2026-10-20 新增 · 规格 ibd-doc-review delivery.md §七之二）——
+# 多轮复核时把 round_diff.py 的台账并进报告，作为**第二工作表**（紧跟封面）。
+SHEET_ROUND = "轮次状态"
+ROUND_STATE_ORDER = ("未修复·原句未动", "未修复·已改写", "新增", "疑似已关闭", "已关闭")
 
 # 封面统一跨度：**所有行一律合并/铺设到 C 列**（用户裁定 2026-10-07）——
 # 此前多数行只跨 A:B，而「域／覆盖范围／条数」统计表天然占 A:B:C，导致封面**上下不等宽**。
@@ -356,7 +366,82 @@ def _detail_sheet(wb, name, rows, cols, styles, first=False):
     return ws
 
 
-def _cover_sheet(wb, meta, rows, split, styles):
+def load_round_ledger(path):
+    """读 `round_diff.py --json` 的产物；结构不对即拒（宁可报错，不出半截页）。
+
+    为什么校验而不是「能读就读」：台账页会被当成**交付件**随报告流转，
+    结构缺项时静默生成一张空表，比报错更坏——读的人会以为「本轮没问题」。
+    """
+    with open(path, encoding="utf-8-sig") as fh:
+        data = json.load(fh)
+    if not isinstance(data, dict) or not isinstance(data.get("stats"), dict) \
+            or not isinstance(data.get("items"), list):
+        raise ValueError("轮次台账结构不符：须为 round_diff.py --json 的输出（含 stats 对象与 items 数组）")
+    return data
+
+
+def _round_note(ws, r, text, last_col, styles):
+    """整行说明文字（跨 A:last_col 合并）——台账页比封面宽，故不用 _write_lines 的 A:C。"""
+    Alignment, _, _, _, _, _ = styles
+    c = ws.cell(row=r, column=1, value=text)
+    c.alignment = Alignment(vertical="top", wrap_text=True)
+    ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=last_col)
+    return r + 1
+
+
+def _round_sheet(wb, ledger, styles):
+    """轮次状态页：统计表 ＋ 逐条五态台账。
+
+    **口径不复制**（P1 单一事实源）：档位定义与三条硬约束写在
+    `ibd-doc-review/references/delivery.md` §七之二，此处只渲染，并把「读法警示」重复一遍
+    ——因为报告会脱离对话单独流转，读的人看不到规范。
+    """
+    Alignment, _, Font, PatternFill, _, get_column_letter = styles
+    ws = wb.create_sheet(SHEET_ROUND)
+    for col, w in (("A", 24), ("B", 16), ("C", 10), ("D", 40), ("E", 58)):
+        ws.column_dimensions[col].width = w
+
+    r = _write_center(ws, 1, "轮次状态（跨轮收敛台账）", styles, bold=True, size=13, color=SECTION_FONT)
+    r = _round_note(ws, r,
+                    "读法：本页由 round_diff.py 生成，比对「上轮问题清单」与「本轮问题清单」。"
+                    "「未修复」两档可直接采信；「疑似已关闭」与「已关闭」须人工过目，"
+                    "并与封面报告头的**复核范围声明**逐项对照——范围收窄（如 L2→L1、只核财务域）"
+                    "同样会造成「已关闭」，那不是改好了。", 5, styles)
+    r += 1
+
+    st = ledger.get("stats") or {}
+    pairs = [("上轮条数", st.get("上轮条数", "—")),
+             ("本轮条数", st.get("本轮条数", "—")),
+             ("未修复·原句未动", st.get("未修复·原句未动", 0)),
+             ("未修复·已改写", st.get("未修复·已改写", 0)),
+             ("疑似已关闭（待人工确认）", st.get("疑似已关闭", 0)),
+             ("已关闭（原句已不存在）", st.get("已关闭", 0)),
+             ("本轮新增", st.get("新增", 0))]
+    if st.get("关闭率") is not None:
+        pairs.append(("关闭率（已关闭／上轮条数）", "%.1f%%" % (float(st["关闭率"]) * 100)))
+    r = _write_table(ws, r, ["指标", "值"], pairs, None, styles)
+    r += 1
+
+    items = ledger.get("items") or []
+    order = {k: i for i, k in enumerate(ROUND_STATE_ORDER)}
+    rows = []
+    for it in items:
+        state = str(it.get("state") or "")
+        src = it.get("cur") or it.get("prev") or {}
+        score = it.get("score")
+        anchor_txt = str(src.get("anchor") or "").replace("\n", " ")
+        if len(anchor_txt) > 70:
+            anchor_txt = anchor_txt[:70] + "…"
+        rows.append((state, "—" if score is None else "%.2f" % float(score),
+                     src.get("sev", ""), src.get("title", ""), anchor_txt))
+    rows.sort(key=lambda x: order.get(x[0], len(order)))
+    r = _write_table(ws, r, ["状态", "相似度", "严重度", "问题标题", "位置锚点（节选）"],
+                     rows, None, styles)
+    ws.freeze_panes = "A%d" % (r - len(rows) - 1 if rows else r)
+    return ws
+
+
+def _cover_sheet(wb, meta, rows, split, styles, extra_sheets=()):
     Alignment, _, Font, _, _, get_column_letter = styles
     ws = wb.active
     ws.title = SHEET_COVER
@@ -439,14 +524,15 @@ def _cover_sheet(wb, meta, rows, split, styles):
 
     # 工作表导航（非编号节）
     r = _write_section(ws, r, "工作表导航", styles)
-    names = [SHEET_COVER] + [n for n, _ in group_entries(rows, split)] + [SHEET_ALL]
+    names = ([SHEET_COVER] + list(extra_sheets)
+             + [n for n, _ in group_entries(rows, split)] + [SHEET_ALL])
     r = _write_lines(ws, r, names, styles)
     return ws
 
 
 # ───────────────────────── 主流程 ─────────────────────────
 
-def build(args, issues, meta):
+def build(args, issues, meta, ledger=None):
     openpyxl, Alignment, Border, Font, PatternFill, Side, get_column_letter = _load_openpyxl()
     styles = (Alignment, Border, Font, PatternFill, Side, get_column_letter)
 
@@ -462,9 +548,12 @@ def build(args, issues, meta):
         meta["date"] = d or datetime.date.today().strftime("%Y-%m-%d")
 
     wb = openpyxl.Workbook()
-    _cover_sheet(wb, meta, rows, args.split, styles)
+    extra = [SHEET_ROUND] if ledger else []
+    _cover_sheet(wb, meta, rows, args.split, styles, extra_sheets=extra)
+    if ledger:
+        _round_sheet(wb, ledger, styles)
 
-    used = {SHEET_COVER}
+    used = {SHEET_COVER} | set(extra)
     for name, group in group_entries(rows, args.split):
         _detail_sheet(wb, _sanitize_sheet_name(name, used), group, cols, styles)
     _detail_sheet(wb, _sanitize_sheet_name(SHEET_ALL, used), rows, cols, styles)
@@ -485,6 +574,8 @@ def main():
     ap.add_argument("--title", help="报告标题（覆盖 meta.title）")
     ap.add_argument("--date", help="生成日期（覆盖 meta.date；默认今天）")
     ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费；不打印人类可读摘要）")
+    ap.add_argument("--round-ledger", default=None,
+                    help="轮次台账 JSON（round_diff.py --json 的产物）——传则追加「轮次状态」工作表")
     ap.add_argument("--verbose", action="store_true", help="逐条打印入口校验提示（默认折叠为一行计数）")
     args = ap.parse_args()
 
@@ -529,7 +620,15 @@ def main():
               "凡非「全项」复核，按 ibd-doc-review delivery.md §八 须随报告声明核对范围。",
               file=sys.stderr)
 
-    out, rows, cols = build(args, issues, meta)
+    ledger = None
+    if args.round_ledger:
+        try:
+            ledger = load_round_ledger(args.round_ledger)
+        except (OSError, json.JSONDecodeError, ValueError) as e:
+            print(f"[ERROR] 轮次台账读取/校验失败：{e}", file=sys.stderr)
+            sys.exit(2)
+
+    out, rows, cols = build(args, issues, meta, ledger)
     hi = sum(1 for r in rows if r["sev"] == "高")
     mid = sum(1 for r in rows if r["sev"] == "中")
     lo = sum(1 for r in rows if r["sev"] == "低")
@@ -539,12 +638,16 @@ def main():
         print(json.dumps({"tool": "review_report_to_xlsx", "out": out, "total": len(rows),
                           "split": args.split, "groups": sheets, "cols": [h for _, h in cols],
                           "declaration": bool(meta.get("declaration")),
+                          "round_ledger": bool(ledger),
+                          "round_items": len((ledger or {}).get("items") or []),
                           "sev": {"高": hi, "中": mid, "低": lo}},
                          ensure_ascii=False))
         return 0
     # 输出分层（P10）：stdout 只出指标行 ＋ 路径，明细在工作簿里
     print(f"[OK] 复核报告已生成：{out}")
-    print(f"     条目 {len(rows)}｜工作表 {len(sheets) + 2}（封面与汇总 ／ {' ／ '.join(sheets)} ／ 全部）")
+    _round_txt = "轮次状态 ／ " if ledger else ""
+    print(f"     条目 {len(rows)}｜工作表 {len(sheets) + 2 + (1 if ledger else 0)}"
+          f"（封面与汇总 ／ {_round_txt}{' ／ '.join(sheets)} ／ 全部）")
     print(f"     严重度 高 {hi} ／ 中 {mid} ／ 低 {lo}｜分页轴 {args.split}｜列 {len(cols)} 列")
     return 0
 
