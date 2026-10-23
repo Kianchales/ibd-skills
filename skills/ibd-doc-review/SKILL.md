@@ -18,7 +18,7 @@ description: >
   「核对格式」「格式自查」「检查序号金额日期标点」「批注格式」「校验批注」「修订稿校验」「校验修订」
   「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」「查哪些项」「本轮查什么」「检查项声明」
   「研究下XX节」「帮我看看这段」「逐段复核」「逐段顺稿」
-version: 0.37.1
+version: 0.38.0
 agent_created: true
 ---
 
@@ -72,7 +72,7 @@ agent_created: true
 | **G** 修订稿产物校验（只读） | ins==del 对／author·id 成对／落定证明 | `check_revisions.py`（≡ `deliver_gate.py --revised`） |
 | **H** 交付前综合核验 | 基础十项一次跑完，三态 PASS/FAIL/SKIP | `deliver_gate.py`（`--json` 供上层消费） |
 | **I** 圈定范围的复核 | 用户**显式圈定范围**（「只核对X」「X 过一遍」） | 先进门出声明单；域路由：文字与格式→本 skill；内容质量→`ibd-quality-gates`；财务→`ibd-finance-review`；法律→`ibd-legal-review` |
-| **J** 惯例对照（只对照不定性） | 情形无明文或属灰色地带 | 四步法 → [convention-compare.md](references/convention-compare.md)；D 域执行 → `ibd-legal-review` |
+| **J** 惯例对照（只对照不定性） | 情形无明文或属灰色地带 | 四步法 → [convention-compare.md](references/convention-compare.md)；取例可先本地全文检索〔若已接入，无则降级且**须声明范围**〕→ [workflow.md](references/workflow.md) §零·三；D 域执行 → `ibd-legal-review` |
 | **K** 跨轮收敛（第2轮起） | 上轮 vs 本轮清单五态台账 | `round_diff.py`（→ delivery.md §七之二） |
 
 > 决策树判定细节、工具调用顺序、失败降级协议 → [workflow.md](references/workflow.md) §零·一。
@@ -85,7 +85,7 @@ agent_created: true
 |---|---|
 | **S1** 识别样式场景 | 含「问题X.」或【发行人说明】→ 反馈回复版；其余正式文档 → 招股书版 |
 | **S2** 加载样式资产 | 模板 docx 存在 ＋ 样式体系与场景匹配（[style-map.md](references/style-map.md)） |
-| **S3** 工具路由 | 场景 → 工具一一对应；层级与缺失降级见 [toolchain.md](references/toolchain.md) §一 |
+| **S3** 工具路由 | 场景 → 工具一一对应；层级与降级见 [toolchain.md](references/toolchain.md) §一 |
 | **S4** 样式映射（核心） | 内容段落逐个落 pStyle，按 style-map.md |
 | **S5** 序号与表格规则 | 九级链无跳号/重号/倒退；三线表按 [rules.md](references/rules.md) §一／§二 |
 | **S6** 校验门禁 | `deliver_gate.py` 零 FAIL（SKIP 须向用户点名）；禁词红线源 ＝ [banned-terms.json](references/banned-terms.json)（按 `--scenario` 装载） |
@@ -94,7 +94,7 @@ agent_created: true
 ### 3. 样式应用铁律（红线）
 
 0. **只改格式、严禁修改原文内容（最高优先级）**：只做样式应用（pStyle／字体／字号／对齐／缩进／间距／边框），**不得增删改移任何文字**（含表格内文字、标点、空格、数字、单位）。套用后必须 `check_styles.py --verify-content <原文件>` 校验——逐字不一致即 FAIL，打回重做。内容修改属内容层任务，本 skill 一律不做。
-1. **模板先行**——动笔前确认 `assets/templates/` 模板存在，优先以模板为基底；**模板即样式源，换模板即定制输出**。
+1. **模板先行**——动笔前确认 `assets/templates/` 模板存在，优先以模板为基底。
 2. **pStyle 优先于手写格式**——能应用命名样式（000-009／0011／001）就不硬编码字体字号。
 3. **序号段落判定走双维度算法**（段落长短 ＋ 上下文分段）→ [rules.md](references/rules.md) §一；可 `check_styles.py --check-numbering` 辅助。
 4. **反馈回复合规展示**——监管问题原文 001（黑体）、回复正文 000（宋体），黑宋对照本身即合规展示，不得混用。
@@ -105,19 +105,19 @@ agent_created: true
 
 ### 4. 格式核对模式（check_content.py，只读不改文件）
 
-> - **只读**，适用任意投行 Word；`check_content.py --input <docx> [--checks text|table|geo,table_na]`（`content_common.py`＋`content_text.py`＋`content_table.py` 三模块），出 `<input>_格式核对报告.md`。
-> - **两组**：text（序号连续性／用词规范／日期写法／空格与重复标点／释义简称／地理表述）＋ table（字号体系／数字右对齐／空单元格／NA 标记统一），按 HIGH/MEDIUM/LOW 分级。
+> - **只读**，适用任意投行 Word；`check_content.py --input <docx> [--checks text|table|geo,table_na]`（content_common／content_text／content_table），出 `<input>_格式核对报告.md`。
+> - **两组**：text 6 项（序号·用词·日期·标点空格·简称·地理）＋ table 4 项（字号体系·数字右对齐·空单元格·NA），按 HIGH/MEDIUM/LOW 分级。
 > - **边界**：本模式查格式层自洽；**数值自洽**与内容质量溯源归 `ibd-quality-gates`；敏感词与地理清单 → [sensitive-terms.json](references/sensitive-terms.json)。
-> - 完整细则（命令块 · 核对矩阵 · 边界说明）→ [workflow.md](references/workflow.md) 第二节。
+> - 细则（命令块·核对矩阵）→ [workflow.md](references/workflow.md) §二。
 
 ### 5. 批注与修订复核交付模式（规范 + 只读校验）
 
-> - **职责**：本 skill 定规范 ＋ 门禁（只读）；**注入执行 = `ibd-doc-annotate`**（同一份问题清单 → `annotate_docx.py` / `revise_docx.py --mode`）——两 skill 以本 skill 规范为合规依据。
+> - **职责**：本 skill 定规范 ＋ 门禁（只读）；**注入执行 = `ibd-doc-annotate`**（`annotate_docx.py` / `revise_docx.py --mode`）——两 skill 以本 skill 规范为合规依据。
 > - **门禁一条命令**：`deliver_gate.py --docx <件> --annotated [--expect-annotated N]` / `--revised [--expect-revised N]`，任一 FAIL → 退回重注入，不交付。
 > - **规范单一事实源**：批注 → [annotations.md](references/annotations.md)；修订 → [revisions.md](references/revisions.md)；交付口径 → [delivery.md](references/delivery.md)；清单 schema → [problems.schema.json](references/problems.schema.json)（校验入口 `validate_schema.py`）。
 > - **复核报告（Excel）不属本 skill 产出**：形态规范 = delivery.md §八之二；生成器 = `ibd-doc-annotate/scripts/review_report_to_xlsx.py`。
 > - **⚠️ 加粗判定须按语义**：`<w:b w:val="0">` 是显式取消加粗，只判 `<w:b>` 元素存在会把合规批注误判 FAIL（两脚本均已修）。
-> - 完整细则 → [workflow.md](references/workflow.md) 第三节。
+> - 细则 → [workflow.md](references/workflow.md) §三。
 
 ## 资源索引
 
@@ -150,7 +150,7 @@ agent_created: true
 |---|---|
 | 🔴 **必须** | 任一 Word 处理工具（`minimax-docx`〔🟨市场〕或 `tencent-docx`〔🟦内置〕至少一）＋ 随包脚本 `check_styles.py`／`check_content.py`／`check_annotations.py`／`check_revisions.py`／`deliver_gate.py`／`extract_final_text.py`——docx 侧零依赖，仅 `--pdf` 需 pymupdf（缺失跳过并提示） |
 | 🟡 **推荐** | `tencent-local-office-edit`〔🟦内置〕（局部微调体验最佳）；模板 docx（`assets/templates/`，可替换） |
-| 🟢 **可选** | 金融数据终端（仅交叉验证）；知识库后端（检索同类范例）；`officecli`（渲染层缺陷扫描 ＋ OpenXML 架构校验，S6 补充门禁） |
+| 🟢 **可选** | 金融数据终端（仅交叉验证）；本地全文检索〔若已接入〕／知识库后端（检索同类范例）；`officecli`（渲染层缺陷扫描 ＋ OpenXML 架构校验，S6 补充门禁） |
 | **运行模式** | 单用户直接使用；也可作为 `ibd-doc-write` 的格式层被串联调用 |
 
 > 每个工具为什么是这个层级、缺了会怎样 → [toolchain.md](references/toolchain.md) §一。
