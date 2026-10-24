@@ -78,7 +78,7 @@ python scripts/refresh_index.py --methods-root <工作区根>
 | 2 | 继续写 | **降级不阻断**：改用 writing-style 高频句法库兜底（「能写、但不地道」档） |
 | 3 | 收尾 | G4 对照表声明「本库暂无对应条目」＋ 所引句式清单 ＋ **登记至 `state/待补学清单.md`** |
 
-> 写作侧的规则本体不在本 skill：见 `ibd-doc-write` 的「降级与缺口登记」。
+> 写作侧的规则本体不在本 skill：见 `ibd-doc-write` §「G4 引用自检 · 降级两场景与库更新」。
 
 ---
 

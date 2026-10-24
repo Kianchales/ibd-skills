@@ -18,7 +18,7 @@ description: >
   「核对格式」「格式自查」「检查序号金额日期标点」「批注格式」「校验批注」「修订稿校验」「校验修订」
   「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」「查哪些项」「本轮查什么」「检查项声明」
   「研究下XX节」「帮我看看这段」「逐段复核」「逐段顺稿」
-version: 0.38.0
+version: 0.38.1
 agent_created: true
 ---
 
@@ -46,13 +46,13 @@ agent_created: true
 ## 使用流程
 
 > 本节只留「步骤名 ＋ 一句话判据 ＋ 册指针」，执行细则 → [workflow.md](references/workflow.md)。
-> **读取前置**：读源 docx 取文本前先探测 `w:ins`／`w:del`／`word/comments.xml`——命中即按「接受全部修订＋剔除全部批注」取终稿并标注；**禁对源文件写操作**。判据 → `docs/CONVENTIONS.md` §一；细则 → [read-docx.md](references/read-docx.md)，脚本 [extract_final_text.py](scripts/extract_final_text.py)。
+> **读取前置**：读源 docx 取文本前先探 `w:ins`／`w:del`／`word/comments.xml`——命中即按「接受全部修订＋剔除全部批注」取终稿并标注；**禁对源文件写操作**。判据 → `docs/CONVENTIONS.md` §一；细则 → [read-docx.md](references/read-docx.md)，脚本 [extract_final_text.py](scripts/extract_final_text.py)。
 
 ### 0. 进门第一档：检查项声明（先声明，再动手）
 
 | 事项 | 一句话判据 | 册指针 |
 |---|---|---|
-| **先声明查什么** | 任何复核委托的**第一个动作**——首次委托先出「动手前三问」小表（范围／形态／档位，各附推荐），确认后逐项列「查哪些（域编号）／不查哪些＋为什么／S 专项／交付前将跑 F 域」；同文档沿用，换文档重问 | [check-scope.md](references/check-scope.md)；动作规范 → [delivery.md](references/delivery.md) §零 |
+| **先声明查什么** | 任何复核委托的**第一个动作**——首次委托先出「动手前三问」小表（范围／形态／档位，各附推荐），确认后逐项列「查／不查 ＋ 为什么 ＋ S 专项 ＋ 交付前跑 F 域」；同文档沿用，换文档重问 | [check-scope.md](references/check-scope.md)；动作规范 → [delivery.md](references/delivery.md) §零 |
 | 再定交付形态 | 批注版／文本定稿／修订稿（三选一，带项目级记忆） | delivery.md §五 |
 | 深度档位作预设 | L1/L2/L3 只预填声明单，不是另一套独立选择；**分档轴＝性质**：L2 装机器能判的（格式/数值/台账），L3 装只有人能判的 | check-scope.md §七 ＋ delivery.md §七 |
 
@@ -93,7 +93,7 @@ agent_created: true
 
 ### 3. 样式应用铁律（红线）
 
-0. **只改格式、严禁修改原文内容（最高优先级）**：只做样式应用（pStyle／字体／字号／对齐／缩进／间距／边框），**不得增删改移任何文字**（含表格内文字、标点、空格、数字、单位）。套用后必须 `check_styles.py --verify-content <原文件>` 校验——逐字不一致即 FAIL，打回重做。内容修改属内容层任务，本 skill 一律不做。
+0. **只改格式、严禁修改原文内容（最高优先级）**：只做样式应用（pStyle／字体／字号／对齐／缩进／间距／边框），**不得增删改移任何文字**（含表内文字、标点、空格、数字、单位）。套用后须 `check_styles.py --verify-content <原文件>` 逐字校验，不一致即 FAIL 重做。内容修改属内容层，本 skill 不做。
 1. **模板先行**——动笔前确认 `assets/templates/` 模板存在，优先以模板为基底。
 2. **pStyle 优先于手写格式**——能应用命名样式（000-009／0011／001）就不硬编码字体字号。
 3. **序号段落判定走双维度算法**（段落长短 ＋ 上下文分段）→ [rules.md](references/rules.md) §一；可 `check_styles.py --check-numbering` 辅助。
@@ -106,7 +106,7 @@ agent_created: true
 ### 4. 格式核对模式（check_content.py，只读不改文件）
 
 > - **只读**，适用任意投行 Word；`check_content.py --input <docx> [--checks text|table|geo,table_na]`（content_common／content_text／content_table），出 `<input>_格式核对报告.md`。
-> - **两组**：text 6 项（序号·用词·日期·标点空格·简称·地理）＋ table 4 项（字号体系·数字右对齐·空单元格·NA），按 HIGH/MEDIUM/LOW 分级。
+> - **两组**：文字 **8** 项 ＋ 表格 **4** 项，按 HIGH/MEDIUM/LOW 分级；**明细矩阵 → [workflow.md](references/workflow.md) §二**（项名与严重度判据以该矩阵为准，本页不复制）。
 > - **边界**：本模式查格式层自洽；**数值自洽**与内容质量溯源归 `ibd-quality-gates`；敏感词与地理清单 → [sensitive-terms.json](references/sensitive-terms.json)。
 > - 细则（命令块·核对矩阵）→ [workflow.md](references/workflow.md) §二。
 
@@ -114,10 +114,8 @@ agent_created: true
 
 > - **职责**：本 skill 定规范 ＋ 门禁（只读）；**注入执行 = `ibd-doc-annotate`**（`annotate_docx.py` / `revise_docx.py --mode`）——两 skill 以本 skill 规范为合规依据。
 > - **门禁一条命令**：`deliver_gate.py --docx <件> --annotated [--expect-annotated N]` / `--revised [--expect-revised N]`，任一 FAIL → 退回重注入，不交付。
-> - **规范单一事实源**：批注 → [annotations.md](references/annotations.md)；修订 → [revisions.md](references/revisions.md)；交付口径 → [delivery.md](references/delivery.md)；清单 schema → [problems.schema.json](references/problems.schema.json)（校验入口 `validate_schema.py`）。
-> - **复核报告（Excel）不属本 skill 产出**：形态规范 = delivery.md §八之二；生成器 = `ibd-doc-annotate/scripts/review_report_to_xlsx.py`。
-> - **⚠️ 加粗判定须按语义**：`<w:b w:val="0">` 是显式取消加粗，只判 `<w:b>` 元素存在会把合规批注误判 FAIL（两脚本均已修）。
-> - 细则 → [workflow.md](references/workflow.md) §三。
+> - **规范单一事实源**：批注 [annotations.md](references/annotations.md)｜修订 [revisions.md](references/revisions.md)｜交付口径 [delivery.md](references/delivery.md)（含报告 Excel 形态与生成器 §八之二，本 skill 不产出）｜schema [problems.schema.json](references/problems.schema.json)（`validate_schema.py` 校验）。
+> - 校验项明细（含加粗按语义判定的实测坑）→ [workflow.md](references/workflow.md) §三。
 
 ## 资源索引
 
@@ -131,16 +129,12 @@ agent_created: true
 | `反馈回复样式.docx` | 审核问询回复／反馈回复／落实函回复 | 0011 问题编号、001 监管问题原文、000 正文、002-009 明细 |
 | `表格模板.docx` | 以上全部文档的表格 | 三线表 a6／表前单位 a5／表后备注 a4 |
 
-**细则指针**（按需读，本页不复制）：
-- 样式定义（字体字号·对齐·缩进·间距·行距·大纲）→ [style-map.md](references/style-map.md)
-- 执行细则（S1-S7 · 格式核对 · 复核交付 · 命令全表）→ [workflow.md](references/workflow.md)——**动手前翻这一份**
-- 读取口径（含修订/批注的 Word）→ [read-docx.md](references/read-docx.md)
-- 批注规范 → [annotations.md](references/annotations.md)；修订规范 → [revisions.md](references/revisions.md)；执行器 = `ibd-doc-annotate`
-- 检查项明细清单（**声明单事实源**：A 文字／B 内容／C 财务／D 法律／E 行业／F 交付／S 前置门）→ [check-scope.md](references/check-scope.md)；惯例对照四步法 → [convention-compare.md](references/convention-compare.md)
-- 章节复核交付约定（检查项声明 · 三形态路由 · 深度三档 · 报告 Excel 形态）→ [delivery.md](references/delivery.md)
-- 对外接口契约 → [interface.md](references/interface.md)；清单 schema → [problems.schema.json](references/problems.schema.json)
-- 工具层级与踩坑全文 → [toolchain.md](references/toolchain.md)；典型用例 → [examples.md](references/examples.md)
-- 清单：禁词红线 → [banned-terms.json](references/banned-terms.json)（三档词条·按 `--scenario` 装载，改 json 即生效）｜敏感词与地理 → [sensitive-terms.json](references/sensitive-terms.json)
+**细则指针**（按需读，本页不复制；各步判据处的指针为准，本段是**全集索引**）：
+- **动手前先翻**：[workflow.md](references/workflow.md)（S1-S7 · 格式核对 · 复核交付 · 命令全表）
+- 样式与读取：[style-map.md](references/style-map.md)（字体字号·对齐·缩进·间距·行距·大纲）｜[read-docx.md](references/read-docx.md)（含修订/批注的 Word 读取口径）
+- 复核规范：[annotations.md](references/annotations.md)（批注）｜[revisions.md](references/revisions.md)（修订）｜[delivery.md](references/delivery.md)（交付口径·声明·三形态·深度三档·报告 Excel 形态）｜[check-scope.md](references/check-scope.md)（**声明单事实源**：A 文字／B 内容／C 财务／D 法律／E 行业／F 交付／S 前置门）｜[convention-compare.md](references/convention-compare.md)（惯例对照四步法）｜[interface.md](references/interface.md)（对外契约）｜[problems.schema.json](references/problems.schema.json)（清单 schema）｜执行器 = `ibd-doc-annotate`
+- 工具与样例：[toolchain.md](references/toolchain.md)（层级与踩坑全文）｜[examples.md](references/examples.md)（典型用例）
+- 清单 json：[banned-terms.json](references/banned-terms.json)（禁词红线·三档·按 `--scenario` 装载，改 json 即生效）｜[sensitive-terms.json](references/sensitive-terms.json)（敏感词与地理）
 
 ## 依赖与工具
 
