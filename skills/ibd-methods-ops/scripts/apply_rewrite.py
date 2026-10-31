@@ -306,13 +306,18 @@ def plans(root):
             #   ② `\b` 在 `PL-010097` 的 `-01` 前不成立 ⇒ PL/S 形态同险。
             # 改为**显式枚举前缀 + 只禁左侧字母数字**：既保全 `PL-`/`WL-` 双字母前缀，
             # 又阻止 `L-010097` 从中截断，且支持从「见 PL-010097 条」等句中提取。
-            tc = re.search(r'(?<![A-Za-z0-9])(?:PL-\d{2}\d{4}|WL-\d{2}\d{4}|S-\d{2}\d{4}'
-                           r'|F-\d{2}\d{4}|L-\d{2}\d{4}|I-\d{2}\d{4}'
-                           r'|I-CL\d{2}-\d{2}|W-AN\d{4}-[A-DFIL]\d{2})', field)
-            if not (nc and tc):
+            # 2026-11-01 修（对账暴露）：原 `re.search` **只取首个目标编号** ⇒ 映射表一行写
+            #   「F-110002／F-110003」这类多目标时，**第二个及以后目标静默不写**。
+            #   本批实测 2 行多目标，漏写 1 条（悦龙×F-110003，案次级对账 182 对 vs 181 对查出）。
+            #   改为 `findall` 全量展开，一条目对应多个目标时逐目标各记一行。
+            tcs = re.findall(r'(?<![A-Za-z0-9])(?:PL-\d{2}\d{4}|WL-\d{2}\d{4}|S-\d{2}\d{4}'
+                             r'|F-\d{2}\d{4}|L-\d{2}\d{4}|I-\d{2}\d{4}'
+                             r'|I-CL\d{2}-\d{2}|W-AN\d{4}-[A-DFIL]\d{2})', field)
+            if not (nc and tcs):
                 continue
-            out.append({'case': name, 'dir': case_dir, 'new': nc.group(1),
-                        'target': tc.group(0), 'grade': grade})
+            for _t in dict.fromkeys(tcs):          # 去重保序
+                out.append({'case': name, 'dir': case_dir, 'new': nc.group(1),
+                            'target': _t, 'grade': grade})
     return out
 
 

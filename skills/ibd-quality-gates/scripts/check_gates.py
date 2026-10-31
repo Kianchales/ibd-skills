@@ -50,16 +50,32 @@ def load_wordlist(path):
 def scan_wordlist(lines, words, label):
     hits = []
     for lineno, text in lines:
-        for w in words:
-            if w in text:
-                has_source = any(m in text for m in SOURCE_MARKERS)
+        row_hits = [w for w in words if w in text]
+        if not row_hits:
+            continue
+        # 列举行排除（I-0218 同族机械灰区 · 2026-10-26）：
+        # 一行内命中 ≥3 个不同黑名单词 ⇒ 大概率是「黑名单条目名列举」（自评表/判据条款/教学语料），
+        # 而非正文实际使用——降级 INFO，仍打印留可见性。实质使用（单行 1-2 词）不受影响。
+        distinct = len(set(row_hits))
+        if distinct >= 3 or "黑名单" in text and distinct >= 2:
+            for w in row_hits:
                 hits.append({
                     "gate": label,
                     "line": lineno,
                     "text": text.strip()[:60],
                     "word": w,
-                    "severity": "WARN" if has_source else "HIGH",
+                    "severity": "INFO",
                 })
+            continue
+        for w in row_hits:
+            has_source = any(m in text for m in SOURCE_MARKERS)
+            hits.append({
+                "gate": label,
+                "line": lineno,
+                "text": text.strip()[:60],
+                "word": w,
+                "severity": "WARN" if has_source else "HIGH",
+            })
     return hits
 
 
