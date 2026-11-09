@@ -4,7 +4,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IBD%20%E6%96%B9%E6%B3%95%E8%AE%BA%E5%AD%A6%E4%B9%A0%E4%B8%8E%E7%BB%B4%E6%8A%A4-blue" alt="displayName">
-  <img src="https://img.shields.io/badge/version-1.40.0-green" alt="version">
+  <img src="https://img.shields.io/badge/version-1.41.1-green" alt="version">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="MIT">
 </p>
 
@@ -17,7 +17,7 @@
 > **设计原则 · 双向开放**：资料来源与沉淀去向都由用户自己确定——材料从哪来（对话给文件/文件夹/项目，或已接入的库）、沉淀到哪去（本地/Obsidian/云知识库等），全部由用户定；skill 提供流程、规范与工具，不绑定私有环境。
 
 - **蒸馏域**：S0-S7 全流程——**材料来源由用户定**（单文件/文件夹/项目/已接入的库）→ 材料准备（三阅读包）→ 多专家并行蒸馏 → 综合成文（写作范式）→ 模拟回复演练 → 共通点蒸馏 → 沉淀入库（索引刷新 + 护栏校验）
-- **维护域**：库结构健康——26 项护栏体检 → 修复工具箱（先 dry-run）→ 复验幂等
+- **维护域**：库结构健康——28 项护栏体检 → 修复工具箱（先 dry-run）→ 复验幂等
 - **随包工具链**：33 个脚本（索引体系 / 落库 / 门禁 / 修复 / 拆分 / 迁移 / 快照对比），全部支持 `--methods-root` 或 `$METHODS_ROOT`
 - **库规范单一事实源**：[references/methods-guide.md](references/methods-guide.md)（目录结构 / 条目结构 / 索引机制 / 规模化拆分）
 
@@ -30,7 +30,7 @@
 
 # 库维护（命令示例）
 python scripts/refresh_index.py --methods-root ~/methods        # 索引一键刷新（四件套编排）
-python scripts/check_methods_health.py --methods-root ~/methods # 26 项护栏体检（0 ERROR 交付）
+python scripts/check_methods_health.py --methods-root ~/methods # 28 项护栏体检（0 ERROR 交付）
 python scripts/update_expert_md.py --entries batch.json --methods-root ~/methods  # 条目落库
 ```
 
@@ -75,7 +75,7 @@ scripts/                 33 个随包脚本（下表为示例；全量清单见 
   gen_entry.py             重写入口（路由表 + 摘要保留）
   update_expert_md.py      条目落库（h3/表格双形态 + 超线归档）
   check_expert_output.py   S4.5 产出自检门禁
-  check_methods_health.py  26 项护栏体检
+  check_methods_health.py  28 项护栏体检
   add_frontmatter.py / add_fm_single.py / b_fmt_unify.py / c_scale_dedup.py   结构修复工具箱
   split_domains.py         单体库 → 域文件拆分（配置驱动）
 references/
@@ -89,7 +89,7 @@ CHANGELOG.md             版本记录
 ## 📌 近期更新
 
 - **2026-10-19 · v1.37.0**：**新增 `snapshot_entries.py`（批量改动的条目级差异视图）** —— 改动前后各拍一次快照（正文段 sha256 ＋ 实证案名集合），`--diff` 直接列出「正文变更／实证少案／条目消失／条目搬家」，免通读比对。只读脚本、不写库；全库 8,575 条扫描 0.9 秒；阳性（改 1 字／删 1 案名）与阴性（还原后 0 差异）对照均通过。
-- **2026-10-19 · v1.36.6**：**入口瘦身 13,807 → 9,998 字符（−27.6%）** —— 只留「路由 ＋ 判据 ＋ 指针」：两张表的「详规」列由逐行重复全路径改为表头一次说明＋行内节号；体检判据不再罗列 26 项护栏（清单唯一事实源回 `health-check.md`）；「协作模式」独立节取消，三条协作铁律并入蒸馏域抬头；资源索引改分组式。S0-S7 判据、维护域三步、降级路径零变更。
+- **2026-10-19 · v1.36.6**：**入口瘦身 13,807 → 9,998 字符（−27.6%）** —— 只留「路由 ＋ 判据 ＋ 指针」：两张表的「详规」列由逐行重复全路径改为表头一次说明＋行内节号；体检判据不再罗列 28 项护栏（清单唯一事实源回 `health-check.md`）；「协作模式」独立节取消，三条协作铁律并入蒸馏域抬头；资源索引改分组式。S0-S7 判据、维护域三步、降级路径零变更。
 - **2026-10-12 · v1.36.2**：补承 `distill-methods.md` §S3 材料校验增补（首页校验／md5 防串档／**北交所案强制验内文抬头**——KB 标注双向实证不可信／BSE 403 切乐享通道），内容随 10-03/10-10 蒸馏批入库、本条立目承载。
 
 - **2026-10-02 · v1.35.7**：**规范补「旧编号溯源面不保留」条**——承用户裁定「**我没必要做任何回溯**」：① 本库不承担「当年编过什么号／来自哪位专家第几条产出」的追溯义务；② §2.2d 三问的「问二（承载可溯源映射信息？）」**不再构成保留理由** ⇒ 旧号去留只按「语位 × 误读」判；③ 恢复溯源须先裁定（不可从正文反推）。同轮已清除卷03 附录 214 处／单案旧号索引表／换号映射行／沿革句／旧案字母码。登记 **R-0076**。⚠️ 同轮事故（整文件跨行 `\s` 清洗吞空行、40 文件受损）已 `git checkout` 复原并改逐行重做，判据固化「批量清洗禁用跨行 `\s`＋核行数守恒」

@@ -108,9 +108,35 @@ def show_stats():
     print("各动作计数：" + "｜".join("%s %d" % (k, by[k]) for k in sorted(by)))
     print("蒸馏批次数：%d" % dist_batches)
     print("累计案数：%d（＝各次 `--cases` 之和 ＋ 迁移基线）" % cases)
-    print("维护域体检触发：每累计 %d 案一次 ⇒ 本档进度 %d/%d%s"
-          % (TRIGGER_EVERY, cases % TRIGGER_EVERY, TRIGGER_EVERY,
-             "（**已达阈值，应触发**）" if cases and cases % TRIGGER_EVERY == 0 else ""))
+    # 维护域档位判定（2026-11-07 修）：原实现只看 `cases % 40 == 0`，导致
+    #   同一档（如 80 案）在体检做完后仍永久显示「已达阈值，应触发」——无法区分
+    #   「刚满档、尚未做」与「已满档、已做过」。改为：定位跨档事件，再看其后是否
+    #   存在维护域体检事件（object 含「维护」）。用户 2026-11-07 裁定「满 40 案就必须做一次」。
+    tier = cases // TRIGGER_EVERY if TRIGGER_EVERY else 0
+    if tier and cases % TRIGGER_EVERY == 0:
+        # 找到把累计推到本档档位（tier*40）的那条事件下标
+        cum, cross_idx = 0, None
+        for i2, e2 in enumerate(ev):
+            cum += e2["cases"]
+            if cum >= tier * TRIGGER_EVERY:
+                cross_idx = i2
+                break
+        done = None
+        if cross_idx is not None:
+            for e2 in ev[cross_idx + 1:]:
+                if e2["action"] == "体检" and "维护" in e2["object"]:
+                    done = e2["date"]
+                    break
+        if done:
+            print("维护域体检触发：每累计 %d 案一次 ⇒ **第 %d 档（%d 案）已体检（%s）**，下一档 %d 案"
+                  % (TRIGGER_EVERY, tier, tier * TRIGGER_EVERY, done, (tier + 1) * TRIGGER_EVERY))
+        else:
+            print("维护域体检触发：每累计 %d 案一次 ⇒ **第 %d 档（%d 案）刚满，应立即执行**"
+                  % (TRIGGER_EVERY, tier, tier * TRIGGER_EVERY))
+    else:
+        print("维护域体检触发：每累计 %d 案一次 ⇒ 本档进度 %d/%d（距下一档 %d 案）"
+              % (TRIGGER_EVERY, cases % TRIGGER_EVERY, TRIGGER_EVERY,
+                 TRIGGER_EVERY - cases % TRIGGER_EVERY))
     print("上次体检日期：%s ｜ 上次**维护域**体检：%s" % (last_health, last_maint))
     print("→ 台账 `state/维护体检计数.md` 已改为**指针**；本视图即其真身读数。")
     return 0

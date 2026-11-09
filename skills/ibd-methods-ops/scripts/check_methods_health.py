@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""方法论全库健康护栏（26 项检查 · 防结构漂移）
+"""方法论全库健康护栏（28 项检查 · 防结构漂移）
 
 用法：
     python check_methods_health.py [--methods-root <工作区根>] [--quiet]
@@ -75,6 +75,23 @@
                         扫描面＝受检正文面（同第 1 项）；`60_notes/` 内**描述该形态本身**的文字合法。
                         修复：`apply_rewrite.py --repair --apply --cases-root <材料根>`；配不到源转人工
 
+27. 案例层条目层级      案例层（`cases/` 与 `methods/cases_md/`）条目出现 `#####` 及更深 ⇒ ERROR。
+                        判据：案例层条目层级＝所在分组层级＋1（无分组用 `###`／有分组用 `####`），
+                        两形态**并存合法**；五级及更深会使条目**不进任何索引面**（静默消失）。
+                        立项理由：2026-09-26 前的门禁**无一项**看守此处（第 7 项只管主库 `###`），
+                        实测曾积累 51 处（昂瑞微／科建股份／菊乐股份）而无人报警 ⇒ 覆盖面缺口
+28. 同族内容重复        同族内**编号不同但内容相同**的条目：同族 ＋ 规范化标题相似 ≥0.95 ＋
+                        规范化正文相似 ≥0.85（双阈值；单看标题实测误杀 21 对「同标题异内容」）。
+                        存量入 `DUP_BASELINE` ⇒ NOTES 可见不阻断；**基线外新增即 ERROR**。
+                        立项理由：第 3 项只查编号连续性/唯一性，`S-020137`≡`S-020147` 这类
+                        编号不同、正文 0.986 相同的对子**从未被发现** ⇒ 实测 2911 条（新格式 1824＋老格式 1087）存 5 对
+                        同案同现象重复立条而库 ERROR 恒为 0（I-0231）。两类成因：族内分段重复
+                        搬运（跨段卷，正文 1.000）／重蒸馏「新建一条、旧条未删」。
+                        ⛔ **删条目不可行**：编号连续性对 S/F/L/I 族无基线豁免，删中间编号必留
+                        永久空洞（实测删 5 条即报 11 项 ERROR）。
+                        ✅ **标准处置＝合并占位**（2026-11-07 实做 5 对）：保留编号，正文改指针
+                        （四要素：合并说明／为何不删／独有信息核对／批次沿革）＋ **必留「互见」字段**
+                        （漏则触发第 21 项）＋ 先改活引用 ＋ 改后刷索引。处置完基线清零，新增即 ERROR
 注：第 12 项（I-CL 条目位置）实现在第 3 项（编号健康）的行业合并版分支内，非独立小节。
 
 四栏信号（2026-09-26 WO-33 立三栏；2026-10-03 增 NOTES 成四栏）：
@@ -95,7 +112,7 @@ import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-_ap = argparse.ArgumentParser(description="方法论全库健康护栏（26 项检查）")
+_ap = argparse.ArgumentParser(description="方法论全库健康护栏（28 项检查）")
 _ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT", ""),
                  help="工作区根（= 库根，其下含 methods/；默认 $METHODS_ROOT，或脚本上级目录）")
 _ap.add_argument("--quiet", action="store_true", help="只输出异常项")
@@ -1124,6 +1141,101 @@ for _tname, _tpath in _TB.items():
             WARNS.append("案号不连续（第 22 项 · %s）：AN0001–%s 间缺 %d 个 —— %s"
                          "（若为「主库直入案·无单案文件」属正常，请核表二台账）"
                          % (_tname, max(_tan), len(_gap), "、".join(_gap[:8])))
+
+
+# ---------- 28. 同族内容重复（2026-11-07 新增 · 判 I-0231） ----------
+# 根因：第 3 项只查「编号」连续性/唯一性，**编号不同但内容相同**从不被发现 ⇒
+#   2026-11-07 维护域第 80 案复核实测 1824 条中存 **5 对**同案同现象重复立条，
+#   全库 ERROR 却恒为 0（S-020137≡S-020147 正文 0.986、S-030096≡S-030104 正文 1.000 等）。
+# 两类成因：①族内分段时重复搬运（跨段卷）②重蒸馏「新建一条、旧条未删」。
+# 判据（双阈值，缺一即误杀）：**同族** 且 **规范化标题相似 ≥0.95** 且 **规范化正文相似 ≥0.85**。
+#   单看标题会误杀：同句式不同实质者实测 21 对（标题≥0.90 但正文<0.60）。
+# 豁免口径（承 GAP_BASELINE 先例「豁免存量、约束增量」）：
+#   存量 5 对入 DUP_BASELINE ⇒ 报 NOTES（可见不阻断）；**基线外新增即 ERROR**。
+#   ⚠️ 为何不直接删：编号连续性护栏（第 3 项）对 S/F/L/I 族**无基线豁免**，删条目必留空洞
+#   ⇒ 去重只能「合并占位」或「全库重编」，二者均需用户裁定，本项先做**可观测**。
+DUP_BASELINE = {
+    # 2026-11-07 已全部销项 —— 原 5 对均以「合并占位」处置（被删方正文改指针、编号保留）：
+    #   S-010165→S-010167／S-010210→S-010189／S-020137→S-020147／S-030096→S-030104／S-040118→S-040106
+    #   指针行正文远短于保留方 ⇒ 相似度预剪枝不再命中，重复实质已消除。保留空集作机制占位：
+    #   **此后新增重复即 ERROR，无豁免**（与 GAP_BASELINE 2026-09-26「基线清零」同款处置）。
+}
+
+
+def _dup_check():
+    """族内标题/正文双阈值重复检测（第 28 项）。"""
+    import glob as _g, re as _re
+    from difflib import SequenceMatcher as _SM
+    from collections import defaultdict as _dd
+    _items = []
+    _dirs = [os.path.join(METHODS, d) for d in ("50_分卷", "10_跨案域", "20_语言专项")]
+    for _d in _dirs:
+        if not os.path.isdir(_d):
+            continue
+        for _f in sorted(_g.glob(os.path.join(_d, "*.md"))):
+            try:
+                _t = open(_f, encoding="utf-8", errors="replace").read()
+            except Exception:
+                continue
+            for _blk in _re.split(r"\n(?=### )", _t):
+                # 2026-11-07 修（覆盖面）：原正则只认「### 编号｜标题」竖线式，
+                #   实测漏掉**老格式「### 编号 标题」空格式** 1087 条（S 484／F 201／
+                #   L 166／I 139／WL 97）⇒ 检测面仅 1824/2911 = 62.7%。承第 17b 项
+                #   「编号覆盖面探针」同族缺陷（判 I-0094 第五犯：PL/S 整族曾漏检）。
+                _m = _re.match(r"### ((?:S|PL|WL|F|L|I)-\d{6})(?:[｜|]\s*|\s+)(.+)", _blk)
+                if not _m:
+                    continue
+                _body = _blk.split("\n", 1)[1] if "\n" in _blk else ""
+                _items.append((
+                    _m.group(1),
+                    _re.sub(r"[^\u4e00-\u9fa5A-Za-z0-9]", "", _m.group(2)),
+                    _re.sub(r"\s+", "", _body)[:900],
+                ))
+    if not _items:
+        return
+    def _fam(no):
+        p = no.split("-")
+        return p[0] + "-" + p[1][:2]
+    _byfam = _dd(list)
+    for _no, _nt, _bd in _items:
+        _byfam[_fam(_no)].append((_no, _nt, _bd))
+    _found = []
+    for _fm, _arr in _byfam.items():
+        _n = len(_arr)
+        for _i in range(_n):
+            for _j in range(_i + 1, _n):
+                _a, _b = _arr[_i][1], _arr[_j][1]
+                if len(_a) < 8 or len(_b) < 8:
+                    continue
+                # 长度差 >20% 直接跳过（标题相似度不可能达 0.95）
+                if abs(len(_a) - len(_b)) > max(len(_a), len(_b)) * 0.2:
+                    continue
+                if _SM(None, _a, _b).ratio() < 0.95:
+                    continue
+                _ba, _bb = _arr[_i][2], _arr[_j][2]
+                if abs(len(_ba) - len(_bb)) > max(len(_ba), len(_bb)) * 0.3:
+                    continue
+                _rb = _SM(None, _ba, _bb).ratio()
+                if _rb < 0.85:
+                    continue
+                _pair = "|".join(sorted([_arr[_i][0], _arr[_j][0]]))
+                _found.append((_pair, _arr[_i][0], _arr[_j][0], round(_rb, 3)))
+    _new = [_x for _x in _found if _x[0] not in DUP_BASELINE]
+    _old = [_x for _x in _found if _x[0] in DUP_BASELINE]
+    if _new:
+        ERRORS.append(
+            "同族内容重复（第 28 项）：**新增 %d 对** 编号不同但同族同现象 —— %s"
+            "（去重须先改引用再合并占位；禁直接删条目：编号连续性对 S/F/L/I 族无豁免）"
+            % (len(_new), "；".join("%s ≡ %s（正文%s）" % (x[1], x[2], x[3]) for x in _new[:5]))
+        )
+    if _old:
+        NOTES.append(
+            "同族内容重复（第 28 项）**存量 %d 对**（已入 DUP_BASELINE · 待裁定去重方式）：%s"
+            % (len(_old), "、".join("%s≡%s" % (x[1], x[2]) for x in _old))
+        )
+
+
+_dup_check()
 
 
 # ---------- 判定接口与退出码（WO-18 · 2026-09-26） ----------

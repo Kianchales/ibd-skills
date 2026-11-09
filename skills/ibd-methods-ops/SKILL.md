@@ -5,7 +5,7 @@ displayName: IBD 方法论学习与维护
 description: 方法论知识库「生产 + 维护」双域全流程。生产域=案例蒸馏沉淀（选材→材料准备→三专家并行蒸馏→写作角色综合成文→共通点蒸馏→沉淀入库→索引刷新→护栏校验），触发词「执行蒸馏学习XX次」「蒸馏学习XX次」；维护域=方法论库结构健康（护栏体检/编号归一/去重/修复工具箱），触发词「方法论体检」「方法论治理」「库结构检查」。方法论库路径可配置（METHODS_ROOT），知识库后端可配；支持单用户模式（默认）与团队模式（可选）。
 summary: 方法论知识库「学习（产知识）+ 维护（保健康）」一体化——案例蒸馏沉淀新方法论 + 库结构健康护栏 + 随包脚本工具链（33 个），路径与知识库后端可配置。
 agent_created: true
-version: 1.40.0
+version: 1.41.1
 ---
 
 # ibd-methods-ops
@@ -65,21 +65,21 @@ version: 1.40.0
 | **S4** 三专家并行蒸馏 | 财务/法律/行业专家 | 三段式产出落 `产出_<维度>_蒸馏.md`；**S4.5 门禁** `check_expert_output.py` **0 FAIL 才进 S5** | §S4（门禁 §S4.5） |
 | **S5** 综合成文 ＋ 写作范式 | 写作角色 | **五步提炼法**综合三方 ＋ 亲读原文提炼「投行语言」词汇句法库 → 通用 ＋ 行业方法论（单案范式七节骨架）；三轨产出后跑 `normalize_pl_s.py` **归一 PL/S 编号**（族内连续·零撞号·幂等） | §S5 |
 | **S5.5** 模拟回复演练 | 写作角色 | 独立撰写 → 回查原文补齐 → 与真实回复对比，**差距清单 ≥3 条**并写回 | §S5.5 |
-| **S6** 共通点蒸馏 | 主理人（可委写作角色） | **S6a 轻量映射 ≤50 行每轮必做**（校验＋补漏＋定稿分级）；「本次＋历史未复盘」≥10 触发 **S6b** 全量蒸馏 | §S6 |
+| **S6** 共通点蒸馏 | 主理人（可委写作角色） | **S6a 轻量映射 ≤50 行每轮必做**（校验＋补漏＋定稿分级）；「本次＋历史未复盘」≥10 触发 **S6b**——**触发即全量重写，禁轻量→全量两段式** | §S6 |
 | **S7** 沉淀入库 | 主理人 | 落库 ＋ **回写池三过滤**（复现 2 次即并入／冲突改旧／用户裁定再裁定）→ `apply_rewrite.py` 回写（高→实证区／中高→独立段）→ `refresh_index.py` **必刷索引** → `check_methods_health.py` **0 ERROR** ＋ `check_index_locator.py` 抽查 12 条行号 → **待补学销项**；任一不过转维护域 | 附 A §S7 ＋ [entry-contract.md](references/entry-contract.md) 附：S7 回写执行纪律 |
 
 > **库主从关系**：**本地 `{METHODS_ROOT}` ＝ 单一事实源**——索引刷新、护栏校验、S6/S7 机制均以本地为准；**云知识库后端 ＝ 只读发布镜像／检索前端**，向其写入属**同步动作、非创作**——禁止在云侧直接改方法论内容，发现本地有误回本地改后重新同步；双侧分叉以本地为准整体覆盖。
 
 ## 维护域：护栏体检 + 修复（3 步）
 
-> **触发节奏**：并入批量蒸馏——每累计满 N 案例（建议 40）、S7 完成后顺带跑一次（计数文件 `<工作区根>/state/维护体检计数.md`）；亦可按触发词随时发起。
-> **同节奏议题**：行业分类合并评估只在本体检触发（平时只归口、不合并；单案正常新立类）——规则见 [library-rules.md](references/library-rules.md) §2.5。
-> **体检前置 · 审计面**：**作用面须显式枚举**，不得默认等同 `methods/`——① 库内正文（`40_单案/`／`50_分卷/`／`30_行业版/`）② 库内归档 `cases_md/` ③ **蒸馏现场 `{工作区}/cases/`**。**凡查产出件／案目录，① ③ 并查**（「库内搜不到」≠「不存在」）。
-> **详规在册**：[govern/health-check.md](references/govern/health-check.md) 附：维护域三步执行详规；步骤名是导航、不下沉。
+> **触发节奏**：并入批量蒸馏——**每累计满 40 案强制一次、逐档必做不得跳过**、S7 完成后顺带跑一次；亦可按触发词随时发起。**计数语义**（`--stats` 的「0/40」＝已满、本次即须执行）见详规。
+> **同节奏议题**：行业分类合并评估只在本体检触发（平时只归口不合并；单案正常新立类）——规则见 [library-rules.md](references/library-rules.md) §2.5。
+> **体检前置 · 审计面**：**作用面须显式枚举**，不得默认等同 `methods/`——三个面（库内正文／`cases_md/`／蒸馏现场 `{工作区}/cases/`），**查产出件与案目录须 ①③ 并查**（清单见详规）。
+> **详规在册**：[govern/health-check.md](references/govern/health-check.md) 附三步执行详规（步骤名不下沉）。
 
 | 步骤 | 动作 | 判据（一句话） | 详规 |
 |------|------|------|------|
-| **1 体检** | `cd {METHODS_ROOT} && python <skill>/scripts/check_methods_health.py` | **26 项护栏 0 ERROR**——结构／编号唯一连续／路由表计数 vs 实算／索引行号／条目契约／骨架／登记表对账／schema 水位等；**逐项与阈值以册为准** | [health-check.md](references/govern/health-check.md) |
+| **1 体检** | `cd {METHODS_ROOT} && python <skill>/scripts/check_methods_health.py` | **28 项护栏 0 ERROR**——结构／编号唯一连续／路由表计数 vs 实算／索引行号／条目契约／骨架／登记表对账／schema 水位等；**逐项与阈值以册为准** | [health-check.md](references/govern/health-check.md) |
 | **2 修复** | 按 ERROR 类型选脚本（`add_frontmatter`／`b_fmt_unify`／`c_scale_dedup` 等） | **先 dry-run 后执行**；工具箱索引与三个单一事实源边界见册 | [fix-tools.md](references/govern/fix-tools.md) |
 | **3 复验** | 重跑 `refresh_index.py` ＋ 复跑护栏 | **0 ERROR 且幂等** | health-check.md 附 §3 |
 
@@ -117,7 +117,7 @@ version: 1.40.0
 - **[entry-contract.md](references/entry-contract.md)**〔⬛随包〕：条目与回写书写契约（四字段模型／三种排布／来源标注／标签禁用）＋ S7 回写纪律 12 条
 - **[library-rules.md](references/library-rules.md)**〔⬛随包〕：库规则总览（四层地图 · 裁决顺序 · 12 条易误解点）——只做导航
 - **[examples.md](references/examples.md)**〔⬛随包〕：上手串联示例 ＋ 三个易踩坑（空库不跑全库体检／配置是本机文件／缺口登记勿另起名目）
-- **govern/**〔⬛随包〕：[health-check.md](references/govern/health-check.md) 护栏 26 项＋三步详规｜[fix-tools.md](references/govern/fix-tools.md) 修复工具箱＋编号迁移踩坑｜[adversarial-review.md](references/govern/adversarial-review.md) 对抗性复核判据（S7 复盘，只标不改）｜[design-boundaries.md](references/govern/design-boundaries.md) 设计边界 15 条
+- **govern/**〔⬛随包〕：[health-check.md](references/govern/health-check.md) 护栏 28 项＋三步详规｜[fix-tools.md](references/govern/fix-tools.md) 修复工具箱＋编号迁移踩坑｜[adversarial-review.md](references/govern/adversarial-review.md) 对抗性复核判据（S7 复盘，只标不改）｜[design-boundaries.md](references/govern/design-boundaries.md) 设计边界 15 条
 - **[templates/](references/templates/README.md)**〔⬛随包〕：**骨架模板单一事实源**（4 份：单案范式／行业合并版／跨案域条目块／蒸馏笔记）——新建从此复制
 - **方法论库 `{METHODS_ROOT}`**〔自建〕：`_generated/通用方法论_最终版.md`（路由入口）＋ 各域正文 ＋ 调用索引 ＋ 条目标题目录 ＋ 引用图谱（反向视图＋对账）＋ 来源代号映射；生成物统一隔离于 `methods/_generated/`
 - **KB 后端**〔🟢〕：笔记默认落 `{METHODS_ROOT}/60_notes/`；可选外部连接器

@@ -49,9 +49,46 @@ def load_wordlist(path):
 
 def scan_wordlist(lines, words, label):
     hits = []
+    # 自评表行排除锚点（I-0224 同族机械灰区 · 2026-11-02）：命中行处于
+    # 「质量自评/自评报告」表内 ⇒ 该表本就是黑名单词的判据陈列区（逐词说明是否
+    # 命中及扣分理由），命中属预期形态而非正文实质使用——降级 INFO 留可见性。
+    _SELF_EVAL_HEADER = re.compile(r"自评报告|质量自评")
+    in_self_eval = False
+    off_row = 0          # 自评表内「连续非表行」计数（局部量，不跨调用留存）
     for lineno, text in lines:
+        if _SELF_EVAL_HEADER.search(text):
+            in_self_eval = True
+            off_row = 0
+            continue
+        is_row = text.lstrip().startswith("|")
+        # 离开自评表：下一个二级标题（## ），或表结束后连续 3 行非表行（与注释同义）
+        # ⚠ 状态必须走局部变量：本函数对同一份 lines 会被调用多次（G2／S1 各一次），
+        #   用具名属性留存行号会让第二次调用的行号差恒为负 ⇒ 退出条件永不成立
+        #   ⇒ 该门禁在整份文件后段被静默降级 INFO（假阴性）。
+        if in_self_eval:
+            if text.lstrip().startswith("## "):
+                in_self_eval = False
+                off_row = 0
+            elif is_row:
+                off_row = 0
+            elif text.strip():
+                off_row += 1
+                if off_row > 3:
+                    in_self_eval = False
+                    off_row = 0
         row_hits = [w for w in words if w in text]
         if not row_hits:
+            continue
+        if in_self_eval and text.lstrip().startswith("|"):
+            # 自评表内的命中行：降级 INFO（列举行排除的超集，单行 1-2 词也覆盖）
+            for w in row_hits:
+                hits.append({
+                    "gate": label,
+                    "line": lineno,
+                    "text": text.strip()[:60],
+                    "word": w,
+                    "severity": "INFO",
+                })
             continue
         # 列举行排除（I-0218 同族机械灰区 · 2026-10-26）：
         # 一行内命中 ≥3 个不同黑名单词 ⇒ 大概率是「黑名单条目名列举」（自评表/判据条款/教学语料），
