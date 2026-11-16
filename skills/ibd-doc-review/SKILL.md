@@ -2,7 +2,7 @@
 name: ibd-doc-review
 slug: ibd-doc-review
 displayName: IBD 投行格式复核
-summary: A 股投行文档格式复核：样式规范化（招股书/反馈回复排版）+ 格式核对（序号/日期/标点/简称/表格）+ 章节复核交付约定（批注版＋复核报告 Excel），只读核对不改文件。
+summary: A 股投行文档格式复核：样式规范化（招股书/反馈回复排版）+ 格式核对 + 章节复核交付约定（批注版＋复核报告 Excel），只读核对不改文件。
 description: >
   A 股投行文档的格式处理与章节复核规范，三类能力：
   1. 样式应用：对 Word 套用招股书版（000-009）或反馈回复版（0011+001+000-009）样式；
@@ -10,15 +10,16 @@ description: >
      与 OpenXML 架构校验。
   2. 格式核对（只读）：标题序号连续性、日期写法、标点全半角与用法、释义简称、表格规范等
      12 项，输出按严重程度分级的问题清单（位置/原文/问题/建议）。
-  3. 章节复核交付规范与门禁：进门第一档＝检查项声明（先声明查什么、不查什么、为什么）；
-     交付三形态路由（批注版/文本定稿/修订稿，带项目级记忆）；复核深度三档 L1/L2/L3（作声明预设）；
-     批注与修订的格式单一事实源；产物只读校验门禁（check_annotations.py / check_revisions.py）。
+  3. 章节复核交付规范与门禁：检查项声明（先声明查什么、不查什么）；交付三形态（批注版/定稿/修订稿）；
+     深度三档 L1/L2/L3；产物只读校验门禁（check_annotations.py / check_revisions.py）；
+     工作区目录结构（单文件/多文件两档、基准识别、参考资料四类）。
   本技能不修改文档内容；批注注入与修订稿生成归 ibd-doc-annotate。
   触发词：「按招股书样式」「招股书排版」「按反馈回复样式」「问询回复格式」「落实函格式」「套模板样式」
   「核对格式」「格式自查」「检查序号金额日期标点」「批注格式」「校验批注」「修订稿校验」「校验修订」
   「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」「查哪些项」「本轮查什么」「检查项声明」
   「研究下XX节」「帮我看看这段」「逐段复核」「逐段顺稿」
-version: 0.38.1
+  「复核结果放哪」「工作区怎么建」「参考资料放哪」
+version: 0.39.0
 agent_created: true
 ---
 
@@ -32,7 +33,7 @@ agent_created: true
 
 | 场景 | 触发词示例 |
 |---|---|
-| 招股书样式（含报告/尽调） | 「按招股书样式」「招股书格式」「套用 000-009 样式」「按报告模板」「套模板样式」 |
+| 招股书样式（含报告/尽调） | 「按招股书样式」「招股书格式」「套用 000-009 样式」 |
 | 反馈回复样式 | 「按反馈回复样式」「问询回复格式」「落实函格式」 |
 | 通用排版要求 | 「排版规范」「按投行规范排版」「字体字号统一」「文档格式统一」 |
 | 局部样式调整 | 「标题改成黑体」「正文首行缩进」「表格改成三线表」「单位行右对齐」 |
@@ -45,8 +46,9 @@ agent_created: true
 
 ## 使用流程
 
-> 本节只留「步骤名 ＋ 一句话判据 ＋ 册指针」，执行细则 → [workflow.md](references/workflow.md)。
+> 本节只留「步骤名 ＋ 一句话判据 ＋ 册指针」。
 > **读取前置**：读源 docx 取文本前先探 `w:ins`／`w:del`／`word/comments.xml`——命中即按「接受全部修订＋剔除全部批注」取终稿并标注；**禁对源文件写操作**。判据 → `docs/CONVENTIONS.md` §一；细则 → [read-docx.md](references/read-docx.md)，脚本 [extract_final_text.py](scripts/extract_final_text.py)。
+> **落位前置**：产物放哪先定——核 1 份 ⇒ 源文件同级 `<文件名>_复核/`；核 ≥2 个不同文档 ⇒ 五层作业区（`new_workspace.py` 建）。目录树／基准识别／参考资料四类 → [workspace-layout.md](references/workspace-layout.md)。**同一文档多版本算 1 个对象**。
 
 ### 0. 进门第一档：检查项声明（先声明，再动手）
 
@@ -108,8 +110,6 @@ agent_created: true
 > - **只读**，适用任意投行 Word；`check_content.py --input <docx> [--checks text|table|geo,table_na]`（content_common／content_text／content_table），出 `<input>_格式核对报告.md`。
 > - **两组**：文字 **8** 项 ＋ 表格 **4** 项，按 HIGH/MEDIUM/LOW 分级；**明细矩阵 → [workflow.md](references/workflow.md) §二**（项名与严重度判据以该矩阵为准，本页不复制）。
 > - **边界**：本模式查格式层自洽；**数值自洽**与内容质量溯源归 `ibd-quality-gates`；敏感词与地理清单 → [sensitive-terms.json](references/sensitive-terms.json)。
-> - 细则（命令块·核对矩阵）→ [workflow.md](references/workflow.md) §二。
-
 ### 5. 批注与修订复核交付模式（规范 + 只读校验）
 
 > - **职责**：本 skill 定规范 ＋ 门禁（只读）；**注入执行 = `ibd-doc-annotate`**（`annotate_docx.py` / `revise_docx.py --mode`）——两 skill 以本 skill 规范为合规依据。
@@ -121,7 +121,7 @@ agent_created: true
 
 ### 样式资产（先加载，禁止裸写）
 
-> 模板在 `assets/templates/`（skill 自带，即样式源）：**改模板 = 定制输出样式**；三个模板随包分发。
+> 模板在 `assets/templates/`（即样式源）：**改模板 = 定制输出样式**；三个模板随包分发。
 
 | 模板文件 | 适用文档 | 关键样式 ID |
 |---|---|---|
@@ -132,7 +132,7 @@ agent_created: true
 **细则指针**（按需读，本页不复制；各步判据处的指针为准，本段是**全集索引**）：
 - **动手前先翻**：[workflow.md](references/workflow.md)（S1-S7 · 格式核对 · 复核交付 · 命令全表）
 - 样式与读取：[style-map.md](references/style-map.md)（字体字号·对齐·缩进·间距·行距·大纲）｜[read-docx.md](references/read-docx.md)（含修订/批注的 Word 读取口径）
-- 复核规范：[annotations.md](references/annotations.md)（批注）｜[revisions.md](references/revisions.md)（修订）｜[delivery.md](references/delivery.md)（交付口径·声明·三形态·深度三档·报告 Excel 形态）｜[check-scope.md](references/check-scope.md)（**声明单事实源**：A 文字／B 内容／C 财务／D 法律／E 行业／F 交付／S 前置门）｜[convention-compare.md](references/convention-compare.md)（惯例对照四步法）｜[interface.md](references/interface.md)（对外契约）｜[problems.schema.json](references/problems.schema.json)（清单 schema）｜执行器 = `ibd-doc-annotate`
+- 复核规范：[annotations.md](references/annotations.md)（批注）｜[revisions.md](references/revisions.md)（修订）｜[delivery.md](references/delivery.md)（交付口径）｜[workspace-layout.md](references/workspace-layout.md)（**工作区结构**：两档·基准·参考资料四类）｜[check-scope.md](references/check-scope.md)（**声明单事实源**：查什么/不查什么）｜[convention-compare.md](references/convention-compare.md)（惯例对照四步法）｜[interface.md](references/interface.md)（对外契约）｜[problems.schema.json](references/problems.schema.json)（清单 schema）｜执行器 = `ibd-doc-annotate`
 - 工具与样例：[toolchain.md](references/toolchain.md)（层级与踩坑全文）｜[examples.md](references/examples.md)（典型用例）
 - 清单 json：[banned-terms.json](references/banned-terms.json)（禁词红线·三档·按 `--scenario` 装载，改 json 即生效）｜[sensitive-terms.json](references/sensitive-terms.json)（敏感词与地理）
 
