@@ -16,7 +16,7 @@ description: >
   本技能不修改文档内容；批注注入与修订稿生成归 ibd-doc-annotate。
   触发词：「按招股书样式」「招股书排版」「按反馈回复样式」「问询回复格式」「核对格式」「格式自查」
   「校验批注」「校验修订」「检查项声明」「工作区怎么建」
-version: 0.59.2
+version: 0.62.0
 agent_created: true
 ---
 
@@ -56,7 +56,7 @@ agent_created: true
 | 再定交付形态 | 批注版／文本定稿／修订稿（三选一，带项目级记忆） | delivery.md §五 |
 | 深度档位作预设 | L1/L2/L3 只预填声明单，不是另一套独立选择；**分档轴＝性质**：L2 装机器能判的（格式/数值/台账），L3 装只有人能判的 | check-scope.md §七 ＋ delivery.md §七 |
 
-> **四条纪律**：① 未核即声明（跳过项逐项点名）② 声明 ⟷ 交付报告头**首尾一致**，中途增减重新声明 ③ 档位只是预设，用户点名加减项一律照办 ④ **抽核须写明抽了哪几节**，报告头标「不可比」。
+> **四条纪律**：① 未核即声明（跳过项逐项点名）② 声明 ⟷ 交付报告头**首尾一致**，中途增减重新声明 ③ 档位只是预设，用户点名加减项一律照办 ④ **覆盖默认全文**，抽核/圈定只能用户发起（AI 自缩＝违规），抽核须写明抽了哪几节。
 
 ### 1. 场景识别与工具路由
 
@@ -131,7 +131,7 @@ agent_created: true
 
 | 维度 | 说明 |
 |---|---|
-| 🔴 **必须** | 任一 Word 处理工具（`minimax-docx`〔🟨市场〕或 `tencent-docx`〔🟦内置〕至少一）＋ 随包脚本 `check_styles.py`／`check_content.py`／`check_annotations.py`／`check_revisions.py`／`deliver_gate.py`／`extract_final_text.py`／`plan_review.py`（分母·批次）／`subquestion_map.py`（对位）／`check_cq.py`（C-Q 勾稽）／`docxio.py`（docx 读取公共层）／`check_scope_decl.py`（声明单校验）——docx 侧零依赖；`--pdf` 需 pymupdf（缺则提示） |
+| 🔴 **必须** | 任一 Word 处理工具（`minimax-docx`〔🟨市场〕或 `tencent-docx`〔🟦内置〕至少一）＋ 随包脚本 `check_styles.py`／`check_content.py`／`check_annotations.py`／`check_revisions.py`／`deliver_gate.py`／`extract_final_text.py`／`plan_review.py`（分母·批次）／`subquestion_map.py`（对位）／`check_cq.py`（C-Q 勾稽）／`docxio.py`（docx 读取公共层）／`check_scope_decl.py`（声明单校验）／`review_file.py`（单文件编排·批次内部化）／`check_runlog.py`（流程合规判定）——docx 侧零依赖；`--pdf` 需 pymupdf（缺则提示） |
 | 🟡 **推荐** | `tencent-local-office-edit`〔🟦内置〕（局部微调体验最佳）；模板 docx（`assets/templates/`，可替换） |
 | 🟢 **可选** | 金融数据终端（仅交叉验证）；本地全文检索〔若已接入〕／知识库后端（检索同类范例）；`officecli`（渲染层缺陷扫描 ＋ OpenXML 架构校验，S6 补充门禁） |
 | **运行模式** | 单用户直接使用；也可作为 `ibd-doc-write` 的格式层被串联调用 |

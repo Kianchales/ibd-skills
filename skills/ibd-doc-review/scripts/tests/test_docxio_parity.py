@@ -131,10 +131,14 @@ class TestParity(unittest.TestCase):
     10MB 的 document.xml 上——不是慢在子进程。缓存后总耗时显著下降且语义不变。
     """
 
+    # 对拍样本上限：批注版／修订稿与招股书**同一套正文**（只是多了批注/修订标记），
+    # 覆盖重复；保留三类差异最大的（正文型招股书／附注型／报告型含嵌套表与文本框）。
+    MAX_SAMPLES = 3
+
     @classmethod
     def setUpClass(cls):
         cls.cache = {}
-        for name, p in SAMPLES:
+        for name, p in SAMPLES[:cls.MAX_SAMPLES]:
             if not os.path.exists(p):
                 continue
             b = dx.open_docx(p)

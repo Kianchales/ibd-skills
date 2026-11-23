@@ -77,6 +77,7 @@ import tempfile
 import zipfile
 import xml.etree.ElementTree as ET
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import runlog      # noqa: E402  运行指纹（_run.json）
 import docxio      # noqa: E402  docx 读取公共层（0.54.0）；zipfile/ET 仍供批注/修订/物理扫描用
 import check_styles as _cs   # noqa: E402  样式判据唯一实现（0.57.0 起门禁改为调用它）
 
@@ -1061,4 +1062,13 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    _rc = main()
+    _argv = sys.argv[1:]
+    _target = None
+    for _flag in ("--docx", "--baseline", "--annotated", "--revised"):
+        if _flag in _argv:
+            _i = _argv.index(_flag) + 1
+            if _i < len(_argv) and not _argv[_i].startswith("--"):
+                _target = _target or _argv[_i]
+    runlog.autolog("deliver_gate", _argv, _rc, _target)
+    sys.exit(_rc)

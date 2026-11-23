@@ -46,16 +46,32 @@ class TestDeclCheck(unittest.TestCase):
 
     def test_sampling_bad_reason_warns(self):
         """「量大／时间紧」不是正当理由——只提示，不阻断；--strict 才算不通过。"""
-        text = HDR.format(mode="抽核") + "\n· 抽核：抽第四节，因为文件太大时间紧\n"
+        text = (HDR.format(mode="抽核")
+                + "\n· 指示来源：用户指定只看第四节（原话「先抽第四节看」）\n"
+                + "· 抽核：抽第四节，因为文件太大时间紧\n")
         errs, warns, info = csd.check(text)
         self.assertEqual(errs, [])
         self.assertTrue(any("不是正当理由" in w for w in warns), warns)
         self.assertIn("时间紧", info["理由"])
 
     def test_sampling_good_reason_passes(self):
-        text = HDR.format(mode="抽核") + "\n· 抽核：抽第四节，因为该节缺件、技术上不可读\n"
+        text = (HDR.format(mode="抽核")
+                + "\n· 指示来源：用户指定只看第四节\n"
+                + "· 抽核：抽第四节，因为该节缺件、技术上不可读\n")
         errs, warns, _ = csd.check(text)
         self.assertEqual((errs, warns), ([], []))
+
+    def test_shrink_scope_without_user_request_fails(self):
+        """缩范围只能由用户发起——AI 自行圈定/抽核判 ERROR（默认全文逐段）。"""
+        text = HDR.format(mode="圈定范围") + "\n· 圈定说明：只看第四节（文件太大）\n"
+        errs, _w, _ = csd.check(text)
+        self.assertTrue(any("用户指示" in e for e in errs), errs)
+
+    def test_shrink_scope_with_user_request_passes(self):
+        text = (HDR.format(mode="圈定范围")
+                + "\n· 指示来源：用户指定只看第四节（原话「先看第四节」）\n")
+        errs, _w, _ = csd.check(text)
+        self.assertEqual(errs, [])
 
     def test_sampling_needs_location(self):
         text = HDR.format(mode="抽核") + "\n· 抽核：抽了一些，因为缺件\n"
@@ -83,7 +99,9 @@ class TestCliSmoke(unittest.TestCase):
 
             bad = os.path.join(d, "bad_scope.md")
             with open(bad, "w", encoding="utf-8") as f:
-                f.write(HDR.format(mode="抽核") + "\n· 抽核：抽第四节，因为时间紧\n")
+                f.write(HDR.format(mode="抽核")
+                        + "\n· 指示来源：用户指定只看第四节\n"
+                        + "· 抽核：抽第四节，因为时间紧\n")
             r2 = subprocess.run([sys.executable, SCRIPT, "--file", bad, "--strict"],
                                 capture_output=True, text=True, encoding="utf-8")
             self.assertEqual(r2.returncode, 1, r2.stdout + r2.stderr)

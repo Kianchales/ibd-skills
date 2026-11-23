@@ -43,6 +43,9 @@ import glob
 import json
 import os
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import runlog      # noqa: E402  运行指纹（_run.json）
 from collections import Counter
 
 from content_common import (
@@ -306,7 +309,9 @@ def main():
             "error": tot.get("HIGH", 0), "warn": tot.get("MEDIUM", 0),
             "files": json_files,
         }, ensure_ascii=False))
-    sys.exit(0 if exit_ok else 2)
+    rc = 0 if exit_ok else 2
+    runlog.autolog("check_content", sys.argv[1:], rc, args.input)
+    sys.exit(rc)
 
 
 if __name__ == "__main__":

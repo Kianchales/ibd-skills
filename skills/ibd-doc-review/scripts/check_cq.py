@@ -36,7 +36,11 @@ import argparse
 import datetime
 import json
 import re
+import os
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import runlog      # noqa: E402  运行指纹（_run.json）
 
 import openpyxl
 
@@ -312,7 +316,9 @@ def main():
                           "rows": {k: got[k][0] for k in got}}, ensure_ascii=False, indent=1))
     else:
         print(md)
-    raise SystemExit(0 if total_bad == 0 else 1)
+    rc = 0 if total_bad == 0 else 1
+    runlog.autolog("check_cq", sys.argv[1:], rc, getattr(a, "xlsx", None))
+    raise SystemExit(rc)
 
 
 if __name__ == "__main__":
