@@ -101,7 +101,8 @@ class ModuleContractTest(unittest.TestCase):
         """三模块各自可 import；且 content_common 不反向依赖任何兄弟模块。"""
         import ast
         for fn in ("content_common.py",):
-            tree = ast.parse(open(os.path.join(SCRIPTS, fn), encoding="utf-8").read())
+            with open(os.path.join(SCRIPTS, fn), encoding="utf-8") as fh:
+                tree = ast.parse(fh.read())
             imported = set()
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):

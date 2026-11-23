@@ -27,6 +27,7 @@ import zipfile
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+
 SKILL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SCRIPT = os.path.join(SKILL_DIR, "scripts", "check_annotations.py")
 T = os.path.join(os.path.dirname(__file__), "test_deliver_gate.py")
@@ -161,6 +162,12 @@ class TestCheckAnnotations(unittest.TestCase):
         body = io.open(rep, encoding="utf-8").read()
         self.assertIn("comments 条数", body)
 
+
+
+# --- 测试分层（见 _tier.py）：默认只跑快测，全量需 REVIEW_TESTS=all
+from _tier import slow_all  # noqa: E402
+
+slow_all(globals())
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

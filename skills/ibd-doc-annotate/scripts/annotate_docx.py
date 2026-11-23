@@ -253,10 +253,34 @@ def build_comments_xml(issues, date_iso):
 
 
 # ---------------- zip 补件（styles / Content_Types / rels） ----------------
+def _style_by_name(root, name, typ=None):
+    """按**样式显示名**找样式（不区分大小写）。
+
+    为什么要按名字找：源件常由第三方转换生成，批注样式用的是自定义 styleId
+    （实测招股书是 a6 段落 / afe 字符），但 w:name 已经是 Word 内建的
+    「annotation text」「annotation reference」。只按 styleId=CommentText 找会判"没有"，
+    进而重复添加同名样式 ⇒ officecli 报 Duplicate style name，渲染层多出缺陷。
+    """
+    for st in root.findall('{%s}style' % W):
+        if typ and st.get('{%s}type' % W) != typ:
+            continue
+        nm = st.find('{%s}name' % W)
+        if nm is not None and (nm.get('{%s}val' % W) or '').strip().lower() == name.lower():
+            return st
+    return None
+
+
 def patch_styles(xml_bytes):
     root = etree.fromstring(xml_bytes)
     have_para = root.xpath('//w:style[@w:styleId="CommentText" and @w:type="paragraph"]', namespaces=NSMAP)
     have_char = root.xpath('//w:style[@w:styleId="CommentReference" and @w:type="character"]', namespaces=NSMAP)
+    # 已有同名内建样式（任意 styleId）→ 直接复用，不再添加，避免出现重复样式名
+    if not have_para:
+        if _style_by_name(root, 'annotation text', 'paragraph') is not None:
+            have_para = [True]
+    if not have_char:
+        if _style_by_name(root, 'annotation reference', 'character') is not None:
+            have_char = [True]
     if not have_para:
         s = etree.SubElement(root, '{%s}style' % W)
         s.set('{%s}type' % W, 'paragraph')

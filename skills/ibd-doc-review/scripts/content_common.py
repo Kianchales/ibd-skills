@@ -15,11 +15,12 @@
 本模块不 import 任何兄弟模块 —— 保持零环依赖。
 """
 
+import html
 import os
 import re
+import sys
 import zipfile
 
-import sys
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -50,7 +51,10 @@ ROW_RE = re.compile(r"<w:tr\b[^>]*>.*?</w:tr>", re.S)
 
 
 def _text_of(fragment):
-    return "".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", fragment))
+    # 保留正则引擎（偏移口径不变），但**解码 XML 实体**——否则 &amp; 被当字面量，
+    # 其 `;` 会被标点检查当半角分号假报（真实招股书含 8 处实体）。
+    # 内联而非 import docxio：本模块的约定是**不依赖任何兄弟模块**（零环依赖）。
+    return html.unescape("".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", fragment)))
 
 
 class Issue:
@@ -77,7 +81,7 @@ def _para_info(body):
     return {
         "style": st.group(1) if st else None,
         "align": jc.group(1) if jc else None,
-        "text": "".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", body)).strip(),
+        "text": html.unescape("".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", body))).strip(),
     }
 
 
@@ -122,7 +126,7 @@ def parse_tables(doc):
                 _vm = re.search(r'<w:vMerge(?:\s+w:val="([^"]+)")?\s*/>', _tcpr.group(0)) if _tcpr else None
                 vmerge = (_vm.group(1) or "continue") if _vm else None
                 cells.append({"text": raw_text,
-                              "raw": "".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", cxml)),
+                              "raw": html.unescape("".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", cxml))),
                               "vmerge": vmerge,
                               "sizes": sizes, "paras": paras})
             rows.append(cells)

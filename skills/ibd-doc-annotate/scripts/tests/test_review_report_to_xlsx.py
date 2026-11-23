@@ -275,5 +275,41 @@ class TestReviewReport(unittest.TestCase):
             self.assertFalse(os.path.exists(os.path.join(td, "报告.xlsx")))
 
 
+
+class TestStringMetaFields(unittest.TestCase):
+    """meta 的文本字段传**字符串**时，必须当作一整行，不得逐字渲染。
+
+    2026-11-20 实测：`approach` 写成字符串，封面被渲染成「· 先 / · 定 / · 分 / · 母 …」20 行。
+    """
+
+    def test_approach_string_is_one_line(self):
+        import json, os, subprocess, sys, tempfile
+        here = os.path.dirname(os.path.abspath(__file__))
+        pkg = os.path.abspath(os.path.join(here, "..", ".."))
+        gen = os.path.join(pkg, "scripts", "review_report_to_xlsx.py")
+        with tempfile.TemporaryDirectory() as d:
+            issues = os.path.join(d, "i.json")
+            meta = os.path.join(d, "m.json")
+            out = os.path.join(d, "r.xlsx")
+            with open(issues, "w", encoding="utf-8") as f:
+                # 入口校验要求：title 必填、advice/rev 至少其一 —— 缺则整份不生成
+                json.dump([{"code": "J", "type": "格式规范", "sev": "中", "nature": "格式规范",
+                            "anchor": "原文", "title": "标题", "desc": "说明",
+                            "advice": "建议", "author": "复核人"}], f,
+                          ensure_ascii=False)
+            with open(meta, "w", encoding="utf-8") as f:
+                json.dump({"subject": "x", "approach": "先定分母再切批", "verified": "单条字符串"},
+                          f, ensure_ascii=False)
+            subprocess.run([sys.executable, gen, "--issues", issues, "--meta", meta,
+                            "--out", out], capture_output=True, text=True, encoding="utf-8")
+            import openpyxl
+            ws = openpyxl.load_workbook(out)["封面与汇总"]
+            texts = [str(ws.cell(r, 1).value or "") for r in range(1, ws.max_row + 1)]
+            joined = "\n".join(texts)
+            self.assertIn("先定分母再切批", joined, "字符串 meta 未渲染")
+            hits = [t for t in texts if t.strip().startswith("·") and len(t.strip()) <= 3]
+            self.assertFalse(hits, f"出现逐字渲染：{hits[:5]}")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

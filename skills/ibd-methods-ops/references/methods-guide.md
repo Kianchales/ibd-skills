@@ -212,7 +212,7 @@
 ### 6.3 来源代号映射（G1 前置 · 与索引同属「生成物」）
 
 - `_generated/来源代号映射.json` 由 `gen_source_map.py` 重扫 `cases/` 生成；契约面（格式）见
-  `entry-contract.md` §4.2；**材料变动后须重跑**（实测：85 案｜489 来源｜477 页码可解析｜未归类 2；**该数为当时口径，现库已 136 案——重跑脚本以实况为准**）。
+  `entry-contract.md` §4.2；**材料变动后须重跑**（实测：85 个项目｜489 来源｜477 页码可解析｜未归类 2；**该数为当时口径，现库已 172 个项目——重跑脚本以实况为准**）。
 - **不在 `refresh_index.py` 一键链内**：它扫的是 `cases/`（材料层，体量 MB 级），与索引链（`methods/` 层）**节奏不同**；
   故独立执行 —— **材料变更（补采/换稿）后跑**，不必每次刷索引都跑。
 
@@ -262,9 +262,9 @@
 
 ---
 
-## 附：随包脚本全量清单（33 个 · 含 `gen_refgraph.py`／`check_index_idempotent.py`／`log_event.py`／`gen_source_map.py`／`gen_schema.py`／`check_evidence.py`／`snapshot_entries.py` · 自 `SKILL.md`「随包脚本」节原样迁入）
+## 附：随包脚本全量清单（34 个 · 含 `gen_refgraph.py`／`check_index_idempotent.py`／`log_event.py`／`gen_source_map.py`／`gen_schema.py`／`check_evidence.py`／`snapshot_entries.py` · 自 `SKILL.md`「随包脚本」节原样迁入）
 
-> **计数定义**：**33 个 ＝ `scripts/*.py`**（不含 `scripts/_lib/` 的 3 个内部模块）；其中 `add_fm_single.py` **已退役** ⇒ **在用 32 个**。⚠️ 本计数**曾四度漂移**（历史 25／26／27／28／29 并存）⇒ 现由**体检第 20 项**（文档计数一致性）机器守着，改计数会当场报错。
+> **计数定义**：**34 个 ＝ `scripts/*.py`**（不含 `scripts/_lib/` 的 3 个内部模块）；其中 `add_fm_single.py` **已退役** ⇒ **在用 33 个**。⚠️ 本计数**曾四度漂移**（历史 25／26／27／28／29 并存）⇒ 现由**体检第 20 项**（文档计数一致性）机器守着，改计数会当场报错。
 
 > 本附是**脚本用途与命令形态**的事实源；`SKILL.md` 只留四类分组摘要 ＋ 指向本节。脚本本体单一事实源仍是 `scripts/`。
 
@@ -294,9 +294,10 @@ python scripts/normalize_pl_s.py --methods-root <工作区根> [--cases ...] [--
 
 # —— 重蒸馏 B 对账 ——
 python scripts/gen_recon_anchors.py --methods-root <工作区根> --cases "AN0028=精创电气,..." --out <json>  # B 对账锚点生成（**修正版**）：段界按**标题层级**（1–3 级）切分 ＋ 角色标注（case/source/inter/table）＋ 输出「同编号多案实证挂靠」强信号
-python scripts/apply_rewrite.py --methods-root <工作区根> [--repair] [--apply]     # S7-b · 回写执行（高→实证区／中高→独立段；--repair 修截断行）
+python scripts/apply_rewrite.py --methods-root <工作区根> [--repair] [--apply]     # S7-b · 回写执行（高→实证区／中高→独立段；--repair 修截断行；内置 guard_rewrite 闸门）
+python scripts/guard_rewrite.py [--methods-root <工作区根>] [--plan <json>] [--verify] [--json <out>]  # 回写闸门：一句多投硬拦／空句硬拦／覆盖率仅告警／写后同句计数（返回码 1 禁写盘）
 python scripts/check_entry_contract.py [--json]                # 书写契约自检（回写落盘前置：0 ERROR 才允许 --apply）
-python scripts/replay_gate_report.py ...                       # S7 收尾：回写硬门禁四项指标 dry-run 报告（软执行·不阻断）
+python scripts/replay_gate_report.py ...                       # S7 收尾：回写硬门禁五项指标 dry-run 报告（软执行·不阻断）
 
 # —— 维护域 ——
 python scripts/snapshot_entries.py ... --out <json>          # 改动前拍快照（条目 → 正文段 hash ＋ 实证案名集合；只读）

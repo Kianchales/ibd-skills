@@ -42,6 +42,9 @@ test_validate_schema.py — validate_schema.py 自测（纯标准库实现版）
 
 运行：python scripts/tests/test_validate_schema.py
 """
+import contextlib
+import importlib.util
+import io
 import json
 import os
 import subprocess
@@ -51,6 +54,7 @@ import unittest
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
+
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.abspath(os.path.join(TESTS_DIR, "..", ".."))
@@ -73,9 +77,46 @@ def valid_item(**overrides):
         "title": "合计口径与明细不符",
         "desc": "该段合计与明细加总相差 12 万元。",
         "advice": "改为按明细加总口径列示。",
+        "author": "郑",
     }
     item.update(overrides)
     return item
+
+
+def _load_validator():
+    spec = importlib.util.spec_from_file_location("vs_mod", SCRIPT)
+    m = importlib.util.module_from_spec(spec)
+    sys.modules["vs_mod"] = m
+    spec.loader.exec_module(m)
+    return m
+
+
+_VS = None
+
+
+class _R:
+    """与 subprocess.CompletedProcess 同形的返回对象（只需 returncode/stdout/stderr）。"""
+    def __init__(self, code, out, err):
+        self.returncode, self.stdout, self.stderr = code, out, err
+
+
+def inproc(argv):
+    """进程内调用校验器（0.58.0 提速）：27 条用例各自起解释器，光启动就 4 秒。"""
+    global _VS
+    if _VS is None:
+        _VS = _load_validator()
+    out, err = io.StringIO(), io.StringIO()
+    code = 0
+    old_argv = sys.argv
+    sys.argv = ["validate_schema.py"] + argv
+    try:
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = _VS.main()
+    except SystemExit as e:
+        code = int(e.code or 0)
+    finally:
+        sys.argv = old_argv
+    return _R(code, out.getvalue(), err.getvalue())
 
 
 class ValidateSchemaTest(unittest.TestCase):
@@ -93,8 +134,7 @@ class ValidateSchemaTest(unittest.TestCase):
                 f.write(raw)
             else:
                 json.dump(payload, f, ensure_ascii=False)
-        cmd = [sys.executable, SCRIPT, path] + (extra_args or [])
-        return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+        return inproc([path] + (extra_args or []))
 
     # ---------- A. 通过路径 ----------
 
@@ -106,6 +146,14 @@ class ValidateSchemaTest(unittest.TestCase):
     def test_02_required_only(self):
         r = self.run_script([valid_item()])
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_02b_author_required(self):
+        """author 自 0.48.0 起必填：缺失须在 schema 层就拒绝（此前能过 schema、却在执行器报错）。"""
+        it = valid_item()
+        it.pop("author")
+        r = self.run_script([it])
+        self.assertEqual(r.returncode, 1, "缺 author 应被 schema 拒绝，而不是留到执行器才炸")
+        self.assertIn("author", r.stdout + r.stderr)
 
     def test_03_empty_array(self):
         r = self.run_script([])
@@ -225,8 +273,7 @@ class ValidateSchemaTest(unittest.TestCase):
     # ---------- D. 环境错误 ----------
 
     def test_15_file_missing(self):
-        cmd = [sys.executable, SCRIPT, os.path.join(self.tmpdir, "不存在.json")]
-        r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+        r = inproc([os.path.join(self.tmpdir, "不存在.json")])
         self.assertEqual(r.returncode, 2)
         self.assertIn("ENV-ERROR", r.stderr)
 
@@ -262,6 +309,28 @@ class ValidateSchemaTest(unittest.TestCase):
         r = self.run_script(payload)
         self.assertEqual(r.returncode, 1)
         self.assertIn("FAIL: 2 处", r.stdout)
+
+
+
+# --- 测试分层（见 _tier.py）：默认只跑快测，全量需 REVIEW_TESTS=all
+from _tier import slow_all  # noqa: E402
+
+slow_all(globals())
+
+class TestCliSmoke(unittest.TestCase):
+    """CLI 冒烟：进程内改造后，仍要确认命令行入口（argparse／退出码）可用。"""
+
+    def test_cli_exit_codes(self):
+        with tempfile.TemporaryDirectory() as d:
+            ok = os.path.join(d, "ok.json")
+            with open(ok, "w", encoding="utf-8") as f:
+                json.dump([valid_item()], f, ensure_ascii=False)
+            r = subprocess.run([sys.executable, SCRIPT, ok],
+                               capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            r2 = subprocess.run([sys.executable, SCRIPT, os.path.join(d, "nope.json")],
+                                capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(r2.returncode, 2)
 
 
 if __name__ == "__main__":

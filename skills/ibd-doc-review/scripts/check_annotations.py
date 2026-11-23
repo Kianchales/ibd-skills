@@ -169,14 +169,21 @@ def check_docx(path):
     sroot = ET.fromstring(styles)
     has_text = has_ref = False
     for st in sroot.findall(f"{W}style"):
-        if st.get(f"{W}styleId") == "CommentText" and st.get(f"{W}type") == "paragraph":
+        # 按 **styleId 或 样式显示名** 双判：源件常由第三方转换生成，批注样式可能是
+        # 自定义 id（实测招股书 a6/afe）而 w:name 已是内建的「annotation text」——
+        # 只认 CommentText 会把这种文件误判为「缺样式」（注入器 0.13.3 已改按名复用，此处对齐）
+        sid = (st.get(f"{W}styleId") or "")
+        typ = (st.get(f"{W}type") or "")
+        nm = st.find(f"{W}name")
+        name = ((nm.get(f"{W}val") if nm is not None else "") or "").strip().lower()
+        if typ == "paragraph" and (sid == "CommentText" or name == "annotation text"):
             has_text = True
-        if st.get(f"{W}styleId") == "CommentReference" and st.get(f"{W}type") == "character":
+        if typ == "character" and (sid == "CommentReference" or name == "annotation reference"):
             has_ref = True
     if not has_text:
-        note("FAIL", "styles.xml 缺 CommentText 段落样式（批注字号/字体统一依赖它）")
+        note("FAIL", "styles.xml 缺批注文本样式（styleId=CommentText 或 名为「annotation text」的段落样式）")
     if not has_ref:
-        note("WARN", "styles.xml 缺 CommentReference 字符样式（批注标记上标）")
+        note("WARN", "styles.xml 缺批注标记样式（styleId=CommentReference 或 名为「annotation reference」的字符样式）")
     return True
 
 
@@ -269,12 +276,20 @@ def main():
     if args.json:
         n_fail = sum(1 for ln in report_lines if ln.startswith("- [FAIL]"))
         n_warn = sum(1 for ln in report_lines if ln.startswith("- [WARN]"))
+        # 批注条数：从 INFO 行取（报告口径单一，避免另存一份计数与报告不一致）
+        m_cnt = next((re.search(r"comments 条数：(\d+)", ln) for ln in report_lines
+                      if "comments 条数" in ln), None)
         print(json.dumps({
             "tool": "check_annotations", "target": args.pdf or args.input,
+            "count": int(m_cnt.group(1)) if m_cnt else None,
             "verdict": "PASS" if ok else "FAIL",
             "error": n_fail, "warn": n_warn,
-            "issues": [{"level": "ERROR" if ln.startswith("- [FAIL]") else "WARN", "msg": ln[4:]}
-                       for ln in report_lines if ln.startswith("- [")],
+            # 级别与正文按正则取——原来按固定 4 字符切，"- [INFO] xx" 会被切成 "NFO] xx"
+            "issues": [{"level": ("ERROR" if m.group(1) == "FAIL"
+                                  else "WARN" if m.group(1) == "WARN" else "INFO"),
+                        "msg": m.group(2).strip()}
+                       for ln in report_lines if ln.startswith("- [")
+                       for m in [re.match(r"- \[(INFO|WARN|FAIL)\]\s*(.*)", ln)] if m],
         }, ensure_ascii=False), file=sys.__stdout__)
         sys.exit(0 if ok else 1)
     print("结果：", "PASS ✅" if ok else "FAIL ❌（存在硬性不符，不交付）")

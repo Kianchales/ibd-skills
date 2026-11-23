@@ -26,12 +26,28 @@
 | 入口 | 覆盖 | 使用方 |
 |---|---|---|
 | `--md <内容源.md>` | 内容源预检 | doc-write |
-| `--docx <交付件.docx>` | 基础十项（格式/序号/标点/表格等） | doc-write、通用 |
-| `--annotated --expect-annotated <N>` | 批注版十二项（基础十项 + 批注 docx 侧两项） | doc-annotate |
-| `--revised [--expect-revised N]` | 修订稿（覆盖 check_revisions 全部断言） | doc-annotate |
+| `--docx <交付件.docx>` | **十项基础**（标点/样式/合并/锚点/禁词/占位符/结构/指纹/页脚/标点用法） | doc-write、通用 |
+| `--annotated --expect-annotated <N>` | 批注版 **十二项**（十项基础 + 批注两项） | doc-annotate |
+| `--revised [--expect-revised N]` | 修订稿（覆盖 check_revisions 全部断言；**十三项**） | doc-annotate |
 | `--anchors "36,507.55;19.96"` | 数字锚点核对（可选） | 通用 |
+| `--baseline <源件.docx>` | **基线差分**：交付件与源件同项比对，源件本就 FAIL 的项标〔源件遗留〕**不计入结论**；源件 PASS 而交付件 FAIL 的仍判 FAIL（＝本次引入） | 复核场景（`ibd-doc-review`、`ibd-doc-annotate`）必传 |
 
-门禁返回非 PASS = 退回重做，**不得带瑕疵交付**。批注类任务（docx + PDF）**以 doc-annotate 为唯一对外入口**：PDF 侧批注校验（`check_annotations.py --pdf`）由 doc-annotate 内部回调，外部使用者/下游包**不直接调用**（单入口路由，0.19.0 起）。
+门禁返回非 PASS = 退回重做，**不得带瑕疵交付**。
+
+> **复核场景必须传 `--baseline`**（0.47.0）：复核是**只读**的——源件的半角标点、裸段、空段、禁词本来就存在，用户也不改源件。不传基线，这些源件自带问题会被算成本次 FAIL，批注版永远交不出去，门禁形同废纸。传了基线后：源件同项亦 FAIL ⇒ 标〔源件遗留〕不计入；源件 PASS 而交付件 FAIL ⇒ **照旧 FAIL**（本次注入引入的，例如改动原文导致指纹不一致）。批注类任务（docx + PDF）**以 doc-annotate 为唯一对外入口**：PDF 侧批注校验（`check_annotations.py --pdf`）由 doc-annotate 内部回调，外部使用者/下游包**不直接调用**（单入口路由，0.19.0 起）。
+
+## 2.1 内部公共层 `docxio.py`（0.54.0 起）
+
+**docx 读取统一走这一层**：`open_docx()` → `Bundle`；`iter_blocks()` / `iter_paras()` 逐块逐段；
+`flat_text()` 口径化全文；`iter_tables()`；`strip_punct()` / `norm_for_compare()` 归一化。
+
+- **为什么**：抽层前 8 个脚本各自解包、9 个各自读 `document.xml`、6 个各自定义命名空间——"同一判据两套实现"必然发生（2026-11-19 已发生一次）。
+- **口径是参数化的，不是统一的**：`include_table` / `para_sep` / `tabs` / `breaks` / `del_text` 复现各调用点旧行为。**统一口径＝改判据，须单独立项。**
+- **唯一行为变化**：实体由 ElementTree 解码（正则流派原返回 `&amp;` 字面量，会让 `&amp;` 里的 `;` 被标点检查假报）。真实招股书含 8 处实体。
+- **接入方式**：新脚本直接 `from docxio import ...`；存量脚本替换须先跑 `test_docxio_parity.py`（与旧实现逐字/逐数对拍）。
+- **已接入（0.55.0）**：`subquestion_map`（逐条对拍相同）、`plan_review`（统计逐项相同）、`deliver_gate`（全文逐字相同）。
+- **样式判据唯一实现（0.57.0）**：`check_styles.collect(path, scenario)` 是**唯一**判定函数——CLI 打印、`--json` 的 `data` 字段、`deliver_gate` 的「样式规范」项都调它。改判据只改这一处。
+- **不接入，且理由要保留**：① `extract_final_text`——它的 `_walk` 会跳过 `w:del` 子树与 `mc:Fallback`（否则重复计数），这是**终稿判据**不是普通 I/O，docxio 不建模 ② `check_annotations` / `check_revisions`——读的是 comments/styles 等部件，docxio 目前只覆盖 document.xml ③ `check_styles` / `content_common`——正则流派，改 ET 会**修正实体解码从而改变结论**（属改判据，须单独立项）。
 
 ## 3. 复核问题清单 schema（结构契约）
 
@@ -107,6 +123,10 @@
 | **多 skill 合并清单约定**（单份清单·code 分域·全文位置排序） | **≥ 0.26.2** | `ibd-finance-review`、`ibd-quality-gates`、`ibd-legal-review` |
 | **复核片段模式**（输入完整性探测：片段输入收窄核对项） | **≥ 0.26.2** | `ibd-finance-review` |
 | **复核报告（Excel）形态**（清单新增可选字段 `nature`／`line`；报告分页与台账） | **≥ 0.32.0** | `ibd-doc-annotate`（报告生成）、`ibd-finance-review`（清单产字段） |
+| **清单 `author` 必填**（schema 与执行器口径对齐；缺之则批注/修订无作者、不可追溯） | **≥ 0.48.0** | `ibd-doc-annotate`、`ibd-finance-review`、`ibd-legal-review` |
+| **覆盖方式为声明首栏 ＋ 抽核标「不可比」**（`coverage` 键；声明单落 `_scope.md` 存档） | **≥ 0.40.0** | `ibd-doc-annotate`（报告封面 `coverage` 栏） |
+| **报告「复核声明」6 栏齐备**（新增 `coverage`／补上漏渲的 `sources`） | **≥ 0.13.2**（`ibd-doc-annotate`） | `ibd-doc-review` delivery.md §八之二 |
+| **B 域逐段走查六问 ＋ 长文档分片**（>60 段切片，切片不减项） | **≥ 0.40.0** | （包内自用） |
 
 > ⚠️ **0.26.0→0.26.1 禁词口径两次变更（下游须照此理解 FAIL 的含义）**：
 > ① **0.26.0 扩表**：默认禁词 13→35（新增「经核查」等行为禁语）。

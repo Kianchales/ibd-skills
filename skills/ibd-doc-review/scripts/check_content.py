@@ -105,6 +105,7 @@ def resolve_checks(spec):
     if spec in (None, "", "all"):
         return [c["id"] for c in CHECK_REGISTRY]
     tokens = [tk.strip() for tk in spec.split(",") if tk.strip()]
+    unknown = []
     for tk in tokens:
         if tk in GROUPS:
             chosen.extend(GROUPS[tk])
@@ -115,8 +116,16 @@ def resolve_checks(spec):
                 print(f"[WARN] {tk} 已随 data 组迁至 ibd-quality-gates scripts/check_data.py"
                       f"——本脚本只做 text/table 组")
             else:
+                unknown.append(tk)
                 print(f"[WARN] 未知核对项/组名: {tk}")
     ordered = [c["id"] for c in CHECK_REGISTRY if c["id"] in set(chosen)]
+    if not ordered and unknown:
+        # 组名/项名**写错**时不能静默零命中——否则报告"0 错误"会被读成"查过且没问题"。
+        # 实测：`--checks punct`（应为 punctuation）零命中且退出码 0，回归测试因此空跑通过。
+        # 注意：已迁移的 data/amounts 等属**已知**项，仍按原提示、退出码 0（迁移说明不算错）。
+        print("[ERROR] 指定的核对项一个都不存在，本次未核对任何内容"
+              "（可用 `--checks all` 或 text/table）")
+        raise SystemExit(2)
     return ordered
 
 
@@ -227,7 +236,9 @@ def main():
     ap = argparse.ArgumentParser(description="IPO 文档基本格式核对 v3（只读，不改文件）")
     ap.add_argument("--input", required=True,
                     help="docx 文件路径（样式化后；支持 glob）")
-    ap.add_argument("--output", default=None, help="核对报告 md 输出路径（默认 <input>_格式核对报告.md）")
+    ap.add_argument("--output", default=None,
+                    help="核对报告 md 路径（默认落到源文件同级 <文件名>_复核/ 下——"
+                         "只读工具不往基准材料目录里丢文件，见 workspace-layout.md）")
     ap.add_argument("--checks", default="all",
                     help="all 或 组名(text/table) 或核对项 id，可组合逗号分隔，"
                          "如 --checks text,table 或 --checks table_font,geo")
@@ -253,7 +264,17 @@ def main():
             continue
         base, results = result
         report = render_report(base, check_ids, results)
-        out = args.output or os.path.splitext(f)[0] + "_格式核对报告.md"
+        if args.output:
+            out = args.output
+        else:
+            # 默认落 <源目录>/<文件名>_复核/：与 workspace-layout「核 1 份 ⇒ 源同级 _复核/」一致。
+            # 此前默认写源目录，等于只读工具往基准材料里丢文件（实测污染过 01_待复核材料）。
+            d = os.path.dirname(os.path.abspath(f))
+            stem = os.path.splitext(os.path.basename(f))[0]
+            out = os.path.join(d, stem + "_复核", stem + "_格式核对报告.md")
+        od = os.path.dirname(os.path.abspath(out))
+        if od:
+            os.makedirs(od, exist_ok=True)
         with open(out, "w", encoding="utf-8") as fh:
             fh.write(report)
 

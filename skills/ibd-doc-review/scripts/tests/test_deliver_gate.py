@@ -48,6 +48,7 @@ import zipfile
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+
 SKILL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SCRIPT = os.path.join(SKILL_DIR, "scripts", "deliver_gate.py")
 
@@ -258,6 +259,22 @@ class TestBaseGate(TmpDirMixin, unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertEqual(out.count("[PASS]"), 10)
         self.assertIn("10/10 PASS", out)
+
+
+    def test_12_scenario_inferred_when_omitted(self):
+        """未传 --scenario 时按文档特征推断，并在 stderr 打印依据（不得静默套默认）。"""
+        cases = [
+            ("招股书", [("001", "第一节 概览"), ("000", "正文一。"),
+                        ("001", "第二节 本次发行概况"), ("001", "第三节 风险因素")]),
+            ("反馈回复", [("0011", "问题1.请说明收入确认政策"),
+                          ("000", "回复正文。"), ("0011", "问题2.请说明毛利率")]),
+        ]
+        for expect, paras in cases:
+            docx = self.p(f"infer_{expect}.docx")
+            make_docx(docx, "".join(_para(s, t) for s, t in paras))
+            code, out = run_gate(["--docx", docx])
+            self.assertIn("[场景]", out, "推断结果必须可见")
+            self.assertIn(f"推断为「{expect}」", out, f"应推断为{expect}：\n{out[:400]}")
 
     def test_02_halfwidth_punct_and_ban_fail(self):
         docx, md = self.p("bad.docx"), self.p("bad.md")
@@ -782,6 +799,12 @@ class TestOutputContract(TmpDirMixin, unittest.TestCase):
         self.assertGreaterEqual(j["error"], 1)
         self.assertTrue(any(i["level"] == "ERROR" for i in j["issues"]))
 
+
+
+# --- 测试分层（见 _tier.py）：默认只跑快测，全量需 REVIEW_TESTS=all
+from _tier import slow_all  # noqa: E402
+
+slow_all(globals())
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

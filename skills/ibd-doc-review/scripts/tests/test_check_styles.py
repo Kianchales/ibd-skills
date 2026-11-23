@@ -20,6 +20,7 @@ import zipfile
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+
 SKILL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SCRIPT = os.path.join(SKILL_DIR, "scripts", "check_styles.py")
 TEMPLATE_DIR = os.path.join(SKILL_DIR, "assets", "templates")
@@ -81,11 +82,20 @@ CONTENT_SCRIPT = os.path.join(os.path.dirname(SCRIPT), "check_content.py")
 
 
 def read_content_report(path):
-    """读取 <path>_格式核对报告.md 内容。"""
-    rp = os.path.splitext(path)[0] + "_格式核对报告.md"
-    if os.path.exists(rp):
-        with open(rp, encoding="utf-8") as f:
-            return f.read()
+    """读取核对报告内容。
+
+    0.53.1 起 `check_content.py` 默认落到 `<源目录>/<文件名>_复核/<文件名>_格式核对报告.md`
+    （只读工具不往基准材料目录丢文件）；这里新路径优先，旧路径兜底，避免测试绑死落位。
+    """
+    stem = os.path.splitext(os.path.basename(path))[0]
+    cands = [
+        os.path.join(os.path.dirname(path), stem + "_复核", stem + "_格式核对报告.md"),
+        os.path.splitext(path)[0] + "_格式核对报告.md",
+    ]
+    for rp in cands:
+        if os.path.exists(rp):
+            with open(rp, encoding="utf-8") as f:
+                return f.read()
     return ""
 
 
@@ -407,6 +417,18 @@ class TestCheckStyles(unittest.TestCase):
         # 2026-08-27 裁定：英英之间全角标点不再报（投行中文阅读习惯）
         self.assertNotIn("误用全角", report)
 
+    def test_content_unknown_check_fails_loudly(self):
+        """核对项名写错必须**报错退出**，不能零命中还报"0 错误"。
+
+        由来：曾用 `--checks punct`（应为 punctuation）写回归测试，工具只 WARN、
+        退出码 0、报告"0 错误"——测试空跑却显示通过。这类"静默零命中"比报错更危险。
+        """
+        path = os.path.join(self.tmp, "any.docx")
+        make_mini_docx(path, [("000", "随便一句话。")])
+        code, out = run_content(path, checks="punct")
+        self.assertNotEqual(code, 0, "未知核对项应非零退出")
+        self.assertIn("未核对任何内容", out)
+
     def test_content_punctuation_neighbor_rule(self):
         """标点前后字符判定法：中文语境半角必报；英文/数字间半角不报；英英间全角报。"""
         bad_path = os.path.join(self.tmp, "punct_bad.docx")
@@ -504,6 +526,12 @@ class TestOutputLayering(unittest.TestCase):
             self.assertEqual(judge["json"]["detail_log"], rp)
             self.assertTrue(os.path.exists(rp), "detail_log 指向的文件应已落盘")
 
+
+
+# --- 测试分层（见 _tier.py）：默认只跑快测，全量需 REVIEW_TESTS=all
+from _tier import slow_all  # noqa: E402
+
+slow_all(globals())
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -8,6 +8,8 @@ S4 专家产出自检脚本（格式门禁 · 与 distill-methods.md §S4 编号
 用法：
     python scripts/check_expert_output.py <file.md> [<file.md> ...]
     python scripts/check_expert_output.py --dir <案工作目录>      # 自动扫目录下 产出_*.md
+    python scripts/check_expert_output.py --stage batch --cases-root <cases 目录> --case <案目录或通配>
+        # 批启动硬前置（I-0237）：逐案 × 逐维度确认分析卡存在并通过 P1-P6，缺一即 FAIL
 退出码：0 = 全部 PASS；1 = 存在 FAIL。
 
 编号规范（2026-09-06 v2 · 三层隔离 + 案号 4 位）：
@@ -32,6 +34,12 @@ S4-pre 分析卡门禁（--stage pre · WO-34 · 2026-10-17）：
   P5 篇幅上限：全文 ≤ 2000 字符（半页卡；超限 FAIL——分析卡不是成稿）
   P6 防幻觉抽检：「据我所知」等无来源论断标记 ⇒ WARN（提示人工复核）
 
+批启动硬前置（--stage batch · I-0237 · 2026-11-14）：
+  B1 案目录存在：`--case` 给的目录名/通配在 `--cases-root` 下须命中 ≥1 个目录，否则 FAIL
+  B2 三卡齐备：每案 × 每维度（默认 财务/法律/行业）须有 `分析卡_<维度>_*.md`，缺一即 FAIL
+  B3 通卡过闸：命中的每张卡逐张跑 P1-P6，任一 FAIL 即本批 FAIL
+  语义：三项任一 FAIL ⇒ 退出码 1，**该批不得进入 S4 正式产出**（缺口只能当场补齐，不得挂账）
+
 已知边界（诚实声明）：
   · P4 非法编号判定只查「形态合法性」（族前缀+数字位数），**不查编号是否真实在册**——
     在册校验属 S7-a 编号分配器职责（批内 max+1 语义下分析卡引用既有条目，实际漏引由
@@ -41,6 +49,7 @@ S4-pre 分析卡门禁（--stage pre · WO-34 · 2026-10-17）：
 """
 import glob as _glob
 import json
+import os
 import re
 import sys
 
@@ -128,6 +137,47 @@ def check_pre_card(path):
             WARN.append(f"{tag} P6 第 {i} 行含无来源论断措辞（「{PRE_HEDGE.search(ln).group(0)}」）——人工复核该句是否可溯源")
 
 
+def check_batch(cases_root, patterns, dims):
+    """批启动硬前置（I-0237）：逐案 × 逐维度确认分析卡存在且过 P1-P6。
+
+    返回 (rows, ok)。rows 每项 = (案目录, 命中卡数, 应有卡数, [FAIL 文案])。
+    「缺卡」与「卡不过闸」都算 FAIL——本函数存在的意义就是让「整批跳过 S4-pre」不再静默。
+    """
+    global FAIL, WARN
+    root = cases_root.rstrip("/\\")
+    rows = []
+    all_ok = True
+    for pat in patterns:
+        dirs = sorted(_glob.glob(os.path.join(root, pat))) if any(c in pat for c in "*?[") \
+            else [os.path.join(root, pat)]
+        dirs = [d for d in dirs if os.path.isdir(d)]
+        if not dirs:
+            rows.append((pat, 0, len(dims), ["B1 案目录未找到：%s 下无 %s" % (root, pat)]))
+            all_ok = False
+            continue
+        for d in dirs:
+            base = d.replace("\\", "/").rstrip("/").split("/")[-1]
+            miss, fails, hit = [], [], 0
+            for dim in dims:
+                cards = sorted(_glob.glob(os.path.join(d, "分析卡_%s_*.md" % dim)))
+                if not cards:
+                    miss.append(dim)
+                    continue
+                hit += len(cards)
+                for c in cards:
+                    FAIL.clear()
+                    WARN.clear()
+                    check_pre_card(c)
+                    fails += list(FAIL)
+            if miss:
+                fails.insert(0, "B2 缺分析卡：%s（应有 %d 张，实有 %d 张）"
+                             % ("／".join(miss), len(dims), len(dims) - len(miss)))
+            if fails:
+                all_ok = False
+            rows.append((base, hit, len(dims), fails))
+    return rows, all_ok
+
+
 def check_file(path):
     global FAIL, WARN
     with open(path, encoding="utf-8") as f:
@@ -189,13 +239,42 @@ import argparse
 
 
 def main(argv):
-    ap = argparse.ArgumentParser(description="S4 专家产出自检门禁（--stage pre 分析卡 / 默认蒸馏稿）")
+    ap = argparse.ArgumentParser(description="S4 专家产出自检门禁（--stage pre 分析卡 / batch 批启动 / 默认蒸馏稿）")
     ap.add_argument("files", nargs="*", help="待检 md 文件（可多个）")
     ap.add_argument("--dir", help="案工作目录：自动扫目录下 产出_*.md")
-    ap.add_argument("--stage", choices=["pre", "final"], default="final",
-                    help="pre=分析卡门禁（扫 分析卡_*.md）；final=蒸馏稿门禁（默认，扫 产出_*.md）")
+    ap.add_argument("--stage", choices=["pre", "final", "batch"], default="final",
+                    help="pre=分析卡门禁（扫 分析卡_*.md）；batch=批启动硬前置（逐案三卡齐备）；final=蒸馏稿门禁（默认）")
+    ap.add_argument("--cases-root", default="cases", help="batch 模式：cases 目录（默认 ./cases）")
+    ap.add_argument("--case", action="append", default=[],
+                    help="batch 模式：案目录名或通配（可重复，如 `北交所_丹娜生物*`）")
+    ap.add_argument("--dims", default="财务,法律,行业", help="batch 模式：应有维度（逗号分隔）")
     ap.add_argument("--json", action="store_true", help="输出结构化 JSON（供上层消费）")
     a = ap.parse_args(argv)
+
+    if a.stage == "batch":
+        if not a.case:
+            sys.stderr.write("[USAGE] --stage batch 须配 --case <案目录或通配>（可重复）\n")
+            return 2
+        dims = [x.strip() for x in a.dims.split(",") if x.strip()]
+        rows, ok = check_batch(a.cases_root, a.case, dims)
+        total_fail = not ok
+        if a.json:
+            print(json.dumps({
+                "tool": "check_expert_output", "stage": "batch", "cases_root": a.cases_root,
+                "cases": [{"case": c, "cards": n, "expected": e, "fail": f} for c, n, e, f in rows],
+                "verdict": "PASS" if ok else "FAIL",
+                "error": sum(len(f) for _, _, _, f in rows),
+            }, ensure_ascii=False))
+        else:
+            print("=== S4-pre 批启动硬前置（I-0237）：三卡齐备 ＋ P1-P6 ===")
+            for c, n, e, f in rows:
+                print("%s  %s  卡 %d/%d" % ("PASS" if not f else "FAIL", c, n, e))
+                for x in f:
+                    print("   FAIL  %s" % x)
+            print("--- 案 %d 个｜卡应有 %d 张：%s"
+                  % (len(rows), sum(e for _, _, e, _ in rows), "PASS ✅" if ok else "FAIL ★ 不得进入 S4"))
+        return 1 if total_fail else 0
+
     total_fail = False
     results = []
     if a.dir:

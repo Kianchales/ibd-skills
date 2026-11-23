@@ -22,7 +22,7 @@
 
 **覆盖面口径（2026-10-18 修 · 承普查 ⑦-1）**：
   报出的 `scanned` ＝ **实际受检的治理域包数**，不再用「根目录下的目录数」——
-  旧实现把 42 个目录（含 `docs`／`.scratch`／`.workbuddy` 等非包目录）当分母、
+  旧实现把 42 个目录（含 `docs`／`.scratch`／内部配置目录 等非包目录）当分母、
   而实际只检了 12 个包，输出仍写「OK: 44 包一致」⇒ **分母虚报**，正是「漏检 13 包」
   长期没被发现的原因（同族 I-0170「声明的覆盖面 ≠ 实现的覆盖面」）。
   治理域判定改由 `check_conformance.tier_of()` **派生**（不再维护第二份包名清单），
@@ -149,7 +149,7 @@ def main():
     #   个自建包，`skilldev-*` 9 包与 rule-capture／life-manager／obsidian／pdf-ocr-toolkit／
     #   hjyweb-accounting-fetch／win-crash-forensics 全部**静默不检**，而输出照样报
     #   「OK: 44 包一致」（分母是目录数）。现改为从 `check_conformance.tier_of()` 派生：
-    #   `tier != external` 即治理域。非包目录（docs／.scratch／.workbuddy／trigger-eval）
+    #   `tier != external` 即治理域。非包目录（docs／.scratch／内部配置目录／trigger-eval）
     #   实测一律判 external，故**自动排除**、不再报「缺 SKILL.md」。
     #   ⚠ 依赖：tier_of 读 `BUILTIN`／`PUBLIC_PKGS` 硬编码清单 ⇒ 新包未登记会被判 external。
     #   该风险由 `check_conformance.reconcile_whitelist()` 的 W1 对账覆盖（同一事实、同一

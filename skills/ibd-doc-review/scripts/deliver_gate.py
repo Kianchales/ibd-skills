@@ -76,6 +76,9 @@ import sys
 import tempfile
 import zipfile
 import xml.etree.ElementTree as ET
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import docxio      # noqa: E402  docx 读取公共层（0.54.0）；zipfile/ET 仍供批注/修订/物理扫描用
+import check_styles as _cs   # noqa: E402  样式判据唯一实现（0.57.0 起门禁改为调用它）
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -184,12 +187,13 @@ RE_SPACE_CJK_ALPHA = re.compile(r"[\u4e00-\u9fff][ \t]+[A-Za-z]|[A-Za-z][ \t]+[\
 # ----------------------------------------------------------------- 读取
 
 def read_docx(path):
-    """返回 (全文文本, 根节点, 包内 document.xml 原文)"""
-    with zipfile.ZipFile(path) as z:
-        xml = z.read("word/document.xml").decode("utf-8")
-    root = ET.fromstring(xml)
-    text = "".join(t.text or "" for t in root.iter(W + "t"))
-    return text, root, xml
+    """返回 (全文文本, 根节点, 包内 document.xml 原文)。
+
+    文本口径走 docxio.flat_text 默认档（**含表格、跨段无分隔、不映射 tab/br**）——
+    与旧实现逐字一致，已由 test_docxio_parity 对拍。
+    """
+    b = docxio.open_docx(path)
+    return docxio.flat_text(b), b.root, b.xml
 
 
 def read_md(path):
@@ -243,37 +247,36 @@ def check_punct(docx_text):
     return "标点规范", ok, detail, fails
 
 
-def check_styles(root, scenario):
-    styles = [p.get(W + "val") for p in root.iter(W + "pStyle")]
-    dist = {}
-    for s in styles:
-        dist[s] = dist.get(s, 0) + 1
-    need = STYLE_BY_SCENARIO.get(scenario, STYLE_BY_SCENARIO["反馈回复"])
-    missing = [s for s in need if s not in dist]
-    # 正文段落（body 级，排除表格单元格内的段落）：有文字但无 pStyle / 空段落
-    in_table = set()
-    for tc in root.iter(W + "tc"):
-        for p in tc.iter(W + "p"):
-            in_table.add(id(p))
-    body_bare = body_empty = 0
-    for p in root.iter(W + "p"):
-        if id(p) in in_table:
-            continue  # 表格内段落由 tblStyle 承担，不计
-        txt = "".join(t.text or "" for t in p.iter(W + "t"))
-        if txt.strip() == "":
-            body_empty += 1
-        elif p.find(W + "pPr/" + W + "pStyle") is None:
-            body_bare += 1
-    ok = (not missing) and body_bare == 0 and body_empty == 0
-    top = " ".join(f"{k or '(裸)'}:{v}" for k, v in sorted(dist.items(), key=lambda x: -x[1])[:8])
-    detail = f"pStyle {len(styles)} 段（{top}）；必备 {'齐备' if not missing else '缺 ' + ','.join(missing)}；裸 {body_bare} / 空 {body_empty}"
+def check_styles(docx_path, scenario):
+    """样式规范：**调用 check_styles.collect**，不再自己算一遍。
+
+    0.57.0 合并：此前门禁内建一套判定、`check_styles.py` 又一套，靠一致性测试对账。
+    现只有一套规则——改判据只改一处，门禁自动跟随。
+    """
+    d = _cs.collect(docx_path, scenario)
+    if d.get("error"):
+        return "样式规范", False, d["error"], [d["error"]]
+    missing, bare, empty = d["missing"], d["n_bare"], d["n_empty"]
+    # 「pStyle 分布」只列**有样式**的段落（旧口径：从 w:pStyle 元素统计，不含裸段）；
+    # collect 的 dist 里带 "(裸)" 计数（供 check_styles 人读输出用），此处剔除以保持门禁文案不变
+    top = " ".join(f"{k}:{v}" for k, v in
+                   sorted(((k, v) for k, v in d["dist"].items() if k != "(裸)"),
+                          key=lambda x: -x[1])[:8])
+    ok = (not missing) and bare == 0 and empty == 0
+    detail = (f"pStyle {d['n_styled']} 段（{top}）；"
+              f"必备 {'齐备' if not missing else '缺 ' + ','.join(missing)}；"
+              f"裸 {bare} / 空 {empty}")
     fails = []
     if missing:
-        fails.append(f"缺少必备样式: {missing}")
-    if body_bare:
-        fails.append(f"裸正文段落 {body_bare} 个")
-    if body_empty:
-        fails.append(f"空段落 {body_empty} 个")
+        # 最常见的误报：核招股书／报告却忘了传 --scenario（默认按反馈回复查，会要求 0011）
+        hint = ""
+        if "0011" in missing and scenario == "反馈回复":
+            hint = "（提示：0011 属反馈回复样式；若核的是招股书／报告，请加 --scenario 招股书 重跑）"
+        fails.append(f"缺少必备样式: {missing}{hint}")
+    if bare:
+        fails.append(f"裸正文段落 {bare} 个")
+    if empty:
+        fails.append(f"空段落 {empty} 个")
     return "样式规范", ok, detail, fails
 
 
@@ -636,6 +639,8 @@ def _officecli_candidates():
         os.path.join(home, ".local", "bin", "officecli"),
         os.path.join(home, "bin", "officecli"),
         os.path.join(local, "Programs", "officecli", "officecli.exe"),
+        os.environ.get("OFFICECLI_PATH") or "",
+        shutil.which("officecli") or "",
         os.path.join(here, "officecli.exe"),
     ]
     return cands
@@ -789,12 +794,85 @@ def run_md_precheck(md_text, anchors, ban):
     return [r for r in results if r is not None]
 
 
+def _apply_baseline(results, base_fail):
+    """基线差分：源件本来就 FAIL 的项，不计入本次交付结论。
+
+    为什么要这条：复核是**只读**的——源件的半角标点、裸段、空段、禁词都在，
+    我不改源件。若门禁把它们当成本次 FAIL，批注版就永远交不出去，门禁形同废纸。
+    判据：交付件 FAIL 且**基线（源件）同项亦 FAIL** ⇒ 标〔源件遗留〕，不计入结论；
+    交付件 FAIL 但基线 PASS ⇒ 是本次注入引入的，照旧 FAIL。
+    """
+    out, legacy = [], []
+    for name, ok, detail, fails in results:
+        if ok is False and name in base_fail:
+            legacy.append(name)
+            out.append((name + "〔源件遗留〕", True,
+                        detail + " ｜ 基线同项亦 FAIL，属源件自带",
+                        ["（源件遗留，非本次引入，不计入交付结论）"] + list(fails)))
+        else:
+            out.append((name, ok, detail, fails))
+    return out, legacy
+
+
+def _diff_physical(cur, base):
+    """物理扫描的基线差分：架构问题属源件就归遗留，**缺陷数增量算本次引入**。
+
+    为什么单独处理：物理扫描是聚合项（一条），不能像标点/样式那样按"同名同判"整项豁免。
+    实测注入批注后缺陷数 188 → 191（+3，重复样式名 annotation text），若整项按遗留放过，
+    就会把「注入引入的缺陷」也一并豁免掉——那正是基线差分最该防的误放。
+    """
+    if not cur or not base or cur[1] is None or base[1] is None:
+        return cur
+    name, ok, detail, fails = cur
+    if ok:                      # 交付件本身已过，无需处理
+        return cur
+    b_ok, b_detail = base[1], base[2]
+    m_cur = re.search(r"缺陷\s*(\d+)", detail) or re.search(r"(\d+)\s*处", detail)
+    m_base = re.search(r"缺陷\s*(\d+)", b_detail) or re.search(r"(\d+)\s*处", b_detail)
+    n_cur = int(m_cur.group(1)) if m_cur else None
+    n_base = int(m_base.group(1)) if m_base else None
+    arch_only = fails and all("架构" in f for f in fails)
+    if arch_only and b_ok is False:
+        return (name + "〔源件遗留〕", True,
+                detail + " ｜ 架构错误基线同存", ["（源件遗留，非本次引入）"] + fails)
+    if n_cur is not None and n_base is not None and n_cur > n_base:
+        return (name, False, detail + f" ｜ 基线 {n_base} 处，本次引入 {n_cur - n_base} 处",
+                [f"本次注入引入 {n_cur - n_base} 处渲染层缺陷（须修注入器，不得归为源件遗留）"] + fails)
+    return (name + "〔源件遗留〕", True, detail + f" ｜ 基线 {n_base} 处，无增量",
+            ["（源件遗留，非本次引入）"] + fails)
+
+
+def infer_scenario(docx_text):
+    """按文档特征推断场景，返回 (场景, 依据说明)。
+
+    为什么不再默认「反馈回复」：核招股书时忘传参数会假报「缺 0011」（反馈回复样式），
+    实测每次都要排查一遍。改为推断＋打印依据，猜错也能一眼看出该显式传参。
+    """
+    n_sec = len(re.findall(r"第[一二三四五六七八九十百]+节", docx_text))
+    n_q = len(re.findall(r"问题\s*\d+\s*[.、．]|问题\s*\d+\s*[:：]", docx_text))
+    if n_q >= 2 and n_q >= n_sec:
+        return "反馈回复", f"命中「问题N」{n_q} 处、第X节 {n_sec} 处"
+    if n_sec >= 3:
+        return "招股书", f"命中「第X节」{n_sec} 处、问题N {n_q} 处"
+    return "报告", f"未命中典型特征（第X节 {n_sec} 处／问题N {n_q} 处），按报告处理"
+
+
 def run_full(args, md_text, anchors, ban):
     """交付件核验：基础十项 + 按开关追加批注/修订两项 + 物理扫描一项"""
     docx_text, root, xml = read_docx(args.docx)
+    if not args.scenario:
+        args.scenario, why = infer_scenario(docx_text)
+        # 推断必须**可见**：否则就成了另一种"隐性默认"。
+        # 但 `--json` 契约要求 stdout 只有一行 JSON、且不得混人类输出 —— JSON 模式下
+        # 改为写进 payload 的 scenario_inferred 字段（消费者照样看得见）。
+        if not args.json:
+            print(f"[场景] 未指定 --scenario，按文档特征推断为「{args.scenario}」（{why}）"
+                  f"；不符请显式传 --scenario", file=sys.stderr)
+        else:
+            args._scenario_inferred = why
     results = [
         check_punct(docx_text),
-        check_styles(root, args.scenario),
+        check_styles(args.docx, args.scenario),
         check_merge(root, args.expect_vmerge),
         check_anchors(docx_text, md_text, anchors),
         check_ban(docx_text, ban),
@@ -859,7 +937,8 @@ def _report_path(args):
     return os.path.join(tempfile.gettempdir(), base + ".deliver_gate.log")
 
 
-def _json_payload(results, target, n_fail, n_skip, detail_log):
+def _json_payload(results, target, n_fail, n_skip, detail_log,
+                  scenario=None, scenario_inferred=None):
     """`--json` 契约（docs/ENGINEERING.md §4.4）：基础字段 ＋ items/skipped/detail_log。"""
     issues = []
     for name, ok, _, fails in results:
@@ -871,6 +950,8 @@ def _json_payload(results, target, n_fail, n_skip, detail_log):
     return {
         "tool": "deliver_gate", "target": target,
         "verdict": "FAIL" if n_fail else "PASS",
+        # 场景：显式传入则 scenario_inferred 为 None；推断得来则记下依据（供消费者追溯）
+        "scenario": scenario, "scenario_inferred": scenario_inferred,
         "error": n_fail, "warn": sum(1 for i in issues if i["level"] == "WARN"),
         "skipped": n_skip, "detail_log": detail_log,
         "items": [{"gate": n, "status": "SKIP" if ok is None else ("PASS" if ok else "FAIL"),
@@ -889,7 +970,7 @@ def main():
                     help="关键数字锚点，分号分隔（勿用逗号——数字含千分位逗号），如 '36,507.55;19.96'")
     ap.add_argument("--ban", default="",
                     help="临时追加禁用词（逗号或分号分隔）；不传则按 --scenario 装载 banned-terms.json 红线")
-    ap.add_argument("--scenario", default="反馈回复", choices=list(STYLE_BY_SCENARIO),
+    ap.add_argument("--scenario", default=None, choices=list(STYLE_BY_SCENARIO),
                     help="文档类型：决定样式集与**禁词作用域**（行为禁语『经核查』等仅招股书适用）")
     ap.add_argument("--expect-vmerge", type=int, default=None)
     ap.add_argument("--expect-annotated", type=int, default=None, help="期望批注条数（配 --annotated）")
@@ -899,6 +980,9 @@ def main():
     ap.add_argument("--officecli-path", default=None, help="officecli 可执行文件路径（默认自动探测）")
     ap.add_argument("--expect-issues", type=int, default=0,
                     help="可接受的渲染层缺陷条数上限，默认 0（配 --officecli）")
+    ap.add_argument("--baseline", default=None,
+                    help="源件路径：与交付件同项比对，源件本就 FAIL 的项标〔源件遗留〕不计入结论"
+                         "（复核只读场景必传，否则源件自带的格式问题会让批注版永远交不出去）")
     ap.add_argument("--detail", type=int, default=5, help="FAIL 时最多展开明细条数")
     ap.add_argument("--out", default=None,
                     help="全量结果落盘路径（默认 <%%TEMP%%>/<交付件名>.deliver_gate.log）")
@@ -921,10 +1005,26 @@ def main():
         (w, "IMPORTANT", "临时追加（--ban）", "") for w in extra]
     md_text = read_md(args.md) if args.md else ""
 
+    legacy_note = ""
     if args.docx:
         results = run_full(args, md_text, anchors, ban)
+        if getattr(args, "baseline", None):
+            base_text, base_root, _bx = read_docx(args.baseline)
+            base_res = [check_punct(base_text), check_styles(args.baseline, args.scenario),
+                        check_ban(base_text, ban), check_placeholder(base_text),
+                        check_punct_usage_gate(base_text)]
+            base_fail = {r[0] for r in base_res if r and r[1] is False}
+            results, _legacy = _apply_baseline(results, base_fail)
+            if args.officecli:
+                base_phys = check_physical(args.baseline, True, args.officecli_path,
+                                           args.expect_issues)
+                results = [_diff_physical(r, base_phys) if r[0] == "物理扫描" else r
+                           for r in results]
+            if _legacy:
+                legacy_note = ("；另有 %d 项为源件遗留（%s），已标〔源件遗留〕不计入结论"
+                               % (len(_legacy), "／".join(_legacy)))
         kind = " · 批注版" if args.annotated else (" · 修订版" if args.revised else "")
-        title, tail = f"交付前综合核验（交付件全套 {len(results)} 项{kind}）", "可交付"
+        title, tail = f"交付前综合核验（交付件全套 {len(results)} 项{kind}）", "可交付" + legacy_note
     else:
         results = run_md_precheck(md_text, anchors, ban)
         title, tail = "内容源预检（md 阶段 · 套样式前）", "可进入套样式"
@@ -947,7 +1047,9 @@ def main():
     lines, n_fail, n_skip = _render(results, title, head, tail, args.detail)
 
     if args.json:
-        print(json.dumps(_json_payload(results, args.docx or args.md, n_fail, n_skip, rp),
+        print(json.dumps(_json_payload(results, args.docx or args.md, n_fail, n_skip, rp,
+                                       args.scenario,
+                                       getattr(args, "_scenario_inferred", None)),
                          ensure_ascii=False), file=sys.__stdout__)
         return 1 if n_fail else 0
 

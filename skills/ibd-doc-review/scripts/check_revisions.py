@@ -160,6 +160,7 @@ def check(input_path, mode, expect, report, as_json=False):
     if as_json:
         print(json.dumps({
             "tool": "check_revisions", "target": input_path, "mode": mode,
+            "count": len(ins_els),          # 已修订条数（ins/del 成对，取 ins 数）
             "verdict": "FAIL" if fails else "PASS",
             "error": len(fails), "warn": 0,
             "notes": notes,

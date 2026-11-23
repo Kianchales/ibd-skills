@@ -11,6 +11,9 @@
     ② 索引已刷新（`check_index_locator.py` 行号定位抽查全命中）
     ③ 护栏 0 ERROR（`check_methods_health.py`，10 项）
     ④ 基线已落笔记（`methods/notes/` 最新笔记含「回写基线」行）
+    ⑤ 拟条数 ↔ 分配数（I-0238 · 2026-11-14）：以最新 `state/编号分配_*.json` 为准，
+       逐「案 × 轨」比对「提炼稿 `### 拟：` 条数」与「分配行数」；不等即失配
+       （形态失配会让解析器静默跳过，写的少就检查的少 —— 此前无任何指标能发现）
 
 用法
     python replay_gate_report.py --methods-root <工作区根> [--json] [--quiet]
@@ -104,8 +107,50 @@ def check_baseline(ws):
                      "%s：未找到「回写基线」行" % os.path.basename(latest))
 
 
+def check_count_recon(ws):
+    """⑤ 拟条数 ↔ 分配数（I-0238）：逐「案 × 轨」比对提炼稿条数与分配表行数。"""
+    cands = sorted(glob.glob(os.path.join(ws, "state", "编号分配_*.json")))
+    if not cands:
+        return None, "无编号分配表（state/编号分配_*.json）"
+    latest = cands[-1]
+    try:
+        data = json.load(io.open(latest, encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        return False, "%s 解析失败：%s" % (os.path.basename(latest), e)
+    alloc = data.get("alloc") or []
+    if not alloc:
+        return None, "%s 无 alloc 明细" % os.path.basename(latest)
+
+    want, ref = {}, {}
+    for r in alloc:
+        key = (r.get("an") or "?", r.get("kind") or "?")
+        want[key] = want.get(key, 0) + 1
+        ref[key] = (r.get("case_dir") or "", r.get("file") or "")
+
+    bad, missing = [], []
+    for key in sorted(want):
+        case_dir, fname = ref[key]
+        p = os.path.join(ws, "cases", case_dir, fname)
+        if not os.path.exists(p):
+            missing.append("%s-%s" % key)
+            continue
+        t = io.open(p, encoding="utf-8", errors="replace").read()
+        got = len(re.findall(r"^### 拟：", t, re.M))
+        if got != want[key]:
+            bad.append("%s-%s 拟 %d ≠ 分配 %d" % (key[0], key[1], got, want[key]))
+
+    ok = not bad and not missing
+    detail = "%s｜%d 个「案×轨」｜拟 %d ＝ 分配 %d" % (
+        os.path.basename(latest), len(want), sum(want.values()), len(alloc))
+    if missing:
+        detail += "｜文件缺失 %d（%s）" % (len(missing), "、".join(missing[:3]))
+    if bad:
+        detail += "｜失配 %d（%s）" % (len(bad), "；".join(bad[:3]))
+    return ok, detail
+
+
 def main():
-    ap = argparse.ArgumentParser(description="S7 回写硬门禁四项指标 dry-run 报告（不阻断）")
+    ap = argparse.ArgumentParser(description="S7 回写硬门禁五项指标 dry-run 报告（不阻断）")
     ap.add_argument("--methods-root", required=True, help="工作区根（含 methods/ state/ tasks/）")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--quiet", action="store_true")
@@ -121,6 +166,7 @@ def main():
         ("② 索引行号定位", check_locator(ws)),
         ("③ 护栏 0 ERROR", check_health(ws)),
         ("④ 基线已落笔记", check_baseline(ws)),
+        ("⑤ 拟条数↔分配数", check_count_recon(ws)),
     ]
     passed = sum(1 for _, (ok, _) in checks if ok is True)
     total = sum(1 for _, (ok, _) in checks if ok is not None)
@@ -137,7 +183,7 @@ def main():
         for n, (ok, d) in checks:
             mark = "✅" if ok is True else ("⏭" if ok is None else "⚠️")
             print("  %s %-18s %s" % (mark, n, d))
-    print("--- 四项机器可判指标：%d/%d 通过 ｜ **不阻断本轮沉淀**（Enforcement=soft，2026-09-19 裁定）"
+    print("--- 五项机器可判指标：%d/%d 通过 ｜ **不阻断本轮沉淀**（Enforcement=soft，2026-09-19 裁定）"
           % (passed, total))
     if passed < total:
         print("    复检判据：冲突升级裁定 ≥2 次 或 同型软违规 ≥3 次 ⇒ 该型升硬门禁；满 6 轮强制复检一次")

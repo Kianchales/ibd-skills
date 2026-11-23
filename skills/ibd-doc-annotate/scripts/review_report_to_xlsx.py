@@ -80,13 +80,25 @@ CN_NUM = "一二三四五六七八九十"
 
 # 复核声明的分栏（键 → 小标题），对应《本轮检查项声明》
 # （ibd-doc-review check-scope.md §六）；「声明与报告头一致」＝交付纪律，见 delivery.md §八。
-DECL_SECTIONS = (("checked", "检查（本次实际要跑的项）"),
+# 顺序即渲染顺序，须与 check-scope.md §六 模板一致：覆盖方式 → 检查 → 不查 → 特别专项 → 依据来源 → 交付前将跑
+DECL_SECTIONS = (("coverage", "覆盖方式（全文逐段／圈定范围／抽核）"),
+                 ("checked", "检查（本次实际要跑的项）"),
                  ("not_checked", "不查（点名 ＋ 原因）"),
                  ("special", "特别专项（触发即生效）"),
+                 ("sources", "依据来源（本轮参照了哪些参考资料）"),
                  ("gates", "交付前将跑"))
 
 # 严重度着色：高＝红系｜中＝橙系｜低＝灰系（遵中文语境「红＝最需处理」）
-SEV_STYLE = {"高": ("FFC7CE", "9C0006"), "中": ("FFEB9C", "9C6500"), "低": ("EDEDED", "595959")}
+# ── 字体（2026-11-20 定稿）：不依赖 Excel 默认字体（默认值随机器/语言包变化，跨机不一致）
+FONT_NAME = "宋体"
+BODY_SZ = 10          # 明细正文
+HEAD_SZ = 10          # 表头
+COVER_TITLE_SZ = 16   # 封面主标题
+SECTION_SZ = 11       # 封面小节标题
+
+# 严重度配色（2026-11-23 定稿：投行沉色 —— 底为同色系极浅、字为沉色，比 Excel 经典色克制）
+# 高＝深红 C00000｜中＝赭 BF8F00｜低＝灰 808080；只着色「严重度」一列，不整行、不斑马纹
+SEV_STYLE = {"高": ("FBE5E5", "C00000"), "中": ("FEF2D9", "BF8F00"), "低": ("EDEDED", "808080")}
 HEAD_FILL = "D9E1F2"
 HEAD_FONT = "1F3864"
 SECTION_FONT = "1F3864"
@@ -224,7 +236,7 @@ def _write_table(ws, r, header, rows, widths, styles, start_col=1, extend_last_t
     for j, h in enumerate(header):
         c = ws.cell(row=r, column=start_col + j, value=h)
         c.fill = PatternFill("solid", fgColor=head_fill)
-        c.font = Font(bold=True, color=head_font)
+        c.font = Font(name=FONT_NAME, size=HEAD_SZ, bold=True, color=head_font)
         c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
         c.border = box
     _extend(r)
@@ -233,6 +245,7 @@ def _write_table(ws, r, header, rows, widths, styles, start_col=1, extend_last_t
     for row in rows:
         for j, v in enumerate(row):
             c = ws.cell(row=r, column=start_col + j, value=v)
+            c.font = Font(name=FONT_NAME, size=BODY_SZ)
             c.border = box
             c.alignment = Alignment(vertical="top",
                                     wrap_text=header[j] in LONG_COLS,
@@ -240,7 +253,7 @@ def _write_table(ws, r, header, rows, widths, styles, start_col=1, extend_last_t
             if j == sev_idx and str(v) in SEV_STYLE:
                 fill, font = SEV_STYLE[str(v)]
                 c.fill = PatternFill("solid", fgColor=fill)
-                c.font = Font(bold=True, color=font)
+                c.font = Font(name=FONT_NAME, size=BODY_SZ, bold=True, color=font)
         _extend(r)
         r += 1
     return r
@@ -253,12 +266,13 @@ def _write_kv(ws, r, pairs, styles, key_w=None):
     box = Border(left=thin, right=thin, top=thin, bottom=thin)
     for k, v in pairs:
         a = ws.cell(row=r, column=1, value=k)
-        a.font = Font(bold=True)
+        a.font = Font(name=FONT_NAME, size=BODY_SZ, bold=True)
         a.fill = PatternFill("solid", fgColor="F2F2F2")
         a.border = box
         a.alignment = Alignment(vertical="top", wrap_text=True)
         b = ws.cell(row=r, column=2, value=v)
         b.border = box
+        b.font = Font(name=FONT_NAME, size=BODY_SZ)
         b.alignment = Alignment(vertical="top", wrap_text=True)
         for j in range(3, COVER_LAST_COL + 1):
             ws.cell(row=r, column=j).border = box
@@ -275,7 +289,7 @@ def _write_center(ws, r, text, styles, bold=False, size=11, color=None):
     """
     Alignment, _, Font, _, _, _ = styles
     c = ws.cell(row=r, column=1, value=text)
-    opts = {"bold": bold, "size": size}
+    opts = {"name": FONT_NAME, "bold": bold, "size": size}
     if color:
         opts["color"] = color
     c.font = Font(**opts)
@@ -289,16 +303,22 @@ def _write_section(ws, r, title, styles):
     跨度仍与全封面统一，保证上下等宽）。"""
     Alignment, _, Font, _, _, _ = styles
     c = ws.cell(row=r, column=1, value=title)
-    c.font = Font(bold=True, size=12, color=SECTION_FONT)
+    c.font = Font(name=FONT_NAME, size=SECTION_SZ, bold=True, color=SECTION_FONT)
     c.alignment = Alignment(vertical="center")
     ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=COVER_LAST_COL)
     return r + 1
 
 
 def _write_lines(ws, r, lines, styles, bullet=True):
-    Alignment, _, _, _, _, _ = styles
+    Alignment, _, Font, _, _, _ = styles
+    # 字符串按「一整行」处理：传 list 才是多行。
+    # 2026-11-20 修：此前把 str 当可迭代对象，一个字一行 —— `approach` 写成字符串时，
+    # 封面 20 个字被渲染成 20 行（实测「· 先 / · 定 / · 分 / · 母 …」）。
+    if isinstance(lines, str):
+        lines = [lines]
     for ln in lines:
         c = ws.cell(row=r, column=1, value=("· " if bullet else "") + str(ln))
+        c.font = Font(name=FONT_NAME, size=BODY_SZ)
         c.alignment = Alignment(vertical="top", wrap_text=True)
         ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=COVER_LAST_COL)
         r += 1
@@ -311,7 +331,8 @@ def _write_declaration(ws, r, decl, styles):
     报告是一份独立文件、会脱离对话单独流转，故「动手前声明什么、报告头就写什么」
     （`ibd-doc-review` delivery.md §八 落款义务 ⟷ check-scope.md §六 声明单）。
     两种形态都收：
-      - dict：{depth, checked[], not_checked[], special[], gates}（结构化，推荐）
+      - dict：{depth, coverage, checked[], not_checked[], special[], sources[], gates}
+        （结构化，推荐；键名与 `ibd-doc-review` check-scope.md §六 声明单一致）
       - list／str：逐行文字（简单形态，无分栏）
     """
     Alignment, _, Font, _, _, _ = styles
@@ -363,7 +384,28 @@ def _detail_sheet(wb, name, rows, cols, styles, first=False):
     ws.freeze_panes = "A2"
     if data:
         ws.auto_filter.ref = f"A1:{get_column_letter(len(cols))}{len(data) + 1}"
+    _apply_print(ws, repeat_header=True)
     return ws
+
+
+def _apply_print(ws, repeat_header=False):
+    """打印设置（2026-11-20 定稿）：A4 横向、按宽缩放 1 页、重复首行、页脚页码。
+
+    此前完全没设 —— 打印出来会按纵向硬切、跨页断表、续页无表头，交付件不能直接给人。
+    """
+    from openpyxl.worksheet.properties import PageSetupProperties
+    ws.sheet_properties.pageSetUpPr = PageSetupProperties(fitToPage=True)
+    ws.page_setup.orientation = "landscape"
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0        # 高度不限页，避免长清单被压成小字
+    if repeat_header:
+        ws.print_title_rows = "1:1"      # 续页自动重复表头
+    ws.page_margins.left = ws.page_margins.right = 0.4
+    ws.page_margins.top = ws.page_margins.bottom = 0.5
+    ws.oddFooter.center.text = "第 &P 页 / 共 &N 页"
+    ws.oddFooter.center.size = 8
+    ws.oddFooter.center.font = FONT_NAME
 
 
 def load_round_ledger(path):
@@ -382,8 +424,9 @@ def load_round_ledger(path):
 
 def _round_note(ws, r, text, last_col, styles):
     """整行说明文字（跨 A:last_col 合并）——台账页比封面宽，故不用 _write_lines 的 A:C。"""
-    Alignment, _, _, _, _, _ = styles
+    Alignment, _, Font, _, _, _ = styles
     c = ws.cell(row=r, column=1, value=text)
+    c.font = Font(name=FONT_NAME, size=BODY_SZ)
     c.alignment = Alignment(vertical="top", wrap_text=True)
     ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=last_col)
     return r + 1
@@ -451,7 +494,7 @@ def _cover_sheet(wb, meta, rows, split, styles, extra_sheets=()):
 
     # 主标题：**仅此一行居中**（用户裁定 2026-10-07）；副标题与其余标题一律左对齐
     title = str(meta.get("title") or "复核报告")
-    r = _write_center(ws, 1, title, styles, bold=True, size=14, color=SECTION_FONT)
+    r = _write_center(ws, 1, title, styles, bold=True, size=COVER_TITLE_SZ, color=SECTION_FONT)
     total = len(rows)
     hi = sum(1 for x in rows if x["sev"] == "高")
     mid = sum(1 for x in rows if x["sev"] == "中")
@@ -527,6 +570,7 @@ def _cover_sheet(wb, meta, rows, split, styles, extra_sheets=()):
     names = ([SHEET_COVER] + list(extra_sheets)
              + [n for n, _ in group_entries(rows, split)] + [SHEET_ALL])
     r = _write_lines(ws, r, names, styles)
+    _apply_print(ws, repeat_header=False)     # 封面：A4 横向、按宽缩放、不重复表头
     return ws
 
 

@@ -134,9 +134,15 @@ def entry_text(case_dir, code):
     2026-10-01 扩域（A 案批第一子批暴露）：原只循环 `('财务','法律','行业')` ⇒
     **体例域无回写通路**（`产出_体例_<案名>蒸馏.md` 读不到，22 条体例 R1/R2 无法入库）。
     现补 `'体例'`（`产出_体例_*蒸馏.md` ＋ `产出_*_体例蒸馏.md` 双 glob）。
+
+    2026-11-12 修（补学案整批漏读）：原 glob 要求文件名**以「蒸馏.md」结尾**
+    ⇒ `产出_财务_微容科技蒸馏_补学.md`（补学件以 `_补学` 收尾）整批匹配不上，
+    `entry_text` 返回 None ⇒ 该案全部行判 `source_missing` 静默落「待人工」。
+    本批实证：微容科技 21 行（AN0009 补学）全军覆没。修法：glob 放宽为
+    `*蒸馏*.md`，兼容 `_补学`／`_补蒸馏` 等后缀。
     """
     for role in ('财务', '法律', '行业', '体例'):
-        for f in glob.glob(os.path.join(case_dir, '产出_%s_*蒸馏.md' % role)) + glob.glob(os.path.join(case_dir, '产出_*_%s蒸馏.md' % role)):
+        for f in glob.glob(os.path.join(case_dir, '产出_%s_*蒸馏*.md' % role)) + glob.glob(os.path.join(case_dir, '产出_*_%s蒸馏*.md' % role)):
             t = read_text(f)
             m = re.search(r'^###\s+' + re.escape(code) + r'\s*[｜|]?\s*(.+?)\s*$', t, re.M)
             if m:
@@ -294,10 +300,14 @@ def plans(root):
             continue
         sec = t.split('一、回写清单')[1].split('## 二、')[0]
         for ln in sec.split('\n'):
-            m = re.match(r'^\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|\s*(高|中高)\s*\|', ln)
+            # 2026-11-12 修（I-0235 配套）：补第 4 组「说明」列 —— 闸门 `guard_rewrite.py`
+            #   需读该列判断该行是否**书面声明许双投**（`双投`／`两处均贴`／`双条目`／
+            #   `准许多投`）。缺此字段时多目标行一律被硬拦，无法区分「有意双投」与「盲投」。
+            m = re.match(r'^\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|\s*(高|中高)\s*\|\s*([^|]*?)\s*\|?', ln)
             if not m or '---' in m.group(1) or m.group(1).strip() in ('新案条目', '新案条目 '):
                 continue
             nt, field, grade = m.group(1).strip(), m.group(2).strip(), m.group(3)
+            note = (m.group(4) or '').strip()
             # 源编号闸（2026-10-01 扩域 · A 案批第一子批暴露）：原 `^([FLI]-AN\d{4}-\d{2})`
             #   只认 F/L/I 三域案例层编号 ⇒ **体例域源条目（`PL-AN0053-08`／`S-AN0053-04`）
             #   即使入表也被静默丢弃**（22 条体例 R1/R2 无法入库）。
@@ -322,7 +332,7 @@ def plans(root):
                 continue
             for _t in dict.fromkeys(tcs):          # 去重保序
                 out.append({'case': name, 'dir': case_dir, 'new': nc.group(1),
-                            'target': _t, 'grade': grade})
+                            'target': _t, 'grade': grade, 'note': note})
     return out
 
 
@@ -359,11 +369,53 @@ def do_rewrite(root, apply_):
         r.update({'title': title, 'emp': body, 'src': src,
                   'file': _hits[0][0], 'line': _hits[0][1]})
         rows.append(r)
+    # === 回写闸门（2026-11-12 · I-0235 代码级落地）===
+    #   病灶就在本函数上游：`plans()` 自 2026-11-01 起用 `findall` 展开多目标（修「第二个目标
+    #   静默不写」），但**每个目标取的都是同一个 `r['new']` 的同一个 `seg`** ⇒ 抽出的 `emp`
+    #   完全相同 ⇒ 同一句被写进该行全部目标条目。这正是 2026-11-12 清账中 27 组「一句灌多
+    #   条目」＋19 行张冠李戴的机制来源（当时由临时脚本触发，本脚本同构）。
+    #   闸门按 `(案, 新案条目, 句)` 分组：目标 ≥2 且无「双投／两处均贴／双条目／准许多投」
+    #   书面声明 ⇒ **整组转待判**（不做「留一个」：无依据判断该留哪个，属多解越权）。
+    #   覆盖率只排序告警，不参与取舍（阈值删除实测会误杀，见 references/distill-methods.md）。
+    try:
+        from guard_rewrite import guard_rows
+        _ok, _rej, _warn = guard_rows(rows, root)
+        for x in _rej:
+            for _t in x['targets']:
+                pend.append((x['case'], x['new'],
+                             'multi_target_same_sentence:%s（整组 %d 处，须逐目标取句或声明双投）'
+                             % (_t, len(x['targets']))))
+        if _rej:
+            _rc = collections.Counter(x['reason'] for x in _rej)
+            print('闸门拦下 %d 处（%s）→ 转待人工判定' % (
+                len(_rej), '，'.join('%s %d' % (k, v) for k, v in _rc.items())))
+            for x in _rej[:5]:
+                print('   [拦] %s %s → %s ｜ %s' % (x['case'], x['new'],
+                                                   '/'.join(x['targets']), x['emp'][:46]))
+        if _warn:
+            _warn.sort(key=lambda v: v['cov'])
+            print('闸门（主题覆盖度）：%d 条低于 %.2f，**仅告警不拦**（阈值删除会误杀）；最低 3 条：'
+                  % (len(_warn), 0.15))
+            for w in _warn[:3]:
+                print('   [低 %.2f] %s → %s ｜ %s' % (w['cov'], w['case'], w['target'], w['emp'][:40]))
+        rows = _ok
+        globals()['_GUARD_REJECTED'] = _rej
+    except ImportError:                                   # pragma: no cover
+        print('[WARN] guard_rewrite.py 缺失 ⇒ **回写闸门未生效**（语义盲区无人拦），请先补脚本')
     print('可执行回写 %d 条 ｜ 待人工判定 %d 条' % (len(rows), len(pend)))
     c = collections.Counter(x['grade'] for x in rows)
     print('分布：高 %d ／ 中高 %d' % (c['高'], c['中高']))
     for x in pend[:8]:
         print('   [待判]', x[0], x[1], x[2])
+    # 写前基线（2026-11-12）：判据 C 只报「本次新增的意料之外重复」。不带基线时历史存量
+    #   会全被报成重复（实测 146 条噪音），那样自检等于失效。
+    _base = None
+    if apply_:
+        try:
+            from guard_rewrite import occurrence
+            _base = occurrence([r for r in rows if r.get('emp')], root)
+        except Exception as _e:                            # pragma: no cover
+            print('   [基线] 取不到（%s），写后自检将含历史存量噪音' % _e)
     byfile = collections.defaultdict(list)
     for r in rows:
         byfile[r['file']].append(r)
@@ -404,6 +456,21 @@ def do_rewrite(root, apply_):
         if apply_ and ins:
             write_text(p, '\n'.join(lines) + '\n')
     print('写入 %d 条 ｜ 幂等跳过 %d 条 ｜ 写盘: %s' % (written, skipped, '是' if apply_ else '否（dry-run）'))
+    # 写后自检（判据 C，2026-11-12 · I-0235）：同一句在库内出现次数 > 计划处数 ⇒ 重复投放。
+    #   只在 --apply 后跑：dry-run 时库内尚无本次写入，计数必然为 0，跑它无意义。
+    if apply_:
+        try:
+            from guard_rewrite import verify_rows
+            _bad = verify_rows([r for r in rows if r.get('emp')], root, baseline=_base)
+            if _bad:
+                print('   [写后自检] 超出计划的新增重复 %d 条（须逐处判主题）：' % len(_bad))
+                for b in _bad[:5]:
+                    print('      %s 原 %d ＋ 计划 %d → 现 %d（%d 块）｜ %s'
+                          % (b['case'], b['base'], b['want'], b['found'], b['blocks'], b['emp'][:46]))
+            else:
+                print('   [写后自检] 同句重复 0 条 ✓')
+        except Exception as _e:                            # pragma: no cover
+            print('   [写后自检] 跳过：%s' % _e)
     return written
 
 
@@ -422,7 +489,7 @@ def do_repair(root, apply_, cases_root=None):
     idx = {}
     for name, d in cases.items():
         for role in ('财务', '法律', '行业'):
-            for f in glob.glob(os.path.join(d, '产出_%s_*蒸馏.md' % role)) + glob.glob(os.path.join(d, '产出_*_%s蒸馏.md' % role)):
+            for f in glob.glob(os.path.join(d, '产出_%s_*蒸馏*.md' % role)) + glob.glob(os.path.join(d, '产出_*_%s蒸馏*.md' % role)):
                 t = read_text(f)
                 for m in re.finditer(r'^###\s+[FLI]-AN\d{4}-\d{2}\s*[｜|]\s*(.+?)\s*$', t, re.M):
                     try:

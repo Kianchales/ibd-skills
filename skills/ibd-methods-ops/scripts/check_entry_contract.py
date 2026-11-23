@@ -19,6 +19,13 @@
   A4 案名白名单：实证标签中的案名须为规范案名（证券简称，白名单＝单案 case 字段 ＋
      《方法论_案名规范表.md》）；命中「截断案名／未登记案名／写死案数」报 ERROR
      形态受理面同 A1；判定前先剥标签尾部括注（`本案实证（AN0044）` ⇒ 主体「本案实证」）
+  M1 映射表机读性（--mapping · I-0239 · 2026-11-14）：`cases/*/共通点映射_*.md` 回写清单的
+     「既有条目」列须为**真实条目号**（`PL-`／`S-`／`F-`／`L-`／`I-`／`WL-` ＋ 4-7 位数字）或 `无对应`／`—`；写「F-01／02／03 三轨」
+     这类**聚合描述**即 ERROR——解析器对不到条目，回写计划静默为 0。
+     生效面按文件名日期分段：`--since`（默认 20261114）当日及以后的映射 ERROR，之前的仅 WARN（历史豁免）
+
+用法：python check_entry_contract.py --methods-root <工作区根> [--json]
+      python check_entry_contract.py --mapping [--cases-root <cases>] [--since 20261114]
 
 用法：python check_entry_contract.py --methods-root <工作区根> [--json]
 退出码：0 = PASS（0 ERROR）；1 = FAIL；2 = 用法或环境错误；3 = SKIP（无可检对象）
@@ -210,12 +217,96 @@ def scan(path, rel, is_single, whitelist=None):
     return out
 
 
+# ── M1 映射表机读性（--mapping · I-0239 · 2026-11-14）─────────────────────
+# 「既有条目」列必须是可解析条目号：聚合描述（`F-01／02／03 三轨`）对人是摘要、对机器是空值，
+# 回写器逐行解析即得 0，而「文件齐备」的门禁全绿（5 案实测）。
+MAP_COL = ("既有条目", "库内条目", "对应条目", "旧条目")
+MAP_EMPTY_RX = re.compile(r"^(?:—|–|-)|无[^\s]{0,8}对应|^\[新增\]")
+MAP_ID = re.compile(r"^(?:PL|WL|[FLIS])-\d{4,7}(?!\d)")
+MAP_SEP = re.compile(r"^\|[\s|:\-]+\|$")
+
+
+def scan_mapping(cases_root, since="20261114"):
+    """扫 cases/*/共通点映射_*.md 的回写清单表，「既有条目」列非条目号即报。
+
+    表头识别＝「本行是表头且下一行是分隔行」（只看单元格文本会把含「既有条目」字样的数据行误判为表头）。
+    受理：真实条目号（可带标题尾巴，回写器取前段号）／`无对应` 类空值；其余（聚合描述、整句说明）报。
+    """
+    out = []
+    files = sorted(glob.glob(os.path.join(cases_root, "*", "共通点映射_*.md")))
+    for p in files:
+        rel = os.path.basename(os.path.dirname(p)) + "/" + os.path.basename(p)
+        m = re.search(r"(20\d{2})-?(\d{2})-?(\d{2})", os.path.basename(p))
+        fdate = "".join(m.groups()) if m else "00000000"
+        level = "ERROR" if fdate >= since else "WARN"
+        try:
+            lines = open(p, "rb").read().decode("utf-8").splitlines()
+        except OSError as e:
+            out.append(("ERROR", "IO", rel, "读取失败: %s" % e))
+            continue
+        col = None
+        for i, ln in enumerate(lines):
+            s = ln.strip()
+            if not s.startswith("|"):
+                col = None          # 出表即复位，避免把正文表格误判为回写清单
+                continue
+            cells = [c.strip() for c in s.strip("|").split("|")]
+            if col is None:
+                nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
+                if not MAP_SEP.match(nxt):
+                    continue        # 非表头行（数据行里也可能出现「既有条目」字样）
+                for j, c in enumerate(cells):
+                    if any(k in c for k in MAP_COL):
+                        col = j
+                        break
+                continue
+            if col >= len(cells):
+                continue
+            v = cells[col]
+            if not v or set(v) <= set("-: "):
+                continue            # 分隔行／空单元格
+            if MAP_ID.match(v) or MAP_EMPTY_RX.search(v) or v in ("无", "N/A", "n/a"):
+                continue
+            out.append((level, "M1", "%s:L%d" % (rel, i + 1),
+                        "「%s」列不是可解析条目号：`%s`（须写真号，或 `无对应`）" % (MAP_COL[0], v[:40])))
+    return out, len(files)
+
+
 def main():
     ap = argparse.ArgumentParser(description="条目书写契约自检（只读）")
     ap.add_argument("--methods-root", default=os.environ.get("METHODS_ROOT") or os.getcwd(),
                     help="库所在的工作区根（其下须有 methods/）")
+    ap.add_argument("--mapping", action="store_true",
+                    help="M1 映射表机读性自检（扫 cases/*/共通点映射_*.md 的「既有条目」列）")
+    ap.add_argument("--cases-root", help="映射扫描根（默认 <methods-root>/cases）")
+    ap.add_argument("--since", default="20261114",
+                    help="M1 生效日期（文件名日期 >= 此值报 ERROR，更早仅 WARN；默认 20261114）")
     ap.add_argument("--json", action="store_true", help="结构化输出")
     a = ap.parse_args()
+
+    if a.mapping:
+        root = os.path.abspath(a.methods_root)
+        croot = a.cases_root or os.path.join(root, "cases")
+        issues, scanned = scan_mapping(croot, a.since.replace("-", ""))
+        n_err = sum(1 for i in issues if i[0] == "ERROR")
+        n_warn = sum(1 for i in issues if i[0] == "WARN")
+        if a.json:
+            print(json.dumps({"tool": "check_entry_contract", "mode": "mapping", "target": croot,
+                              "scanned": scanned, "error": n_err, "warn": n_warn,
+                              "issues": [{"level": l, "code": c, "where": w, "msg": m}
+                                         for l, c, w, m in issues],
+                              "verdict": "PASS" if n_err == 0 else "FAIL"},
+                             ensure_ascii=False, indent=2))
+        else:
+            print("=== 映射表机读性自检（M1 · 生效日 %s）：@ %s" % (a.since, croot))
+            ordered = [i for i in issues if i[0] == "ERROR"] + [i for i in issues if i[0] == "WARN"]
+            for l, c, w, m in ordered[:40]:
+                print("   [%s] %s %s %s" % (l, c, w, m))
+            if len(ordered) > 40:
+                print("   … 另 %d 条" % (len(ordered) - 40))
+            print("--- 扫描 %d 个映射文件：ERROR = %d ／ WARN(历史豁免) = %d —— %s"
+                  % (scanned, n_err, n_warn, "PASS ✅" if n_err == 0 else "FAIL ★"))
+        return 0 if n_err == 0 else 1
 
     root = a.methods_root
     _mq = os.path.join(root, METHODS_NAME)

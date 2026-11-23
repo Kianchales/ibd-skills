@@ -26,6 +26,9 @@ import json
 import os
 import re
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import docxio      # noqa: E402  docx 读取公共层（0.54.0）；此处用其 regex_text 解实体
 import tempfile
 import zipfile
 
@@ -122,83 +125,119 @@ def load_docx(docx_path):
         return None
 
 
-def check_document(docx_path, scenario):
-    print(f"\n=== {os.path.basename(docx_path)}（成品文档 · 场景: {scenario}）===")
+def collect(docx_path, scenario):
+    """**纯数据**版本的样式体检——供 CLI 打印、`--json` 输出、以及 deliver_gate 复用。
+
+    为什么单独抽出来：此前门禁自己实现了一套同样的判定，两份实现靠一致性测试对账。
+    抽成函数后只有一套规则，门禁改为**调用**这里，漂移从"要人盯"变成"不可能"。
+    """
     xmls = load_docx(docx_path)
     if not xmls or "word/document.xml" not in xmls:
-        print("  [ERROR] 非标准 docx（无 word/document.xml）")
-        return False
+        return {"ok": False, "error": "非标准 docx（无 word/document.xml）"}
+
     doc = xmls["word/document.xml"]
+    stats, bare, heading_seq, empty = {}, [], [], []
 
-    stats = {}
-    bare = []
-    heading_seq = []
-    empty = []  # 空段落（段落间禁止空行/空段落）
-
-    # 标记表格单元格（<w:tc>）内的段落起始位置——表格单元格内容走表格样式（a6/直接格式），
-    # 不套 000-009 正文样式，不应计入「裸段落」误报；表格内空段亦不算违规
+    # 表格单元格内的段落不计「裸段」也不计「空段」（走表格样式，不套 000-009）。
+    # 用 **w:tbl 深度扫描**而非 `<w:tc>.*?</w:tc>` 非贪婪匹配：后者遇**嵌套表格**会提前闭合，
+    # 导致内层表格段落被当成正文（实测某保荐工作报告裸段虚高 29 个：624 vs 595）。
     table_p_offsets = set()
-    for tc in re.finditer(r"<w:tc\b[^>]*>.*?</w:tc>", doc, re.S):
-        for pm in re.finditer(r"<w:p\b", tc.group(0)):
-            table_p_offsets.add(tc.start() + pm.start())
+    depth = txbx = 0
+    for m in re.finditer(r"<w:tbl\b|</w:tbl>|<w:txbxContent\b|</w:txbxContent>|<w:p\b", doc):
+        tok = m.group(0)
+        if tok.startswith("<w:tbl"):
+            depth += 1
+        elif tok == "</w:tbl>":
+            depth = max(0, depth - 1)
+        elif tok.startswith("<w:txbxContent"):
+            txbx += 1
+        elif tok == "</w:txbxContent>":
+            txbx = max(0, txbx - 1)
+        elif depth > 0 or txbx > 0:
+            # 表格内与**文本框内**的段落都不算正文：文本框落在图形里，段落样式沿用外层，
+            # 逐个数会虚高（实测某保荐工作报告裸段 624 vs 实际 595，差 29 个文本框段落）
+            table_p_offsets.add(m.start())
 
     for m in re.finditer(r"<w:p\b[^>]*>(.*?)</w:p>", doc, re.S):
         body = m.group(1)
         st = re.search(r'<w:pStyle w:val="([^"]+)"', body)
         style = st.group(1) if st else None
-        text = "".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", body)).strip()
+        text = docxio.regex_text(body).strip()
         stats[style] = stats.get(style, 0) + 1
         if style in HEADING_STYLES:
             heading_seq.append(style)
         if style is None and text and m.start() not in table_p_offsets:
             bare.append(text[:50])
-        # 空段落：无任何文本内容（表格外）——间距应由样式 spacing 控制，空段落必须删除
         if not text and m.start() not in table_p_offsets:
             empty.append(m.start())
 
-    # 自闭合空段落 <w:p/>（主循环正则只匹配配对形式，此处补检）
+    # 自闭合空段落 <w:p/>（配对正则只匹配 <w:p>…</w:p>，此处补检）
     for sc in re.finditer(r"<w:p\s*/>", doc):
         if sc.start() not in table_p_offsets:
             empty.append(sc.start())
 
-    _detail("  pStyle 分布：")
-    if not stats:
-        _detail("    （无任何已命名样式段落 —— 未套用样式体系）")
-    for s in sorted(stats, key=lambda x: (x is None, x)):
-        _detail(f"    {s if s else '(裸)'}: {stats[s]}")
-
-    ok = True
     req = REQUIRED.get(scenario, REQUIRED["报告"])
-    missing = [s for s in req if stats.get(s, 0) == 0]
-    if missing:
-        print(f"  [FAIL] 缺少必备样式: {missing}")
-        ok = False
-    else:
-        print(f"  [PASS] 必备样式齐全: {req}")
-
-    if bare:
-        print(f"  [WARN] {len(bare)} 个裸段落（未应用样式，建议补 pStyle）：")
-        for b in bare[:5]:
-            _detail(f"    - {b}")
-    else:
-        print("  [PASS] 无裸正文段落")
-
-    # 空段落检查（段落间禁止空行/空段落）
-    if empty:
-        print(f"  [WARN] {len(empty)} 个空段落（无文字内容，禁止——"
-              f"间距由样式 spacing 控制，空段落应删除）：")
-    else:
-        print("  [PASS] 无空段落（段落间距由样式 spacing 控制）")
+    missing = [s_ for s_ in req if stats.get(s_, 0) == 0]
 
     jumps = []
     for i in range(1, len(heading_seq)):
         prev, cur = heading_seq[i - 1], heading_seq[i]
         if prev in OUTLINE and cur in OUTLINE and OUTLINE[cur] > OUTLINE[prev] + 1:
-            jumps.append((prev, cur))
-    if jumps:
-        print(f"  [WARN] 标题跳级: {jumps}（如 002 后直接 004，检查是否漏了 003）")
+            jumps.append([prev, cur])
+
+    return {
+        "ok": not missing and not bare and not empty,
+        "scenario": scenario,
+        "required": req,
+        "missing": missing,
+        "dist": {("(裸)" if k is None else k): v for k, v in
+                 sorted(stats.items(), key=lambda x: (x[0] is None, x[0]))},
+        "n_styled": sum(v for k, v in stats.items() if k is not None),
+        "bare": bare,
+        "n_bare": len(bare),
+        "n_empty": len(empty),
+        "n_heading": len(heading_seq),
+        "jumps": jumps,
+    }
+
+
+def check_document(docx_path, scenario):
+    print(f"\n=== {os.path.basename(docx_path)}（成品文档 · 场景: {scenario}）===")
+    d = collect(docx_path, scenario)
+    if d.get("error"):
+        print(f"  [ERROR] {d['error']}")
+        return False
+
+    _detail("  pStyle 分布：")
+    if d["n_styled"] == 0:
+        _detail("    （无任何已命名样式段落 —— 未套用样式体系）")
+    for s_, v in d["dist"].items():
+        _detail(f"    {s_}: {v}")
+
+    ok = True
+    if d["missing"]:
+        print(f"  [FAIL] 缺少必备样式: {d['missing']}")
+        ok = False
     else:
-        print("  [PASS] 标题层级连续" + ("（无标题段落）" if not heading_seq else ""))
+        print(f"  [PASS] 必备样式齐全: {d['required']}")
+
+    if d["bare"]:
+        print(f"  [WARN] {d['n_bare']} 个裸段落（未应用样式，建议补 pStyle）：")
+        for b in d["bare"][:5]:
+            _detail(f"    - {b}")
+    else:
+        print("  [PASS] 无裸正文段落")
+
+    if d["n_empty"]:
+        print(f"  [WARN] {d['n_empty']} 个空段落（无文字内容，禁止——"
+              f"间距由样式 spacing 控制，空段落应删除）：")
+    else:
+        print("  [PASS] 无空段落（段落间距由样式 spacing 控制）")
+
+    if d["jumps"]:
+        print(f"  [WARN] 标题跳级: {d['jumps']}（如 002 后直接 004，检查是否漏了 003）")
+    else:
+        print("  [PASS] 标题层级连续" + ("（无标题段落）" if not d["n_heading"] else ""))
 
     print(f"  => {'通过' if ok else '需修正（见上方 FAIL/WARN）'}")
     return ok
@@ -229,7 +268,7 @@ def extract_text(docx_path):
     if not xmls or "word/document.xml" not in xmls:
         return None
     doc = xmls["word/document.xml"]
-    return [m.group(1) for m in re.finditer(r"<w:t[^>]*>([^<]*)</w:t>", doc) if m.group(1)]
+    return [docxio.decode_entities(m.group(1)) for m in re.finditer(r"<w:t[^>]*>([^<]*)</w:t>", doc) if m.group(1)]
 
 
 def extract_para_texts(docx_path):
@@ -244,7 +283,7 @@ def extract_para_texts(docx_path):
     texts = []
     for m in re.finditer(r"<w:p\b[^>]*>(.*?)</w:p>", doc, re.S):
         body = m.group(1)
-        t = "".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", body))
+        t = docxio.regex_text(body)
         if t.strip():
             texts.append(t)
     return texts
@@ -259,7 +298,7 @@ def _paras_with_xml(doc):
         ppr = ppr_m.group(0) if ppr_m else None
         style_m = re.search(r'<w:pStyle w:val="([^"]+)"', ppr or "")
         style = style_m.group(1) if style_m else None
-        text = "".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", body)).strip()
+        text = docxio.regex_text(body).strip()
         out.append((body, ppr, style, text))
     return out
 
@@ -392,7 +431,7 @@ def extract_paras(docx_path):
     for idx, m in enumerate(re.finditer(r"<w:p\b[^>]*>(.*?)</w:p>", doc, re.S)):
         body = m.group(1)
         st = re.search(r'<w:pStyle w:val="([^"]+)"', body)
-        text = "".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", body)).strip()
+        text = docxio.regex_text(body).strip()
         paras.append((st.group(1) if st else None, text, m.start() in table_p_offsets, idx))
     return paras
 
@@ -537,7 +576,7 @@ def check_numbering(docx_path):
     for m in re.finditer(r"<w:p\b[^>]*>(.*?)</w:p>", doc, re.S):
         body = m.group(1)
         st = re.search(r'<w:pStyle w:val="([^"]+)"', body)
-        text = "".join(re.findall(r"<w:t[^>]*>([^<]*)</w:t>", body)).strip()
+        text = docxio.regex_text(body).strip()
         paras.append((st.group(1) if st else None, text, m.start() in table_p_offsets))
 
     hits = []
@@ -648,13 +687,18 @@ def main():
             rp, hidden = None, 0
             inline.append(f"  [WARN] 明细报告写入失败：{e}")
         if args.json:
-            print(json.dumps({
+            payload = {
                 "tool": "check_styles", "target": args.input, "mode": tag,
                 "verdict": "PASS" if all_ok else "FAIL",
                 "error": 0 if all_ok else 1, "warn": 0,
                 "detail_log": rp,
                 "issues": ([] if all_ok else [{"level": "ERROR", "msg": bad_msg}]),
-            }, ensure_ascii=False), file=sys.__stdout__)
+            }
+            # document 模式附上**判定数字**：此前 JSON 只有 verdict，上层拿不到裸段/空段，
+            # 只能自己再算一遍（门禁双实现的成因之一）。
+            if tag == "document":
+                payload["data"] = collect(args.input, args.scenario)
+            print(json.dumps(payload, ensure_ascii=False), file=sys.__stdout__)
         else:
             for ln in inline:
                 print(ln, file=real_out)

@@ -14,12 +14,9 @@ description: >
      深度三档 L1/L2/L3；产物只读校验门禁（check_annotations.py / check_revisions.py）；
      工作区目录结构（单文件/多文件两档、基准识别、参考资料四类）。
   本技能不修改文档内容；批注注入与修订稿生成归 ibd-doc-annotate。
-  触发词：「按招股书样式」「招股书排版」「按反馈回复样式」「问询回复格式」「落实函格式」「套模板样式」
-  「核对格式」「格式自查」「检查序号金额日期标点」「批注格式」「校验批注」「修订稿校验」「校验修订」
-  「章节复核怎么交付」「复核交付形态」「批注版还是修订稿」「查哪些项」「本轮查什么」「检查项声明」
-  「研究下XX节」「帮我看看这段」「逐段复核」「逐段顺稿」
-  「复核结果放哪」「工作区怎么建」「参考资料放哪」
-version: 0.39.0
+  触发词：「按招股书样式」「招股书排版」「按反馈回复样式」「问询回复格式」「核对格式」「格式自查」
+  「校验批注」「校验修订」「检查项声明」「工作区怎么建」
+version: 0.59.2
 agent_created: true
 ---
 
@@ -55,29 +52,20 @@ agent_created: true
 | 事项 | 一句话判据 | 册指针 |
 |---|---|---|
 | **先声明查什么** | 任何复核委托的**第一个动作**——首次委托先出「动手前三问」小表（范围／形态／档位，各附推荐），确认后逐项列「查／不查 ＋ 为什么 ＋ S 专项 ＋ 交付前跑 F 域」；同文档沿用，换文档重问 | [check-scope.md](references/check-scope.md)；动作规范 → [delivery.md](references/delivery.md) §零 |
+| **覆盖方式写清** | **先定分母**（总段／正文段／表数）再切批（正文 300–400 段＋表 40–50 张／批）；**拆不拆、按哪条轴 → [split-rules.md](references/split-rules.md)** | [chunked-review.md](references/chunked-review.md) §零 |
 | 再定交付形态 | 批注版／文本定稿／修订稿（三选一，带项目级记忆） | delivery.md §五 |
 | 深度档位作预设 | L1/L2/L3 只预填声明单，不是另一套独立选择；**分档轴＝性质**：L2 装机器能判的（格式/数值/台账），L3 装只有人能判的 | check-scope.md §七 ＋ delivery.md §七 |
 
-> **三条纪律**：① 未核即声明（跳过项逐项点名）② 声明 ⟷ 交付报告头**首尾一致**，中途增减重新声明 ③ 档位只是预设，用户点名加减项一律照办。
-> **唯一简化情形**：命中片段模式时声明单可缩短，但「先声明再动手」不免除。
+> **四条纪律**：① 未核即声明（跳过项逐项点名）② 声明 ⟷ 交付报告头**首尾一致**，中途增减重新声明 ③ 档位只是预设，用户点名加减项一律照办 ④ **抽核须写明抽了哪几节**，报告头标「不可比」。
 
 ### 1. 场景识别与工具路由
 
-| 场景 | 一句话判据 | 工具 |
+| 场景 | 判据 | 工具 |
 |---|---|---|
-| **A** 已有 docx 整套套样式 | source=用户文件 ／ template=模板 ／ output=新文件 | `minimax-docx apply-template` |
-| **B** 新建 docx | 从模板基底填充 | `tencent-docx`（降级 `minimax-docx create`） |
-| **C** 局部调整 | 单段／单表改样式 | `tencent-local-office-edit`（唯一编辑中枢） |
-| **D** 生成后校验样式 | 必备样式是否应用（**明细默认落盘给路径**） | `check_styles.py` |
-| **E** 格式核对（只读） | 文字 text 组 ＋ 表格 table 组 | `check_content.py` |
-| **F** 批注产物校验（只读） | 四件套／4 段无空行／编号唯一 | `check_annotations.py`（≡ `deliver_gate.py --annotated`） |
-| **G** 修订稿产物校验（只读） | ins==del 对／author·id 成对／落定证明 | `check_revisions.py`（≡ `deliver_gate.py --revised`） |
-| **H** 交付前综合核验 | 基础十项一次跑完，三态 PASS/FAIL/SKIP | `deliver_gate.py`（`--json` 供上层消费） |
-| **I** 圈定范围的复核 | 用户**显式圈定范围**（「只核对X」「X 过一遍」） | 先进门出声明单；域路由：文字与格式→本 skill；内容质量→`ibd-quality-gates`；财务→`ibd-finance-review`；法律→`ibd-legal-review` |
-| **J** 惯例对照（只对照不定性） | 情形无明文或属灰色地带 | 四步法 → [convention-compare.md](references/convention-compare.md)；取例可先本地全文检索〔若已接入，无则降级且**须声明范围**〕→ [workflow.md](references/workflow.md) §零·三；D 域执行 → `ibd-legal-review` |
+| **A–H** 套样式／新建／局部改／样式校验／格式核对／批注校验／修订校验／交付核验 | 按输入形态与产物类型分流 | 见 [workflow.md](references/workflow.md) §零·一（决策树 ＋ 调用顺序 ＋ 降级协议） |
+| **I** 圈定范围的复核 | 用户**显式圈定**（「只核对X」「X 过一遍」） | 先进门出声明单；域路由：格式→本 skill；内容→`ibd-quality-gates`；财务→`ibd-finance-review`；法律→`ibd-legal-review` |
+| **J** 惯例对照（只对照不定性） | 情形无明文／属灰色地带 | 四步法 → [convention-compare.md](references/convention-compare.md)；D 域执行 → `ibd-legal-review` |
 | **K** 跨轮收敛（第2轮起） | 上轮 vs 本轮清单五态台账 | `round_diff.py`（→ delivery.md §七之二） |
-
-> 决策树判定细节、工具调用顺序、失败降级协议 → [workflow.md](references/workflow.md) §零·一。
 
 ### 2. 执行流程（S1-S7）
 
@@ -90,8 +78,8 @@ agent_created: true
 | **S3** 工具路由 | 场景 → 工具一一对应；层级与降级见 [toolchain.md](references/toolchain.md) §一 |
 | **S4** 样式映射（核心） | 内容段落逐个落 pStyle，按 style-map.md |
 | **S5** 序号与表格规则 | 九级链无跳号/重号/倒退；三线表按 [rules.md](references/rules.md) §一／§二 |
-| **S6** 校验门禁 | `deliver_gate.py` 零 FAIL（SKIP 须向用户点名）；禁词红线源 ＝ [banned-terms.json](references/banned-terms.json)（按 `--scenario` 装载） |
-| **S7** 三件套交付 | 修订稿 ＋ 格式问题清单 ＋ 修改统计齐备；对外契约见 [interface.md](references/interface.md) |
+| **S6** 校验门禁 | `deliver_gate.py` 零 FAIL（SKIP 须向用户点名）；禁词红线源 ＝ [banned-terms.json](references/banned-terms.json)（按场景） |
+| **S7** 三件套交付 | 修订稿 ＋ 格式问题清单 ＋ 修改统计齐备；契约见 [interface.md](references/interface.md) |
 
 ### 3. 样式应用铁律（红线）
 
@@ -99,7 +87,7 @@ agent_created: true
 1. **模板先行**——动笔前确认 `assets/templates/` 模板存在，优先以模板为基底。
 2. **pStyle 优先于手写格式**——能应用命名样式（000-009／0011／001）就不硬编码字体字号。
 3. **序号段落判定走双维度算法**（段落长短 ＋ 上下文分段）→ [rules.md](references/rules.md) §一；可 `check_styles.py --check-numbering` 辅助。
-4. **反馈回复合规展示**——监管问题原文 001（黑体）、回复正文 000（宋体），黑宋对照本身即合规展示，不得混用。
+4. **反馈回复合规展示**——监管问题原文 001（黑体）、回复正文 000（宋体），黑宋对照即合规展示，不得混用。
 5. **不覆盖用户手动格式**——apply-template 前先与用户确认是否保留。
 6. **段落间禁止空行/空段落**——间距一律靠样式 spacing；空段落会命中裸段落检查并叠加间距。
 
@@ -107,9 +95,10 @@ agent_created: true
 
 ### 4. 格式核对模式（check_content.py，只读不改文件）
 
-> - **只读**，适用任意投行 Word；`check_content.py --input <docx> [--checks text|table|geo,table_na]`（content_common／content_text／content_table），出 `<input>_格式核对报告.md`。
+> - **只读**，适用任意投行 Word；`check_content.py --input <docx>`（模块 content_common／content_text／content_table），出 `<input>_格式核对报告.md`。
 > - **两组**：文字 **8** 项 ＋ 表格 **4** 项，按 HIGH/MEDIUM/LOW 分级；**明细矩阵 → [workflow.md](references/workflow.md) §二**（项名与严重度判据以该矩阵为准，本页不复制）。
 > - **边界**：本模式查格式层自洽；**数值自洽**与内容质量溯源归 `ibd-quality-gates`；敏感词与地理清单 → [sensitive-terms.json](references/sensitive-terms.json)。
+
 ### 5. 批注与修订复核交付模式（规范 + 只读校验）
 
 > - **职责**：本 skill 定规范 ＋ 门禁（只读）；**注入执行 = `ibd-doc-annotate`**（`annotate_docx.py` / `revise_docx.py --mode`）——两 skill 以本 skill 规范为合规依据。
@@ -132,7 +121,7 @@ agent_created: true
 **细则指针**（按需读，本页不复制；各步判据处的指针为准，本段是**全集索引**）：
 - **动手前先翻**：[workflow.md](references/workflow.md)（S1-S7 · 格式核对 · 复核交付 · 命令全表）
 - 样式与读取：[style-map.md](references/style-map.md)（字体字号·对齐·缩进·间距·行距·大纲）｜[read-docx.md](references/read-docx.md)（含修订/批注的 Word 读取口径）
-- 复核规范：[annotations.md](references/annotations.md)（批注）｜[revisions.md](references/revisions.md)（修订）｜[delivery.md](references/delivery.md)（交付口径）｜[workspace-layout.md](references/workspace-layout.md)（**工作区结构**：两档·基准·参考资料四类）｜[check-scope.md](references/check-scope.md)（**声明单事实源**：查什么/不查什么）｜[convention-compare.md](references/convention-compare.md)（惯例对照四步法）｜[interface.md](references/interface.md)（对外契约）｜[problems.schema.json](references/problems.schema.json)（清单 schema）｜执行器 = `ibd-doc-annotate`
+- 复核规范：[annotations.md](references/annotations.md)（批注）｜[revisions.md](references/revisions.md)（修订）｜[delivery.md](references/delivery.md)（交付）｜[workspace-layout.md](references/workspace-layout.md)（工作区结构）｜[check-scope.md](references/check-scope.md)（声明单·六问）｜[chunked-review.md](references/chunked-review.md)（分片）｜[split-rules.md](references/split-rules.md)（分拆判定）｜[convention-compare.md](references/convention-compare.md)（惯例对照）｜[interface.md](references/interface.md)（契约）｜[problems.schema.json](references/problems.schema.json)（清单 schema）｜执行器 = `ibd-doc-annotate`
 - 工具与样例：[toolchain.md](references/toolchain.md)（层级与踩坑全文）｜[examples.md](references/examples.md)（典型用例）
 - 清单 json：[banned-terms.json](references/banned-terms.json)（禁词红线·三档·按 `--scenario` 装载，改 json 即生效）｜[sensitive-terms.json](references/sensitive-terms.json)（敏感词与地理）
 
@@ -142,7 +131,7 @@ agent_created: true
 
 | 维度 | 说明 |
 |---|---|
-| 🔴 **必须** | 任一 Word 处理工具（`minimax-docx`〔🟨市场〕或 `tencent-docx`〔🟦内置〕至少一）＋ 随包脚本 `check_styles.py`／`check_content.py`／`check_annotations.py`／`check_revisions.py`／`deliver_gate.py`／`extract_final_text.py`——docx 侧零依赖，仅 `--pdf` 需 pymupdf（缺失跳过并提示） |
+| 🔴 **必须** | 任一 Word 处理工具（`minimax-docx`〔🟨市场〕或 `tencent-docx`〔🟦内置〕至少一）＋ 随包脚本 `check_styles.py`／`check_content.py`／`check_annotations.py`／`check_revisions.py`／`deliver_gate.py`／`extract_final_text.py`／`plan_review.py`（分母·批次）／`subquestion_map.py`（对位）／`check_cq.py`（C-Q 勾稽）／`docxio.py`（docx 读取公共层）／`check_scope_decl.py`（声明单校验）——docx 侧零依赖；`--pdf` 需 pymupdf（缺则提示） |
 | 🟡 **推荐** | `tencent-local-office-edit`〔🟦内置〕（局部微调体验最佳）；模板 docx（`assets/templates/`，可替换） |
 | 🟢 **可选** | 金融数据终端（仅交叉验证）；本地全文检索〔若已接入〕／知识库后端（检索同类范例）；`officecli`（渲染层缺陷扫描 ＋ OpenXML 架构校验，S6 补充门禁） |
 | **运行模式** | 单用户直接使用；也可作为 `ibd-doc-write` 的格式层被串联调用 |
@@ -154,19 +143,19 @@ agent_created: true
 - **默认上游 = `ibd-doc-write`**（内容层出草稿并声明样式场景）→ 交本 skill 套样式 ＋ 校验；**上游开放**——人工撰写、其他 AI 流程、外部导入的 Word 均可调用。
 - **下游调用点**：`ibd-doc-write` 已把 `deliver_gate.py` 嵌进流程（`--md` 在套样式前做文字预检、`--docx` 作交付前综合核验）⇒ **本脚本改动直接影响写作链**，升版须核 [interface.md](references/interface.md) §7 版本下限。
 - **顺序铁律：内容质量门禁在前、格式落地在后**——write 草稿先过 `ibd-quality-gates`，内容定稿再套样式；**文字规范必须先于套样式**（文字层返工会导致样式重做），理由与实测 → workflow.md 附录「两条时序铁律」。
-- **交付前一律先跑 `deliver_gate.py`**：基础十项一次跑完、只输出结论行，复核产物加 `--annotated`／`--revised`；不用分散的多条核验命令替代（曾被反复统计 5-8 次）。
-- **输出分层**：三个核验脚本统一「指标行进上下文、明细行落盘」——判据不是「输出变短」，而是「明细有没有可定向读的落盘位置」；落盘后原文不得继续占用上下文（`docs/ENGINEERING.md` §1 P10 ＋ §4.4）。
-- **SKIP 须向用户点名**：`deliver_gate.py` 有 SKIP 项（officecli 未装、pymupdf 缺失等）时，回复中须注明「本次 N 项 SKIP 未执行（原因）」——静默跳过与静默失败同罪。
-- **批注版链路**：复核产出问题清单 → `ibd-doc-annotate` 注入（依据 annotations.md）→ 本 skill `check_annotations.py` 门禁 → 交付（批注版 ＋ 复核报告 Excel；批注总览 md 为中间件，不交付）。
+- **交付前一律先跑 `deliver_gate.py`**：**十项基础**一次跑完、只输出结论行；复核产物加 `--annotated`／`--revised`（各 +2 项）、`--officecli`（+1 项物理扫描）；**复核场景须配 `--baseline`**（源件同为 FAIL 的项标〔源件遗留〕不计入结论）。不用分散的多条核验命令替代。
+- **输出分层**：三个核验脚本统一「指标行进上下文、明细行落盘」——判据是「明细有没有可定向读的落盘位置」，落盘后原文不得继续占用上下文（ENGINEERING §1 P10＋§4.4）。
+- **SKIP 须向用户点名**：`deliver_gate.py` 有 SKIP 项（officecli 未装、pymupdf 缺失等）时，回复须注明「本次 N 项 SKIP 未执行（原因）」——静默跳过与静默失败同罪。
+- **批注版链路**：复核产出问题清单 → `ibd-doc-annotate` 注入（依据 annotations.md）→ 本 skill `check_annotations.py` 门禁 → 交付（批注版＋复核报告 Excel；总览 md 不交付）。
 - **内容质量归 `ibd-quality-gates`**（数字五要素／反模式／来源可溯）；本 skill 只改格式不改内容（铁律 0）。
 
-## 踩坑与要点（全文见 [toolchain.md](references/toolchain.md) §二）
+## 踩坑与要点
 
-- **⚠️ apply-template 只做「组件级替换」、不做段落 pStyle 映射**：套用后 pStyle 分布仍是 `(裸):N`（原来多少还是多少），易被误判"套样式失败"——段落级映射须**另做一步**；验收：body 级 pStyle 引用数从 0 变非 0、必备样式齐备、残留直接格式归零
-- **⚠️ 半全角标点须在「套样式之前」先过 `check_content.py --checks text`**：中文语境半角引号 `"`、半角括号 `()` 判 HIGH；文字层返工将导致样式重做
-- **⚠️ --revise 修订稿三坑**：① 元素名是 `w:trackRevisions`（**不存在** `w:trackChanges`）；② pPrChange 快照 pPr 不得含 `w:rPr`；③ 气泡缺失须用「Word 原生生成的格式修订文档」做对照组再归因，勿凭单点现象判定生成缺陷
+- **⚠️ apply-template 只做「组件级替换」、不做段落 pStyle 映射**：套用后 pStyle 分布仍是 `(裸):N`，易误判"套样式失败"；段落级映射须另做一步。验收：body 级 pStyle 引用数从 0 变非 0、必备样式齐备、残留直接格式归零。
+- 半全角标点须在**套样式之前**先过 `check_content.py --checks text`；`--revise` 三坑（`w:trackRevisions` 而非 `w:trackChanges`／pPrChange 快照不含 `w:rPr`／气泡缺失须用 Word 原生文档做对照组）→ [toolchain.md](references/toolchain.md) §二。
 
 ## 维护
 
 > 规则变更同步 6 环、报告形态同源对、升版三道核对 → [maintenance.md](references/maintenance.md)——**漏一环，该规则即形同不存在**。
-> 版本历史：本包 CHANGELOG.md（0.15.0 起）；0.1.0–0.14.1 归 [changelog-archive.md](references/changelog-archive.md)。
+> 版本历史：主账 CHANGELOG.md（0.40.0 起）；0.39.x 及更早归 [changelog-archive.md](references/changelog-archive.md)。
+> **改脚本后必跑**：`python scripts/tests/run_tests.py`（快测，约 5 秒／不起子进程）→ 提交前 `--all`（全量，约 70 秒）＋ `python scripts/tests/golden_run.py`（真实文档回归，样本自备于 `IBD_GOLDEN_DIR` 指定的目录，缺席 SKIP 不阻断）。
