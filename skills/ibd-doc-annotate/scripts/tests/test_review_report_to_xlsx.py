@@ -47,7 +47,8 @@ def _run(td, issues, meta=None, extra=(), expect_rc=0):
     ip = os.path.join(td, "issues.json")
     with open(ip, "w", encoding="utf-8") as fh:
         json.dump(issues, fh, ensure_ascii=False)
-    cmd = [sys.executable, SCRIPT, "--issues", ip, "--out", os.path.join(td, "报告.xlsx"), *extra]
+    cmd = [sys.executable, SCRIPT, "--issues", ip, "--out", os.path.join(td, "报告.xlsx"),
+           "--allow-no-runlog", *extra]
     if meta is not None:
         mp = os.path.join(td, "meta.json")
         with open(mp, "w", encoding="utf-8") as fh:
@@ -301,7 +302,8 @@ class TestStringMetaFields(unittest.TestCase):
                 json.dump({"subject": "x", "approach": "先定分母再切批", "verified": "单条字符串"},
                           f, ensure_ascii=False)
             subprocess.run([sys.executable, gen, "--issues", issues, "--meta", meta,
-                            "--out", out], capture_output=True, text=True, encoding="utf-8")
+                            "--out", out, "--allow-no-runlog"],
+                           capture_output=True, text=True, encoding="utf-8")
             import openpyxl
             ws = openpyxl.load_workbook(out)["封面与汇总"]
             texts = [str(ws.cell(r, 1).value or "") for r in range(1, ws.max_row + 1)]
@@ -309,6 +311,66 @@ class TestStringMetaFields(unittest.TestCase):
             self.assertIn("先定分母再切批", joined, "字符串 meta 未渲染")
             hits = [t for t in texts if t.strip().startswith("·") and len(t.strip()) <= 3]
             self.assertFalse(hits, f"出现逐字渲染：{hits[:5]}")
+
+
+
+class TestRunlogGate(unittest.TestCase):
+    """运行指纹闸：没有 `_run.json` 就不得生成"看起来走完了"的报告。
+
+    实证动因：某轮复核只读了 SKILL.md、用自建脚本提取后人工过，没跑 review_file/check_cq，
+    但产出的报告形式上与本包产物无差别 —— 读者无从分辨。闸门把这一点变成**生成期的硬失败**。
+    """
+
+    def _mk(self, d, meta_extra=None):
+        import json as _j
+        issues = os.path.join(d, "i.json")
+        meta = os.path.join(d, "m.json")
+        out = os.path.join(d, "r.xlsx")
+        with open(issues, "w", encoding="utf-8") as f:
+            _j.dump([{"code": "J", "type": "格式规范", "sev": "中", "nature": "格式规范",
+                      "anchor": "原文", "title": "标题", "desc": "说明", "advice": "建议",
+                      "author": "复核人"}], f, ensure_ascii=False)
+        with open(meta, "w", encoding="utf-8") as f:
+            _j.dump(meta_extra or {"subject": "x"}, f, ensure_ascii=False)
+        return issues, meta, out
+
+    def test_blocks_without_runlog(self):
+        import subprocess, sys, tempfile
+        with tempfile.TemporaryDirectory() as d:
+            issues, meta, out = self._mk(d)
+            r = subprocess.run([sys.executable, SCRIPT, "--issues", issues, "--meta", meta,
+                                "--out", out], capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(r.returncode, 3, r.stderr)
+            self.assertIn("未找到运行指纹", r.stderr)
+            self.assertFalse(os.path.exists(out), "拦下时不得产出报告")
+
+    def test_allow_no_runlog_marks_cover(self):
+        import json as _j, subprocess, sys, tempfile
+        import openpyxl
+        with tempfile.TemporaryDirectory() as d:
+            issues, meta, out = self._mk(d)
+            r = subprocess.run([sys.executable, SCRIPT, "--issues", issues, "--meta", meta,
+                                "--out", out, "--allow-no-runlog"],
+                               capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            ws = openpyxl.load_workbook(out)["封面与汇总"]
+            text = "\n".join(str(ws.cell(i, 1).value or "") for i in range(1, ws.max_row + 1))
+            self.assertIn("未按 skill 流程执行", text, "越过闸门必须在封面留痕")
+
+    def test_with_runlog_records_tools(self):
+        import json as _j, subprocess, sys, tempfile
+        with tempfile.TemporaryDirectory() as d:
+            issues, meta, out = self._mk(d)
+            rl = os.path.join(d, "_run.json")
+            with open(rl, "w", encoding="utf-8") as f:
+                _j.dump({"skill_version": "9.9.9",
+                         "steps": [{"tool": "check_content", "rc": 0},
+                                   {"tool": "check_cq", "rc": 1}]}, f, ensure_ascii=False)
+            r = subprocess.run([sys.executable, SCRIPT, "--issues", issues, "--meta", meta,
+                                "--out", out, "--runlog", rl],
+                               capture_output=True, text=True, encoding="utf-8")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertTrue(os.path.exists(out))
 
 
 if __name__ == "__main__":

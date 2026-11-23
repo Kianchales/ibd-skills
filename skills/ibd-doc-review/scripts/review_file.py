@@ -48,6 +48,20 @@ import docxio                 # noqa: E402
 import runlog                 # noqa: E402  运行指纹（_run.json）
 
 STATE_NAME = ".review_state.json"
+STATE_VERSION = 2
+
+# 四档深度：每档包含前一档。原「档位 × 颗粒」两轴合并——
+# 六个组合里 L1+逐字（快扫不逐字）、L3+逐项（不逐字却出专业意见）本就无效，只剩四档。
+LEVELS = {
+    "L1": {"name": "L1 快扫", "cap": (60, 20),
+           "desc": "表面项（标点/禁词/明显数字错）；不做勾稽、不逐数登记"},
+    "L2": {"name": "L2 标准", "cap": (60, 20),
+           "desc": "A 域 12 项＋B 域 8 项＋C-Q 勾稽＋逐数台账；不出会计专业判断"},
+    "L3": {"name": "L3 通读", "cap": (30, 10),
+           "desc": "同 L2，且**逐字通读**（单批 30 段／10 表，批更短便于读完）"},
+    "L4": {"name": "L4 深核", "cap": (30, 10),
+           "desc": "同 L3，另加 C-P 专业判断 16 维＋D 法律 22 项（由 finance/legal-review 承载）"},
+}          # 结构变更即升；旧状态缺 `_items` 会让 --begin 无内容可吐
 DEFAULT_CAP_P, DEFAULT_CAP_T = 60, 20      # 单批正文段/表上限（内部默认，不暴露给用户）
 
 
@@ -70,7 +84,12 @@ def load_state(d):
     if not os.path.exists(p):
         return None
     with open(p, encoding="utf-8") as f:
-        return json.load(f)
+        st = json.load(f)
+    if st.get("v") != STATE_VERSION:
+        # 旧结构（如缺 _items）：重建，避免 --begin 空转却看不出原因
+        print(f"[WARN] 状态结构为 v{st.get('v')}，当前 v{STATE_VERSION}——重建（进度清零）", file=sys.stderr)
+        return None
+    return st
 
 
 def save_state(d, st):
@@ -86,19 +105,32 @@ def init_state(path, cap_p=DEFAULT_CAP_P, cap_t=DEFAULT_CAP_T):
     units, stats = pr.load_units(path)
     batches = pr.build_batches(units, cap_p, cap_t)
     out = []
+    tid = 0
     for i, b in enumerate(batches, 1):
-        prose = [u for u in b["items"] if u["type"] == "正文"]
+        # 批内条目＝**所有段落类**（正文/标题/短句），不只是"正文"。
+        # 只给正文会漏掉标题序号问题（实测：某招股书 24 条 HIGH 全在标题段，批内看不到）。
+        prose = [u for u in b["items"] if u["type"] not in ("表格", "单元格")]
         tables = [u for u in b["items"] if u["type"] == "表格"]
+        tabs = []
+        for _u in tables:
+            if _u.get("type") == "表格":
+                tid += 1
+                tabs.append({"id": "TAB%03d" % tid, "rows": 0, "cols": 0, "head": []})
         out.append({
             "i": i,
             "name": b["name"],
-            "n_prose": len(prose),
+            "n_prose": len([u for u in prose if u["type"] == "正文"]),
             "n_tables": len(tables),
             "status": "pending",
             "findings": [],
-            "_texts": [u["text"] for u in prose],   # 仅供 --begin 吐出，不对外
+            "_texts": [u["text"] for u in prose],   # 兼容旧结构
+            "_items": [{"p": None, "kind": u["type"], "text": u["text"]} for u in prose],
+            "_tables": tabs,
         })
     return {
+        "v": STATE_VERSION,
+        "financials": None,          # 未提供即单件复核（降级），不自动去别处找
+
         "input": os.path.abspath(path),
         "stats": stats,
         "cap": [cap_p, cap_t],
@@ -107,6 +139,190 @@ def init_state(path, cap_p=DEFAULT_CAP_P, cap_t=DEFAULT_CAP_T):
 
 
 # ---------------------------------------------------------------- 命令
+
+def extract_artifacts(path, d):
+    """把**全文 / 段表 / 表表**落盘，供逐段复核与回溯定位。
+
+    为什么由编排器做这件事：此前这些中间件要 agent 自己写脚本抽取；而自建脚本一旦开始，
+    整轮就会走成"自建流程"（不跑检查、不留指纹）。**入口必须比自建更省事**，否则没人用。
+    编号口径：正文段 `P####`（按文档顺序，不含表格单元格）、表格 `TAB###`。
+    """
+    bundle = docxio.open_docx(path)
+    body = docxio.body_of(bundle)
+
+    paras, tables, full = [], [], []
+    pi = ti = 0
+
+    def walk(node):
+        nonlocal pi, ti
+        for child in list(node):
+            tag = child.tag
+            if tag == docxio.W + "p":
+                pi += 1
+                st_ = docxio.style_of(child)
+                txt = docxio.para_text(child)
+                paras.append({"id": "P%04d" % pi, "style": st_, "text": txt})
+                full.append("P%04d\t%s\t%s" % (pi, st_ or "-", txt))
+            elif tag == docxio.W + "tbl":
+                ti += 1
+                rows = []
+                for tr in child.findall(docxio.W + "tr"):
+                    cells = ["".join(t.text or "" for t in tc.iter(docxio.W + "t"))
+                             for tc in tr.findall(docxio.W + "tc")]
+                    rows.append(cells)
+                tables.append({"id": "TAB%03d" % ti, "rows": rows})
+                full.append("TAB%03d\t%d 行 × %d 列" % (ti, len(rows), max((len(r) for r in rows), default=0)))
+                for r in rows:
+                    full.append("\t" + " | ".join(r))
+            elif tag == docxio.W + "sdt":
+                walk(child)          # 内容控件：进去继续
+
+    walk(body)
+
+    os.makedirs(d, exist_ok=True)
+    with open(os.path.join(d, "paras.json"), "w", encoding="utf-8") as f:
+        json.dump(paras, f, ensure_ascii=False, indent=1)
+    with open(os.path.join(d, "tables.json"), "w", encoding="utf-8") as f:
+        json.dump(tables, f, ensure_ascii=False, indent=1)
+    with open(os.path.join(d, "full.txt"), "w", encoding="utf-8") as f:
+        f.write("\n".join(full))
+    return {"paras": len(paras), "tables": len(tables), "lines": len(full)}
+
+
+def write_scope(d, path, stats, n_batches, level="L2"):
+    """生成声明单 `_scope.md`（覆盖方式＝全文逐段，分母自动填）。
+
+    为什么由编排器生成：声明单此前要 agent 手写，**漏写就过不了 R5**；而分母/批数编排器本就有，
+    没有理由让调用方再填一遍。
+    """
+    today = __import__("datetime").date.today().strftime("%Y%m%d")
+    f = os.path.join(d, "%s_%s_v1_scope.md" % (os.path.splitext(os.path.basename(path))[0], today))
+    if os.path.exists(f):
+        return f
+    body = (
+        "【本轮检查项声明】对象：%s ｜ 深度：%s ｜ 覆盖方式：全文逐段 ｜ "
+        "分母：总 %d 段（正文 %d／表 %d）\n\n"
+        "**检查**：格式规范（A 域 12 项）｜数值正确性（C-Q 五式勾稽，给 --financials 时）"
+        "｜表达与事实（禁用词、标点用法）｜交付门禁\n"
+        "**不查**：法律事项（D 域，本轮不做）｜行业数据外部核验（无外部数据源）"
+        "｜底稿与函证（不在材料范围）\n"
+        "**依据来源**：申报报表与附注（勾稽用）｜本包 A 域判据表；缺「同类范例」「内部口径」\n"
+        "**交付前将跑**：check_runlog.py（流程合规）＋ review_report_to_xlsx.py（报告）\n\n"
+        "内部调度：切 %d 个处理单元（批次为内部实现，不出现在交付物与汇报中）\n"
+        % (os.path.basename(path),
+           LEVELS.get(level, LEVELS["L2"])["name"] + "：" + LEVELS.get(level, LEVELS["L2"])["desc"],
+           stats["总段"], stats["正文"], stats["表格"], n_batches)
+    )
+    with open(f, "w", encoding="utf-8") as fh:
+        fh.write(body)
+    return f
+
+
+def run_checks(path, d, financials=None, restr=None, accrued=None, level="L2"):
+    """起子进程跑本包检查：产物与指纹都落在**同一目录**。
+
+    ⚠️ 必须把 `IBD_RUNLOG_DIR` 传给子进程：子进程默认按"源文件同级 `<名>_复核/`"找指纹目录，
+    一旦用了 `--out-dir` 就找不到，于是"真跑了检查"却"没留下指纹"——把合规执行误判成没跑。
+    """
+    import subprocess
+    here = os.path.dirname(os.path.abspath(__file__))
+    env = dict(os.environ, IBD_RUNLOG_DIR=os.path.abspath(d))
+    out = {}
+
+    missing = []      # 声明要做、但缺材料做不了的检查——不许只在 stderr 一闪而过
+    if level == "L4":
+        missing.append({"check": "C-P 专业判断 16 维", "need": "调用 ibd-finance-review 后回填结论",
+                        "effect": "未跑则 L4 实际只到 L3，专业判断缺失"})
+        missing.append({"check": "D 法律惯例对照 22 项", "need": "调用 ibd-legal-review 后回填结论",
+                        "effect": "未跑则 L4 实际只到 L3，法律域缺失"})
+    if not financials:
+        missing.append({"check": "C-Q 五式勾稽（跨文档）", "need": "申报财务报表 xlsx（--financials）",
+                        "effect": "本轮为单件复核；给报表可升级为全套复核（含数值勾稽）"})
+    md = os.path.join(d, "format_check.md")
+    js = os.path.join(d, "format_check.json")
+    r = subprocess.run([sys.executable, os.path.join(here, "check_content.py"),
+                        "--input", path, "--output", md, "--json"],
+                       capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       env=env)
+    with open(js, "w", encoding="utf-8") as f:
+        f.write(r.stdout or "{}")
+    out["check_content"] = r.returncode
+
+    if financials:
+        js2 = os.path.join(d, "checks.json")
+        extra = (["--restr", restr] if restr else []) + (["--accrued", accrued] if accrued else [])
+        if not restr:
+            missing.append({"check": "C-Q 第⑥式（货币资金差额 vs 附注受限）",
+                            "need": "附注「受限资金明细」各期合计（--restr）",
+                            "effect": "受限资金口径未核，差额无处比对"})
+        r2 = subprocess.run([sys.executable, os.path.join(here, "check_cq.py"),
+                             "--xlsx", financials, "--json"] + extra,
+                            capture_output=True, text=True, encoding="utf-8", errors="replace",
+                            env=env)
+        with open(js2, "w", encoding="utf-8") as f:
+            f.write(r2.stdout or "{}")
+        out["check_cq"] = r2.returncode
+    with open(os.path.join(d, "pending_inputs.json"), "w", encoding="utf-8") as f:
+        json.dump(missing, f, ensure_ascii=False, indent=1)
+    if missing:
+        print(f"  待补材料 {len(missing)} 项（已记入 pending_inputs.json，将列入报告行动项）：",
+              file=sys.stderr)
+        for m in missing:
+            print(f"    · {m['check']} ← 需 {m['need']}", file=sys.stderr)
+    return out
+
+
+def cmd_prepare(path, d, financials=None, restr=None, accrued=None, level="L2"):
+    print(f"准备中：{os.path.basename(path)}")
+    # 旧一轮的产物（有完成批但无节级回执，或状态版本过旧）自动归档重建：
+    # 用户只说"复核 X"时不该被"25 批无回执"卡住。
+    old = load_state(d)
+    if old and any(b.get("status") == "done" and not b.get("receipt")
+                   for b in old.get("batches", [])):
+        import time as _t
+        arch = d.rstrip("/\\") + "_archive_" + _t.strftime("%Y%m%d_%H%M")
+        try:
+            os.rename(d, arch)
+            print(f"  · 旧一轮无回执，已归档至 {os.path.basename(arch)}（不阻塞本轮）")
+        except OSError:
+            pass
+    cap = LEVELS.get(level, LEVELS["L2"])["cap"]
+    st = load_state(d) or init_state(path, *cap)
+    st["financials"] = os.path.abspath(financials) if financials else None
+    st["level"] = level
+    save_state(d, st)
+    if not financials:
+        print("  · 本轮为**单件复核**：只核这一份文档；未提供申报报表，跨文档勾稽不做")
+    n = extract_artifacts(path, d)
+    # 把表的真实行列回填到批摘要（--begin 用），免得只显示 0×0
+    try:
+        dims = {}
+        with open(os.path.join(d, "tables.json"), encoding="utf-8") as f:
+            for t in json.load(f):
+                rows = t.get("rows") or []
+                dims[t["id"]] = (len(rows), max((len(r) for r in rows), default=0),
+                                 (rows[0] if rows else []))
+        for b in st["batches"]:
+            for tb in b.get("_tables") or []:
+                if tb["id"] in dims:
+                    tb["rows"], tb["cols"], head = dims[tb["id"]]
+                    tb["head"] = [h for h in head if h][:4]
+        save_state(d, st)
+    except (OSError, ValueError):
+        pass
+    sf = write_scope(d, path, st["stats"], len(st["batches"]), level)
+    print(f"  声明单：{os.path.basename(sf)}（覆盖方式＝全文逐段，分母已填）")
+    print(f"  已提取：段落 {n['paras']}／表格 {n['tables']}（full.txt {n['lines']} 行）")
+    rc = run_checks(path, d, financials, restr, accrued, level)
+    print(f"  已跑检查：check_content rc={rc.get('check_content')}"
+          + (f"／check_cq rc={rc.get('check_cq')}" if "check_cq" in rc else "（未给 --financials，跳过勾稽）"))
+    runlog.log("review_file", ["--prepare"], rc=0, out_dir=d,
+               extra={"step": "prepare", "paras": n["paras"], "tables": n["tables"],
+                      "checks": rc})
+    print(f"  中间件目录：{d}")
+    print("  下一步：--begin 取正文 → 逐条读 → --commit 登记 → --finish 出结果")
+    return 0
+
 
 def cmd_status(st, verbose=False):
     done = [b for b in st["batches"] if b["status"] == "done"]
@@ -125,13 +341,24 @@ def cmd_status(st, verbose=False):
 
 
 def cmd_begin(st):
-    """吐出下一批正文。这是**内部**取活接口，不是用户动作。"""
+    """吐出下一批。这是**内部**取活接口，不是用户动作。
+
+    每行带 `P####`（与 full.txt / 报告定位一致）；表格只给**摘要与 TAB 编号**，
+    内容在 `tables.json`——避免把上万个单元格倒进上下文。
+    """
     for b in st["batches"]:
         if b["status"] != "done":
             print(f"### 第 {b['i']}/{len(st['batches'])} 批｜{b['name']}"
                   f"｜正文 {b['n_prose']} 段／表 {b['n_tables']}")
-            for k, t in enumerate(b["_texts"], 1):
-                print(f"[{b['i']}.{k}] {t}")
+            for item in b.get("_items") or [{"p": None, "text": t} for t in b["_texts"]]:
+                kind = item.get("kind") or ""
+                mark = "〔%s〕" % kind if kind and kind != "正文" else ""
+                print(f"{mark}{item['text']}")
+            for tb in b.get("_tables") or []:
+                print(f"[{tb['id']}] 表格 {tb['rows']} 行 × {tb['cols']} 列"
+                      f"（内容见 tables.json；表头：{' | '.join(tb.get('head', []))[:120]}）")
+            print("\n（定位：全文按 P0001… 顺序见 full.txt；表格内容见 tables.json。"
+                  "读完后用 --commit 登记本批）")
             return 0
     print("全部批次已处理")
     return 0
@@ -142,14 +369,50 @@ def cmd_commit(st, idx, findings_path):
     if b is None:
         print(f"[ERROR] 无第 {idx} 批", file=sys.stderr)
         return 2
-    items = []
+    items, receipt = [], None
     if findings_path:
         with open(findings_path, encoding="utf-8") as f:
-            items = json.load(f)
+            payload = json.load(f)
+        if isinstance(payload, dict):
+            items = payload.get("findings") or []
+            receipt = payload.get("receipt")
+        else:
+            items = payload
         if not isinstance(items, list):
-            print("[ERROR] 发现清单应为 JSON 数组", file=sys.stderr)
+            print("[ERROR] findings 应为数组（或 {findings, receipt} 对象）", file=sys.stderr)
+            return 2
+        # 节级回执：把"这一节读了没有"变成必填表态，而不是靠"没发现问题"含糊过去
+        SIX = ("self", "cross_prev", "cross_next", "disclose", "caliber", "wording")
+        if not isinstance(receipt, dict):
+            print("[ERROR] 本批缺 receipt（节级六问回执）——只交问题清单不算读过：", file=sys.stderr)
+            print("  需 {\"findings\": [...], \"receipt\": {六问}}；六问见 references/fuhe-charter.md §八",
+                  file=sys.stderr)
+            return 2
+        miss = [k for k in SIX if not str(receipt.get(k, "")).strip()]
+        if miss:
+            print(f"[ERROR] receipt 缺 {len(miss)} 项回答：{'、'.join(miss)}（无异常也须写\"未见异常\"）",
+                  file=sys.stderr)
+            return 2
+        # 当场校验：缺必填字段就拒收（此前要等到 --finish 才发现，且不说是哪一条）
+        bad = []
+        for k, it in enumerate(items, 1):
+            if not isinstance(it, dict):
+                bad.append(f"第{k}条不是对象")
+                continue
+            if not it.get("title"):
+                bad.append(f"第{k}条缺 title（问题标题）")
+            if not (it.get("advice") or it.get("rev")):
+                bad.append(f"第{k}条缺 advice（修改建议）或 rev（定稿文本）")
+            if not it.get("anchor"):
+                bad.append(f"第{k}条缺 anchor（原文片段，报告定位用）")
+        if bad:
+            print(f"[ERROR] 本批发现未通过校验（{len(bad)} 项）——未登记：", file=sys.stderr)
+            for x in bad:
+                print(f"  - {x}", file=sys.stderr)
+            print("  字段口径见 references/pipeline.md §五", file=sys.stderr)
             return 2
     b["findings"] = items
+    b["receipt"] = receipt or {}
     b["status"] = "done"
     b.pop("_texts", None)              # 已处理完，正文不必再留（省体积）
     return 0
@@ -163,7 +426,10 @@ def merge(st):
             seq.append((b["i"], k, f))
     seen, merged = set(), []
     for bi, ik, f in seq:
-        key = (f.get("anchor", "").strip(), f.get("title", "").strip())
+        # 去重键须含**位置**：同一句话在两处重复（如重复标题 #807/#808）是两条问题，
+        # 只按 (anchor,title) 会把它们并成一条，导致"查出 107 条、报告只剩 62 条"。
+        key = (f.get("anchor", "").strip(), f.get("title", "").strip(),
+               str(f.get("line", "")).strip())
         if key in seen:
             continue
         seen.add(key)
@@ -174,7 +440,118 @@ def merge(st):
     return merged
 
 
+NATURE_BY_TYPE = {
+    "数据不一致": "数据不一致", "表述不一致": "表述不一致", "格式规范": "格式规范",
+    "事实存疑": "事实存疑", "自身逻辑": "自身逻辑",
+}
+
+
+def to_issues(merged):
+    """把内部发现转成报告清单（`problems.schema` 口径）。
+
+    报告要的是 `code + 序号`／`nature`／`title`／`advice`；内部只用 `F-01` 全局编号。
+    这里做一次**显式映射**，缺必填字段的条目**不静默丢**——计数后回报，让调用方补齐。
+    """
+    issues, skipped = [], 0
+    for i, g in enumerate(merged, 1):
+        if not g.get("title") or not (g.get("advice") or g.get("rev")):
+            skipped += 1
+            continue
+        nature = g.get("nature") or NATURE_BY_TYPE.get(g.get("type", ""), "格式规范")
+        issues.append({
+            "code": g.get("code") or "J",
+            "id": g.get("code", "J") + "-%02d" % i,
+            "type": g.get("type") or "格式规范",
+            "sev": g.get("sev") or "中",
+            "nature": nature,
+            "line": g.get("line", ""),
+            "anchor": g.get("anchor", ""),
+            "title": g["title"],
+            "desc": g.get("desc", ""),
+            "advice": g.get("advice") or g.get("rev", ""),
+            "author": g.get("author") or "复核人",
+        })
+    return issues, skipped
+
+
+def build_meta(st, d, n_findings):
+    """自动构造报告 meta：报告是独立流转件，封面不能留"—"。
+
+    声明（覆盖方式/不查项）直接取声明单正文 → 报告头与声明单**首尾一致**（delivery §八纪律）。
+    """
+    path = st["input"]
+    try:
+        md5 = __import__("hashlib").md5(open(path, "rb").read()).hexdigest()[:8]
+    except OSError:
+        md5 = "?"
+    stats = st["stats"]
+    scope = ""
+    for fn in sorted(os.listdir(d)):
+        if fn.endswith("_scope.md"):
+            scope = open(os.path.join(d, fn), encoding="utf-8").read()
+            break
+    tabs = sum(b.get("n_tables", 0) for b in st["batches"])
+    segs = sum(len(b.get("_items") or []) for b in st["batches"])
+    return {
+        "subject": f"{os.path.basename(path)}（{stats['总段']} 段／正文 {stats['正文']}／表 {stats['表格']}）",
+        "baseline": (f"MD5 {md5}…；段落类 {segs}／{stats['总段']} 段（差为表格单元格，"
+                     f"随表判）｜表 {tabs}／{stats['表格']}"),
+        "method": (LEVELS.get(st.get("level") or "L2", LEVELS["L2"])["name"] + "："
+                   + "全文逐段：全部段落（含标题）逐段过 ＋ 全部表格逐表判 ＋ 机器判据（A 域 12 项）"
+                   + ("＋ C-Q 勾稽" if st.get("financials") else "")
+                   + "；内部按容量切单元调度，对外为单一流程"
+                   + ("" if st.get("financials")
+                      else "。**本轮为单件复核（降级）：未与申报报表／附注做跨文档勾稽**")
+                   + ("。**L4 专业判断两款（C-P／D）由 ibd-finance-review、ibd-legal-review 承载，"
+                      "本包不验证其执行**" if st.get("level") == "L4" else "")),
+        "declaration": scope or None,
+        "quality_evidence": [
+            f"覆盖对账：段落类 {segs} 段全部过（声明分母 {stats['总段']} 段，差额为表格单元格，随表判）；"
+            f"表格 {tabs}／{stats['表格']} 全部判",
+            "运行指纹见同目录 `_run.json`（工具／退出码／版本）",
+        ],
+        "actions": [
+            f"补材料以解锁「{m['check']}」：{m['need']}（当前影响：{m['effect']}）"
+            for m in (json.load(open(os.path.join(d, "pending_inputs.json"), encoding="utf-8"))
+                      if os.path.exists(os.path.join(d, "pending_inputs.json")) else [])
+        ] or None,
+        "verified": [
+            f"{b['name'][:20]}：回执已交，发现 {len(b.get('findings') or [])} 条"
+            for b in st["batches"] if b.get("receipt")
+        ][:30],
+        "domain_scope": {"J": "格式规范（A 域 12 项）", "Z": "数据一致性（C-Q 勾稽）"},
+        "conclusion_notes": [f"共 {n_findings} 条，均带原文锚点可回溯至 full.txt 的 P####／tables.json 的 TAB###。"],
+    }
+
+
+def gen_report(issues_path, xlsx, runlog_path, meta_path=None):
+    """调 ibd-doc-annotate 的报告生成器（同仓相邻包）；找不到就明确降级，不假装成功。"""
+    import subprocess
+    here = os.path.dirname(os.path.abspath(__file__))          # …/ibd-doc-review/scripts
+    skills_root = os.path.dirname(os.path.dirname(here))       # …/（skills 根）
+    base = os.environ.get("IBD_ANNOTATE_DIR") or os.path.join(skills_root, "ibd-doc-annotate")
+    cand = os.path.join(base, "scripts", "review_report_to_xlsx.py")
+    if not os.path.exists(cand):
+        print("[WARN] 未找到 review_report_to_xlsx.py（ibd-doc-annotate 包缺失）——"
+              "报告未生成，清单已保留", file=sys.stderr)
+        return 4
+    args = [sys.executable, cand, "--issues", issues_path, "--out", xlsx]
+    if meta_path:
+        args += ["--meta", meta_path]
+    if os.path.exists(runlog_path):
+        args += ["--runlog", runlog_path]
+    r = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if r.returncode != 0:
+        print((r.stderr or r.stdout or "").strip()[:400], file=sys.stderr)
+    return r.returncode
+
+
 def cmd_finish(st, out_path=None):
+    no_rc = [b["i"] for b in st["batches"] if b["status"] == "done" and not b.get("receipt")]
+    if no_rc:
+        print(f"[ERROR] {len(no_rc)} 批无节级回执（{'、'.join(f'#{i}' for i in no_rc)}）——"
+              f"无法证明这些节真读过；请重新 --commit 并带 receipt", file=sys.stderr)
+        return 3
     pend = [b["i"] for b in st["batches"] if b["status"] != "done"]
     if pend:
         # **不静默出结论**：缺批就说缺批，且拒绝生成"看起来完整"的结果
@@ -190,8 +567,8 @@ def cmd_finish(st, out_path=None):
         "n_findings": len(merged),
         "findings": merged,
     }
-    out = out_path or os.path.join(os.path.dirname(state_path(st.get("_dir", ""))) or ".",
-                                   "findings.json")
+    _d = st.get("_dir") or "."
+    out = out_path or os.path.join(_d, "findings.json")
     out = os.path.abspath(out)
     os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
@@ -199,6 +576,30 @@ def cmd_finish(st, out_path=None):
     runlog.log("review_file", ["--finish"], rc=0, out_dir=st.get("_dir"),
                extra={"step": "finish", "n_findings": len(merged)})
     print(f"已合并 {len(merged)} 条｜输出 {out}")
+
+    # ③ 转成报告清单并直接生成 xlsx（缺这一步，就得手工再造一份清单——正是"报告出不来"的主因）
+    issues, skipped = to_issues(merged)
+    ipath = os.path.join(os.path.dirname(out), "issues.json")
+    with open(ipath, "w", encoding="utf-8") as f:
+        json.dump(issues, f, ensure_ascii=False, indent=1)
+    if skipped:
+        print(f"  [WARN] {skipped} 条因缺 title/advice 未进报告（请补后再 --finish）",
+              file=sys.stderr)
+    xlsx = os.path.join(os.path.dirname(out), os.path.splitext(os.path.basename(st["input"]))[0]
+                        + "_复核报告.xlsx")
+    meta_path = os.path.join(os.path.dirname(out), "report_meta.json")
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(build_meta(st, st.get("_dir") or ".", len(merged)), f, ensure_ascii=False, indent=1)
+    rc = gen_report(ipath, xlsx, os.path.join(st.get("_dir", ""), "_run.json"), meta_path)
+    if rc == 0:
+        n_tabs = sum(b.get("n_tables", 0) for b in st["batches"])
+        n_seg = sum(len(b.get("_items") or []) for b in st["batches"])
+        print(f"报告已生成：{xlsx}")
+        print(f"覆盖：段落 {n_seg}／表 {n_tabs}｜发现 {len(merged)} 条"
+              f"｜批 {len(st['batches'])}/{len(st['batches'])}")
+        print("自检：check_runlog --file <源文件>（期望 PASS）")
+    else:
+        print(f"[WARN] 报告未生成（rc={rc}）——清单已保留：{ipath}", file=sys.stderr)
     print("（批次信息已丢弃：对读者而言这是**一份文件的一次完整处理**）")
     return 0
 
@@ -209,6 +610,17 @@ def main():
     ap = argparse.ArgumentParser(description="单文件复核编排器（批次内部化）")
     ap.add_argument("--input", required=True, help="被复核文件（**只需给文件**）")
     ap.add_argument("--out-dir", default=None, help="内部状态目录（默认 <文件>_复核/）")
+    ap.add_argument("--prepare", action="store_true",
+                    help="一次产出全部中间件（全文/段表/表表/格式核对/勾稽/指纹）——**开局就一条命令**")
+    ap.add_argument("--restr", default=None,
+                    help="附注「受限资金明细」各期合计（逗号分隔，按报表列序）——给了才做勾稽第⑥式")
+    ap.add_argument("--accrued", default=None, help="附注应计利息各期金额（货币资金含应计利息时必传）")
+    ap.add_argument("--financials", default=None,
+                    help="--prepare 时顺带跑勾稽用的申报财务报表 xlsx（可选）")
+    ap.add_argument("--level", choices=("L1", "L2", "L3", "L4"), default="L2",
+                    help="深度档：L1 快扫 / L2 标准（默认）/ L3 通读（逐字）/ L4 深核")
+    ap.add_argument("--depth", choices=("all", "read"), default=None,
+                    help="旧参数别名：all=L2、read=L3（保留兼容）")
     ap.add_argument("--status", action="store_true", help="查看进度")
     ap.add_argument("--begin", action="store_true", help="取下一批（内部接口）")
     ap.add_argument("--commit", type=int, metavar="N", help="登记第 N 批（内部接口）")
@@ -224,6 +636,21 @@ def main():
         return 2
 
     d = out_dir_of(a.input, a.out_dir)
+    if a.prepare:
+        if a.reset and os.path.isdir(d):
+            # 纯净状态＝目录内清空（只删文件，不碰同级的 _archive_* 归档目录）
+            n = 0
+            for fn in os.listdir(d):
+                fp = os.path.join(d, fn)
+                if os.path.isfile(fp):
+                    os.remove(fp)
+                    n += 1
+            if n:
+                print(f"  · --reset：清空上轮产物 {n} 个文件", file=sys.stderr)
+        lv = a.level
+        if a.depth:                      # 旧参数映射
+            lv = "L3" if a.depth == "read" else "L2"
+        return cmd_prepare(a.input, d, a.financials, a.restr, a.accrued, lv)
     st = None if a.reset else load_state(d)
     if st is None:
         st = init_state(a.input)

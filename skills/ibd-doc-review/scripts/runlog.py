@@ -22,6 +22,7 @@
 写入是**追加 + 原子替换**：中途崩溃不会留下半截 JSON。
 """
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -92,13 +93,23 @@ def log(tool, argv=None, rc=0, input_path=None, extra=None, out_dir=None):
         cur = read(d)
         argv = list(argv or [])
         cur["skill_version"] = skill_version()
-        cur.setdefault("steps", []).append({
+        steps = cur.setdefault("steps", [])
+        rec = {
+            "seq": len(steps) + 1,
             "tool": tool,
             "rc": int(rc),
             "argv": [str(x) for x in argv[:12]],
             "at": time.strftime("%Y-%m-%d %H:%M:%S"),
             **({"extra": extra} if extra else {}),
-        })
+        }
+        # 哈希链：每条记录承接上一条的 h。事后补写或改写会让链断裂——
+        # 不指望它防得住刻意伪造，但能拦住"回头补一笔"这种最常见的做法。
+        prev = steps[-1].get("h", "") if steps else ""
+        rec["h"] = hashlib.sha1(
+            (prev + json.dumps({k: v for k, v in rec.items() if k != "h"},
+                               ensure_ascii=False, sort_keys=True)).encode("utf-8")
+        ).hexdigest()[:16]
+        steps.append(rec)
         tmp = _path(d) + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(cur, f, ensure_ascii=False, indent=1)

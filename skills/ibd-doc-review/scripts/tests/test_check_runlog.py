@@ -57,13 +57,33 @@ class TestRunlog(unittest.TestCase):
         self.assertEqual(rc, 2)
         self.assertIn("没有留下任何运行痕迹", out)
 
-    def test_missing_required_steps_fail(self):
+    def test_missing_content_check_fails(self):
+        """内容核对永远必需：只跑了编排器与合并 → FAIL。"""
         write_log(self.d, [step("review_file", 0, step="finish")])
         rc, out = run(["--dir", self.d])
         self.assertEqual(rc, 2)
-        for t in ("check_content", "check_cq", "deliver_gate"):
-            self.assertIn(f"R3 {t}", out)
-        self.assertIn("未执行", out)
+        self.assertIn("R3 check_content", out)
+        self.assertIn("必需项", out)
+
+    def test_optional_steps_skip_not_fail(self):
+        """无报表 → 不勾稽；未出批注版 → 不校验批注。属 SKIP，不应判 FAIL。"""
+        write_log(self.d, [step("check_content"), step("review_file", 0, step="finish")])
+        with open(os.path.join(self.d, "x_scope.md"), "w", encoding="utf-8") as f:
+            f.write(GOOD_SCOPE)
+        rc, out = run(["--dir", self.d])
+        self.assertEqual(rc, 0, out)
+        self.assertIn("—", out, "SKIP 应显示为 —")
+
+    def test_evidence_without_fingerprint_fails(self):
+        """有 checks.json 却没 check_cq 指纹 → 漏记，必须红（不许静默放过）。"""
+        write_log(self.d, [step("check_content"), step("review_file", 0, step="finish")])
+        with open(os.path.join(self.d, "x_scope.md"), "w", encoding="utf-8") as f:
+            f.write(GOOD_SCOPE)
+        with open(os.path.join(self.d, "checks.json"), "w", encoding="utf-8") as f:
+            f.write("{}")
+        rc, out = run(["--dir", self.d])
+        self.assertEqual(rc, 2)
+        self.assertIn("无运行指纹", out)
 
     def test_all_green_pass(self):
         write_log(self.d, [step("check_content"), step("check_cq"), step("deliver_gate"),
@@ -75,6 +95,42 @@ class TestRunlog(unittest.TestCase):
         rc, out = run(["--dir", self.d])
         self.assertEqual(rc, 0, out)
         self.assertIn("✅", out)
+
+    def test_no_finish_fails(self):
+        """《复核章程》§四-7：只跑 prepare/单点检查就宣称完成 → R4 FAIL，不是 WARN。"""
+        write_log(self.d, [step("check_content"), step("check_cq"), step("deliver_gate")])
+        with open(os.path.join(self.d, "x_scope.md"), "w", encoding="utf-8") as f:
+            f.write(GOOD_SCOPE)
+        rc, out = run(["--dir", self.d])
+        self.assertEqual(rc, 2, out)
+        self.assertIn("无 finish 步", out)
+
+    def test_backfilled_step_fails(self):
+        """步骤时间晚于产物 → 疑似补记，判 FAIL。"""
+        import time
+        write_log(self.d, [step("check_content"), step("review_file", 0, step="finish")])
+        rep = os.path.join(self.d, "r.xlsx")
+        with open(rep, "wb") as f:
+            f.write(b"x")
+        old = time.mktime(time.strptime("2020-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"))
+        os.utime(rep, (old, old))          # 产物时间调到过去
+        with open(os.path.join(self.d, "x_scope.md"), "w", encoding="utf-8") as f:
+            f.write(GOOD_SCOPE)
+        rc, out = run(["--dir", self.d, "--report", rep])
+        self.assertEqual(rc, 2, out)
+        self.assertIn("疑似事后补记", out)
+
+    def test_l4_without_external_traces_warns(self):
+        """L4 的专业判断靠外部两包；本包看不到就必须点出来，不能默认它跑了。"""
+        write_log(self.d, [step("check_content"), step("check_cq"), step("deliver_gate"),
+                           step("review_file", 0, step="finish")])
+        with open(os.path.join(self.d, "x_scope.md"), "w", encoding="utf-8") as f:
+            f.write(GOOD_SCOPE)
+        with open(os.path.join(self.d, ".review_state.json"), "w", encoding="utf-8") as f:
+            json.dump({"v": 2, "level": "L4", "batches": []}, f)
+        rc, out = run(["--dir", self.d])
+        self.assertIn("R3b L4 专业判断", out)
+        self.assertIn("实际只到 L3", out)
 
     def test_version_mismatch_warns(self):
         write_log(self.d, [step("check_content"), step("check_cq"), step("deliver_gate"),
@@ -88,6 +144,16 @@ class TestRunlog(unittest.TestCase):
         rc, out = run(["--dir", self.d])
         self.assertEqual(rc, 2)
         self.assertIn("无 *_scope.md", out)
+
+    def test_non_full_coverage_fails(self):
+        """《复核章程》：复核＝全量。声明单合法但覆盖方式非全文 → R5 FAIL。"""
+        write_log(self.d, [step("check_content"), step("review_file", 0, step="finish")])
+        with open(os.path.join(self.d, "x_scope.md"), "w", encoding="utf-8") as f:
+            f.write("【本轮检查项声明】对象：x.docx ｜ 深度：L2 ｜ 覆盖方式：圈定范围 ｜ "
+                    "分母：总 900 段（正文 100／表 10）\n· 指示来源：用户指定只看第四节\n")
+        rc, out = run(["--dir", self.d])
+        self.assertEqual(rc, 2, out)
+        self.assertIn("非「全文逐段」", out)
 
     def test_bad_scope_fails(self):
         write_log(self.d, [step("check_content"), step("check_cq"), step("deliver_gate"),

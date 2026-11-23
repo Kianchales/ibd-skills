@@ -607,6 +607,39 @@ def build(args, issues, meta, ledger=None):
     return out, rows, cols
 
 
+def find_runlog(issues_path, out_path=None):
+    """在清单同目录 / 输出目录 / <清单同名>_复核/ 里找 _run.json。"""
+    cands = []
+    for base in (os.path.dirname(os.path.abspath(issues_path)),
+                 os.path.dirname(os.path.abspath(out_path)) if out_path else None):
+        if base:
+            cands.append(os.path.join(base, "_run.json"))
+    stem = os.path.splitext(os.path.basename(issues_path))[0]
+    cands.insert(0, os.path.join(os.path.dirname(os.path.abspath(issues_path)),
+                                 stem + "_复核", "_run.json"))
+    for c in cands:
+        if os.path.exists(c):
+            return c
+    return None
+
+
+def runlog_summary(path):
+    """把指纹压成两行证据；解析失败返回 (None, "无法解析")。"""
+    try:
+        import json as _j
+        with open(path, encoding="utf-8") as f:
+            st = _j.load(f)
+        steps = st.get("steps", [])
+        tools = []
+        for s_ in steps:
+            t = s_.get("tool")
+            if t and t not in tools:
+                tools.append(t)
+        return st, f"流程指纹：{len(steps)} 步／工具 {'、'.join(tools) or '无'}／skill {st.get('skill_version', '?')}"
+    except Exception:      # noqa: BLE001
+        return None, "流程指纹：文件存在但无法解析"
+
+
 def main():
     ap = argparse.ArgumentParser(
         description="复核报告（Excel）生成器（规格：ibd-doc-review references/delivery.md §八之二）")
@@ -621,6 +654,10 @@ def main():
     ap.add_argument("--round-ledger", default=None,
                     help="轮次台账 JSON（round_diff.py --json 的产物）——传则追加「轮次状态」工作表")
     ap.add_argument("--verbose", action="store_true", help="逐条打印入口校验提示（默认折叠为一行计数）")
+    ap.add_argument("--runlog", default=None,
+                    help="运行指纹路径（<文件>_复核/_run.json）；缺省自动在 --out 目录附近找")
+    ap.add_argument("--allow-no-runlog", action="store_true",
+                    help="无运行指纹也生成报告（会**在封面标注「未按流程执行」**，留痕供追责）")
     args = ap.parse_args()
 
     try:
@@ -657,6 +694,25 @@ def main():
         if not isinstance(meta, dict):
             print("[ERROR] 元信息顶层须为对象（dict）", file=sys.stderr)
             sys.exit(2)
+
+    # ── 运行指纹闸（2026-11-23）：没有指纹 = 没按 skill 流程跑，报告不得"看起来像走完了"
+    rl_path = args.runlog or find_runlog(args.issues, args.out)
+    rl_state, rl_line = (None, "流程指纹：无（未按 skill 流程执行）")
+    if rl_path:
+        rl_state, rl_line = runlog_summary(rl_path)
+    elif not args.allow_no_runlog:
+        print("[ERROR] 未找到运行指纹 `_run.json`——本轮没有按 ibd-doc-review 流程执行"
+              "（未经 review_file 编排／未跑 check_content／check_cq／deliver_gate）。", file=sys.stderr)
+        print("  处置：① 按流程重跑（python scripts/review_file.py --input <文件>）后生成报告；"
+              "② 确需先出报告，加 --allow-no-runlog —— 封面会标注「未按流程执行」留痕。",
+              file=sys.stderr)
+        sys.exit(3)
+    # 证据行并入「质量证据」节（读者在报告里就能看到流程是否合规）
+    ev = list(meta.get("quality_evidence") or [])
+    ev.append(rl_line)
+    if rl_state is None:
+        ev.append("⚠️ 本轮未按 skill 流程执行（无运行指纹），结论仅供内部参考")
+    meta["quality_evidence"] = ev
 
     # 声明未做 ＝ 未声明范围（与 SKIP 同纪律）：缺声明不阻断生成，但必须留痕
     if not meta.get("declaration"):

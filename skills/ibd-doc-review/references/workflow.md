@@ -327,3 +327,56 @@ python scripts/deliver_gate.py --docx <修订稿.docx> --revised --expect-revise
 **两条时序铁律**（写在这里，因为都是"动手前"的事）：
 1. **文字规范必须在套样式之前查**——`check_content.py --checks text` 先跑（标点全角化/数字空格），再套样式。套样式后才发现文字问题会导致样式重做（实测一份交付件 384 处半角引号一路漏到套样式之后）
 2. **交付前一律先跑 `deliver_gate.py`**，不要用分散的多条核验命令替代（实测同一指标被反复统计 5-8 次，输出本身成为 token 大头）
+
+
+---
+
+## 附 · 入口细则（2026-11-23 自 SKILL.md 迁入，判据不变）
+
+### 1. 场景识别与工具路由
+
+| 场景 | 判据 | 工具 |
+|---|---|---|
+| **A–H** 套样式／新建／局部改／样式校验／格式核对／批注校验／修订校验／交付核验 | 按输入形态与产物类型分流 | 见 [workflow.md](references/workflow.md) §零·一（决策树 ＋ 调用顺序 ＋ 降级协议） |
+| **I** 圈定范围的复核 | 用户**显式圈定**（「只核对X」「X 过一遍」） | 先进门出声明单；域路由：格式→本 skill；内容→`ibd-quality-gates`；财务→`ibd-finance-review`；法律→`ibd-legal-review` |
+| **J** 惯例对照（只对照不定性） | 情形无明文／属灰色地带 | 四步法 → [convention-compare.md](references/convention-compare.md)；D 域执行 → `ibd-legal-review` |
+| **K** 跨轮收敛（第2轮起） | 上轮 vs 本轮清单五态台账 | `round_diff.py`（→ delivery.md §七之二） |
+
+### 2. 执行流程（S1-S7）
+
+> 七步主线，任一门禁不符 → 返回 S4/S5 修正后重跑，不交付。详规 → [workflow.md](references/workflow.md) §一。
+
+| 步 | 一句话判据 |
+|---|---|
+| **S1** 识别样式场景 | 含「问题X.」或【发行人说明】→ 反馈回复版；其余正式文档 → 招股书版 |
+| **S2** 加载样式资产 | 模板 docx 存在 ＋ 样式体系与场景匹配（[style-map.md](references/style-map.md)） |
+| **S3** 工具路由 | 场景 → 工具一一对应；层级与降级见 [toolchain.md](references/toolchain.md) §一 |
+| **S4** 样式映射（核心） | 内容段落逐个落 pStyle，按 style-map.md |
+| **S5** 序号与表格规则 | 九级链无跳号/重号/倒退；三线表按 [rules.md](references/rules.md) §一／§二 |
+| **S6** 校验门禁 | `deliver_gate.py` 零 FAIL（SKIP 须向用户点名）；禁词红线源 ＝ [banned-terms.json](references/banned-terms.json)（按场景） |
+| **S7** 三件套交付 | 修订稿 ＋ 格式问题清单 ＋ 修改统计齐备；契约见 [interface.md](references/interface.md) |
+
+### 3. 样式应用铁律（红线）
+
+0. **只改格式、严禁修改原文内容（最高优先级）**：只做样式应用（pStyle／字体／字号／对齐／缩进／间距／边框），**不得增删改移任何文字**（含表内文字、标点、空格、数字、单位）。套用后须 `check_styles.py --verify-content <原文件>` 逐字校验，不一致即 FAIL 重做。内容修改属内容层，本 skill 不做。
+1. **模板先行**——动笔前确认 `assets/templates/` 模板存在，优先以模板为基底。
+2. **pStyle 优先于手写格式**——能应用命名样式（000-009／0011／001）就不硬编码字体字号。
+3. **序号段落判定走双维度算法**（段落长短 ＋ 上下文分段）→ [rules.md](references/rules.md) §一；可 `check_styles.py --check-numbering` 辅助。
+4. **反馈回复合规展示**——监管问题原文 001（黑体）、回复正文 000（宋体），黑宋对照即合规展示，不得混用。
+5. **不覆盖用户手动格式**——apply-template 前先与用户确认是否保留。
+6. **段落间禁止空行/空段落**——间距一律靠样式 spacing；空段落会命中裸段落检查并叠加间距。
+
+> 铁律全文（判据细节与辅助命令）→ [workflow.md](references/workflow.md) §零·二。
+
+### 4. 格式核对模式（check_content.py，只读不改文件）
+
+> - **只读**，适用任意投行 Word；`check_content.py --input <docx>`（模块 content_common／content_text／content_table），出 `<input>_格式核对报告.md`。
+> - **两组**：文字 **8** 项 ＋ 表格 **4** 项，按 HIGH/MEDIUM/LOW 分级；**明细矩阵 → [workflow.md](references/workflow.md) §二**（项名与严重度判据以该矩阵为准，本页不复制）。
+> - **边界**：本模式查格式层自洽；**数值自洽**与内容质量溯源归 `ibd-quality-gates`；敏感词与地理清单 → [sensitive-terms.json](references/sensitive-terms.json)。
+
+### 5. 批注与修订复核交付模式（规范 + 只读校验）
+
+> - **职责**：本 skill 定规范 ＋ 门禁（只读）；**注入执行 = `ibd-doc-annotate`**（`annotate_docx.py` / `revise_docx.py --mode`）——两 skill 以本 skill 规范为合规依据。
+> - **门禁一条命令**：`deliver_gate.py --docx <件> --annotated [--expect-annotated N]` / `--revised [--expect-revised N]`，任一 FAIL → 退回重注入，不交付。
+> - **规范单一事实源**：批注 [annotations.md](references/annotations.md)｜修订 [revisions.md](references/revisions.md)｜交付口径 [delivery.md](references/delivery.md)（含报告 Excel 形态与生成器 §八之二，本 skill 不产出）｜schema [problems.schema.json](references/problems.schema.json)（`validate_schema.py` 校验）。
+> - 校验项明细（含加粗按语义判定的实测坑）→ [workflow.md](references/workflow.md) §三。

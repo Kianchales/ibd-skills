@@ -60,3 +60,13 @@
   2. `create` 生成的空白文档无预置 Heading1 样式（会告警），套样式以本 skill 模板为准，勿依赖 CLI 自带样式
   3. `batch` 批量操作默认原子回滚（v1.0.137+），任一失败整体回滚不落盘——适合正式文档批量修改
   4. 调用方式：`<officecli 安装目录>/officecli.exe`（未入 PATH，按本机安装位置确认）；与 `tencent-local-office-edit` 编辑中的文件勿同时操作（文件锁隔离）
+
+
+---
+
+## 附 · 入口细则（2026-11-23 自 SKILL.md 迁入，判据不变）
+
+## 踩坑与要点
+
+- **⚠️ apply-template 只做「组件级替换」、不做段落 pStyle 映射**：套用后 pStyle 分布仍是 `(裸):N`，易误判"套样式失败"；段落级映射须另做一步。验收：body 级 pStyle 引用数从 0 变非 0、必备样式齐备、残留直接格式归零。
+- 半全角标点须在**套样式之前**先过 `check_content.py --checks text`；`--revise` 三坑（`w:trackRevisions` 而非 `w:trackChanges`／pPrChange 快照不含 `w:rPr`／气泡缺失须用 Word 原生文档做对照组）→ [toolchain.md](references/toolchain.md) §二。

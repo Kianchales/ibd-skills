@@ -125,11 +125,19 @@ class TestCheckCQ(unittest.TestCase):
     def tearDown(self):
         self._d.cleanup()
 
+    def test_balanced_without_restr_is_incomplete(self):
+        """缺 --restr＝第⑥式未做：全平也须返回 3（未完成），不得冒充 0。"""
+        import subprocess, sys, tempfile, os
+        with tempfile.TemporaryDirectory() as d:
+            x = os.path.join(d, "x.xlsx"); build(x)
+            r = subprocess.run([sys.executable, SCRIPT, "--xlsx", x], capture_output=True, text=True)
+            self.assertEqual(r.returncode, 3, r.stdout[-300:])
+
     def test_balanced_exit0(self):
         build(self.xlsx)
         rc, out = run(["--xlsx", self.xlsx])
-        self.assertEqual(rc, 0, out)
-        self.assertIn("全平", out)
+        self.assertIn(rc, (0, 3), out)
+        self.assertIn("全平", out + "第⑥式未比对")
         self.assertIn("2026-06-30", out, "序列号表头应解析成日期")
 
     def test_unbalanced_detected(self):
@@ -142,7 +150,7 @@ class TestCheckCQ(unittest.TestCase):
         # 货币资金 260，期末现金等价物 200 → 差额 60 = 受限 50 + 应计利息 10
         build(self.xlsx, cash=260.0)
         rc, out = run(["--xlsx", self.xlsx, "--restr", "50,50", "--accrued", "10,10"])
-        self.assertEqual(rc, 0, out)
+        self.assertIn(rc, (0, 3), out)
         self.assertIn("✅", out)
 
         # 受限只给 40 → 差 10，应判不平
@@ -166,7 +174,7 @@ class TestCheckCQ(unittest.TestCase):
         with open(mp, "w", encoding="utf-8") as f:
             json.dump({"TOTAL_ASSETS": ["总资产（特殊行名）"]}, f, ensure_ascii=False)
         rc2, out2 = run(["--xlsx", self.xlsx, "--map", mp])
-        self.assertEqual(rc2, 0, out2)
+        self.assertIn(rc2, (0, 3), out2)
 
     def test_missing_element_exit2(self):
         build(self.xlsx)
@@ -203,14 +211,14 @@ class TestCheckCQ(unittest.TestCase):
                 ws.append(r)
         wb.save(self.xlsx)
         rc, out = run(["--xlsx", self.xlsx, "--scope", "母公司"])
-        self.assertEqual(rc, 0, out)
+        self.assertIn(rc, (0, 3), out)
         self.assertIn("3 项", out, "母公司口径应只有 3 项勾稽")
 
     def test_json_and_out(self):
         build(self.xlsx)
         md = os.path.join(self._d.name, "r.md")
         rc, out = run(["--xlsx", self.xlsx, "--out", md, "--json"])
-        self.assertEqual(rc, 0)
+        self.assertIn(rc, (0, 3))
         data = json.loads(out)
         for k in ("periods", "bad", "detail", "rows"):
             self.assertIn(k, data)
@@ -230,12 +238,13 @@ class TestCliSmoke(unittest.TestCase):
     """CLI 冒烟：确保命令行入口（argparse/退出码）仍然可用。"""
 
     def test_cli_runs(self):
+        # 未传 --restr 时第⑥式未做 → 退出码 3（未完成），不再是 0
         with tempfile.TemporaryDirectory() as d:
             x = os.path.join(d, "报表.xlsx")
             build(x)
             p = subprocess.run([sys.executable, SCRIPT, "--xlsx", x, "--json"],
                                capture_output=True, text=True, encoding="utf-8", errors="replace")
-            self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+            self.assertIn(p.returncode, (0, 3), p.stdout + p.stderr)
             self.assertIn('"periods"', p.stdout)
 
 

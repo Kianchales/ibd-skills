@@ -87,3 +87,25 @@
 | 七级标题 | 007（不粗） → 007（不粗） |
 | 表格前单位行 | 008 → 008 |
 | 表格后备注行 | 009 → 009 |
+
+
+---
+
+## 附 · 入口细则（2026-11-23 自 SKILL.md 迁入，判据不变）
+
+### 样式资产（先加载，禁止裸写）
+
+> 模板在 `assets/templates/`（即样式源）：**改模板 = 定制输出样式**；三个模板随包分发。
+
+| 模板文件 | 适用文档 | 关键样式 ID |
+|---|---|---|
+| `报告模板.docx` | 招股书章节／报告／备忘录／尽调报告 | 000 正文、001 章标题、002-007 二至七级、008 单位、009 备注 |
+| `反馈回复样式.docx` | 审核问询回复／反馈回复／落实函回复 | 0011 问题编号、001 监管问题原文、000 正文、002-009 明细 |
+| `表格模板.docx` | 以上全部文档的表格 | 三线表 a6／表前单位 a5／表后备注 a4 |
+
+**细则指针**（按需读，本页不复制；各步判据处的指针为准，本段是**全集索引**）：
+- **动手前先翻**：[workflow.md](references/workflow.md)（S1-S7 · 格式核对 · 复核交付 · 命令全表）
+- 样式与读取：[style-map.md](references/style-map.md)（字体字号·对齐·缩进·间距·行距·大纲）｜[read-docx.md](references/read-docx.md)（含修订/批注的 Word 读取口径）
+- 复核规范：[annotations.md](references/annotations.md)（批注）｜[revisions.md](references/revisions.md)（修订）｜[delivery.md](references/delivery.md)（交付）｜[workspace-layout.md](references/workspace-layout.md)（工作区结构）｜[check-scope.md](references/check-scope.md)（声明单·六问）｜[chunked-review.md](references/chunked-review.md)（分片）｜[split-rules.md](references/split-rules.md)（分拆判定）｜[convention-compare.md](references/convention-compare.md)（惯例对照）｜[interface.md](references/interface.md)（契约）｜[problems.schema.json](references/problems.schema.json)（清单 schema）｜执行器 = `ibd-doc-annotate`
+- 工具与样例：[toolchain.md](references/toolchain.md)（层级与踩坑全文）｜[examples.md](references/examples.md)（典型用例）
+- 清单 json：[banned-terms.json](references/banned-terms.json)（禁词红线·三档·按 `--scenario` 装载，改 json 即生效）｜[sensitive-terms.json](references/sensitive-terms.json)（敏感词与地理）

@@ -30,7 +30,7 @@ C17 五类勾稽里的这六式，**只靠申报报表 xlsx 就能算**，不必
                               [--out 报告.md] [--json]
 
     --restr   附注「受限资金明细」各期合计（按报表列顺序，逗号分隔）；给了才做第⑥式比对
-    退出码    0=全平 / 1=有不平 / 2=用法或解析失败
+    退出码    0=全平 / 1=有不平 / 2=用法或解析失败 / 3=**未完成**（缺 --restr，第⑥式未做）
 """
 import argparse
 import datetime
@@ -305,7 +305,14 @@ def main():
     L("## 三、结论")
     L("")
     total_bad = bad + gap_issue
-    L(f"{'✅ 全平' if total_bad == 0 else '❌ %d 处不平（明细见上）' % total_bad}")
+    skipped = [] if a.restr else ["⑥ 货币资金差额 vs 附注受限（缺 --restr）"]
+    if skipped and total_bad == 0:
+        # **不得写"全平"**：少做一式却说全平，等于给假绿。缺输入必须显式标注未覆盖。
+        L("⚠️ 已做各式全平，但**第⑥式未比对**：缺 `--restr`（附注「受限资金明细」各期合计）。")
+        L("   缺这一式时，货币资金与现金等价物的差额无法与附注受限资金核对——"
+          "**本结论不覆盖该口径**。")
+    else:
+        L(f"{'✅ 全平' if total_bad == 0 else '❌ %d 处不平（明细见上）' % total_bad}")
 
     md = "\n".join(lines)
     if a.out:
@@ -316,7 +323,9 @@ def main():
                           "rows": {k: got[k][0] for k in got}}, ensure_ascii=False, indent=1))
     else:
         print(md)
-    rc = 0 if total_bad == 0 else 1
+    # 缺 --restr 时第⑥式未做：**不得以 rc=0 表示"全平"**——那是让上游把"没做"读成"没问题"。
+    # 优先级：查出不平(1) > 缺输入未完成(3) > 全平(0)
+    rc = 1 if total_bad else (3 if skipped else 0)
     runlog.autolog("check_cq", sys.argv[1:], rc, getattr(a, "xlsx", None))
     raise SystemExit(rc)
 
