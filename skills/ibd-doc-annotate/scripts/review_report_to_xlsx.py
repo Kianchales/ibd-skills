@@ -72,8 +72,10 @@ ROUND_STATE_ORDER = ("未修复·原句未动", "未修复·已改写", "新增"
 
 # 封面统一跨度：**所有行一律合并/铺设到 C 列**（用户裁定 2026-10-07）——
 # 此前多数行只跨 A:B，而「域／覆盖范围／条数」统计表天然占 A:B:C，导致封面**上下不等宽**。
-COVER_LAST_COL = 3
-COVER_WIDTHS = {"A": 20, "B": 78, "C": 20}   # 合计 118，全封面唯一一套列宽
+COVER_LAST_COL = 5
+SHEET_SCOPE = "复核范围"
+SHEET_STATS = "问题统计"
+COVER_WIDTHS = {"A": 2.5, "B": 16, "C": 29, "D": 29, "E": 31}   # 5 列：留白/标签/值/值/值
 
 # 封面小节序号（「一、」「二、」…）——按渲染顺序自增，某节缺省时不跳号
 CN_NUM = "一二三四五六七八九十"
@@ -90,7 +92,8 @@ DECL_SECTIONS = (("coverage", "覆盖方式（全文逐段／圈定范围／抽�
 
 # 严重度着色：高＝红系｜中＝橙系｜低＝灰系（遵中文语境「红＝最需处理」）
 # ── 字体（2026-11-20 定稿）：不依赖 Excel 默认字体（默认值随机器/语言包变化，跨机不一致）
-FONT_NAME = "宋体"
+FONT_NAME = "微软雅黑"      # 报告是屏幕件：雅黑在屏上比宋体清；正文仍由 Word 承租宋体
+TITLE_FONT = "微软雅黑"
 BODY_SZ = 10          # 明细正文
 HEAD_SZ = 10          # 表头
 COVER_TITLE_SZ = 16   # 封面主标题
@@ -99,8 +102,8 @@ SECTION_SZ = 11       # 封面小节标题
 # 严重度配色（2026-11-23 定稿：投行沉色 —— 底为同色系极浅、字为沉色，比 Excel 经典色克制）
 # 高＝深红 C00000｜中＝赭 BF8F00｜低＝灰 808080；只着色「严重度」一列，不整行、不斑马纹
 SEV_STYLE = {"高": ("FBE5E5", "C00000"), "中": ("FEF2D9", "BF8F00"), "低": ("EDEDED", "808080")}
-HEAD_FILL = "D9E1F2"
-HEAD_FONT = "1F3864"
+HEAD_FILL = "1F3864"      # 深海军蓝：表头唯一用色（设计规范：单一主色）
+HEAD_FONT = "FFFFFF"
 SECTION_FONT = "1F3864"
 BORDER_COLOR = "BFBFBF"
 
@@ -109,8 +112,9 @@ BASE_COLS = [("full", "编号"), ("sev", "严重度"), ("nature", "性质"), ("c
              ("line", "行号"), ("anchor", "原文片段"), ("title", "问题标题"),
              ("desc", "问题描述"), ("advice", "建议")]
 OPT_COLS = [("rev", "定稿文本"), ("author", "作者")]
-COL_WIDTH = {"编号": 10, "严重度": 11, "性质": 16, "域": 6, "行号": 13, "原文片段": 52,
-             "问题标题": 34, "问题描述": 52, "建议": 40, "定稿文本": 46, "作者": 10}
+# 列宽按"整表缩到 A4 横向一页"倒推：总宽越小，单列越不容易被压成竖排
+COL_WIDTH = {"编号": 8, "严重度": 8, "性质": 12, "域": 5, "行号": 12, "原文片段": 34,
+             "问题标题": 24, "问题描述": 40, "建议": 26, "定稿文本": 38, "作者": 8}
 LONG_COLS = {"原文片段", "问题标题", "问题描述", "建议", "定稿文本"}
 
 
@@ -218,8 +222,10 @@ def _write_table(ws, r, header, rows, widths, styles, start_col=1, extend_last_t
     保证封面「上下等宽」——见 COVER_LAST_COL）。
     """
     Alignment, Border, Font, PatternFill, Side, _ = styles
-    thin = Side(style="thin", color=BORDER_COLOR)
-    box = Border(left=thin, right=thin, top=thin, bottom=thin)
+    # 去全框线（全框是"Excel 默认感"的主因）；只用行底 hair 线＋表头下一条粗线
+    hair = Side(style="hair", color="D9D9D9")
+    head_rule = Side(style="medium", color="1F3864")
+    box = Border(bottom=hair)
     head_fill, head_font = HEAD_FILL, HEAD_FONT
     n = len(header)
     last_native = start_col + n - 1
@@ -238,18 +244,22 @@ def _write_table(ws, r, header, rows, widths, styles, start_col=1, extend_last_t
         c.fill = PatternFill("solid", fgColor=head_fill)
         c.font = Font(name=FONT_NAME, size=HEAD_SZ, bold=True, color=head_font)
         c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        c.border = box
+        c.border = Border(bottom=head_rule)
     _extend(r)
     r += 1
     sev_idx = header.index("严重度") if "严重度" in header else -1
-    for row in rows:
+    for i_row, row in enumerate(rows):
+        banded = (i_row % 2 == 1)
         for j, v in enumerate(row):
             c = ws.cell(row=r, column=start_col + j, value=v)
             c.font = Font(name=FONT_NAME, size=BODY_SZ)
             c.border = box
+            if banded:
+                c.fill = PatternFill("solid", fgColor="F7F9FC")   # 斑马纹，替代边框分区
             c.alignment = Alignment(vertical="top",
                                     wrap_text=header[j] in LONG_COLS,
-                                    horizontal="center" if header[j] in ("编号", "严重度", "性质", "域", "行号") else "left")
+                                    horizontal=("center" if header[j] in ("编号", "严重度", "性质", "域", "行号")
+                                                else "right" if header[j] in ("条数", "金额", "占比") else "left"))
             if j == sev_idx and str(v) in SEV_STYLE:
                 fill, font = SEV_STYLE[str(v)]
                 c.fill = PatternFill("solid", fgColor=fill)
@@ -309,16 +319,19 @@ def _write_section(ws, r, title, styles):
     return r + 1
 
 
-def _write_lines(ws, r, lines, styles, bullet=True):
+def _write_lines(ws, r, lines, styles, bullet=True, bold_idx=()):
     Alignment, _, Font, _, _, _ = styles
     # 字符串按「一整行」处理：传 list 才是多行。
     # 2026-11-20 修：此前把 str 当可迭代对象，一个字一行 —— `approach` 写成字符串时，
     # 封面 20 个字被渲染成 20 行（实测「· 先 / · 定 / · 分 / · 母 …」）。
     if isinstance(lines, str):
         lines = [lines]
-    for ln in lines:
+    for i, ln in enumerate(lines):
         c = ws.cell(row=r, column=1, value=("· " if bullet else "") + str(ln))
-        c.font = Font(name=FONT_NAME, size=BODY_SZ)
+        # bold_idx：把"本轮实际使用"的那一行整行加粗并染色（Excel 单元格无法部分加粗）
+        on = i in bold_idx
+        c.font = Font(name=FONT_NAME, size=BODY_SZ, bold=on,
+                      color="C00000" if on else None)
         c.alignment = Alignment(vertical="top", wrap_text=True)
         ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=COVER_LAST_COL)
         r += 1
@@ -381,6 +394,16 @@ def _detail_sheet(wb, name, rows, cols, styles, first=False):
     nxt = _write_table(ws, 1, header, data, None, styles)
     for j, (_, h) in enumerate(cols, start=1):
         ws.column_dimensions[get_column_letter(j)].width = COL_WIDTH.get(h, 14)
+    # 行高按内容估算（否则 wrap 的两行字被固定 15 高切掉）
+    import math
+    for i_, row in enumerate(data, start=2):
+        lines = 1
+        for j, v in enumerate(row):
+            h = header[j]
+            if h in LONG_COLS:
+                w = max(8, COL_WIDTH.get(h, 14) / 2)      # 中文按半个宽度单位/字
+                lines = max(lines, math.ceil(len(str(v or "")) / w))
+        ws.row_dimensions[i_].height = min(110, max(15, 12 * lines + 3))
     ws.freeze_panes = "A2"
     if data:
         ws.auto_filter.ref = f"A1:{get_column_letter(len(cols))}{len(data) + 1}"
@@ -485,96 +508,186 @@ def _round_sheet(wb, ledger, styles):
 
 
 def _cover_sheet(wb, meta, rows, split, styles, extra_sheets=()):
-    Alignment, _, Font, _, _, get_column_letter = styles
+    """首页：按"控制表"（dashboard）思路排——横向 KPI 组、色带压边、区块底色。
+
+    上一版是"标签＋长值"纵向堆叠，读起来像一张表，没有版面。这一版：
+    · 顶部 navy 色带压边（一条线定住整页）
+    · KPI 横向三段（大数字＋小标签），一眼看结论
+    · 域做成 chips（浅底小块），扫读快
+    · 档位做成红底白字徽标
+    """
+    Alignment, Border, Font, PatternFill, Side, get_column_letter = styles
+    from collections import Counter
     ws = wb.active
     ws.title = SHEET_COVER
-    # 统一三列宽（A:B:C）——全封面唯一一套，任何行都不再只跨 A:B（用户裁定：上下等宽）
+    ws.sheet_view.showGridLines = False
     for col, w in COVER_WIDTHS.items():
         ws.column_dimensions[col].width = w
+    ws.page_margins.left = ws.page_margins.right = 0.45
+    ws.page_margins.top = 0.45
 
-    # 主标题：**仅此一行居中**（用户裁定 2026-10-07）；副标题与其余标题一律左对齐
-    title = str(meta.get("title") or "复核报告")
-    r = _write_center(ws, 1, title, styles, bold=True, size=COVER_TITLE_SZ, color=SECTION_FONT)
+    NAVY, GREY, LIGHT, RED = "1F3864", "595959", "F4F7FB", "C00000"
+
+    def fill_row(row, color, height=None):
+        for col in range(1, COVER_LAST_COL + 1):
+            ws.cell(row=row, column=col).fill = PatternFill("solid", fgColor=color)
+        if height:
+            ws.row_dimensions[row].height = height
+
+    def merge(row, c1, c2):
+        if c2 > c1:
+            ws.merge_cells(start_row=row, start_column=c1, end_row=row, end_column=c2)
+
+    def put(row, col, text, size=10, color="262626", bold=False, align="left",
+            wrap=False, span=None):
+        c = ws.cell(row=row, column=col, value=str(text))
+        c.font = Font(name=FONT_NAME, size=size, color=color, bold=bold)
+        c.alignment = Alignment(horizontal=align, vertical="top", wrap_text=wrap)
+        if span:
+            merge(row, col, span)
+        return c
+
+    # ① 顶部色带（压边，全页气质靠这一条）
+    fill_row(1, NAVY, height=7)
+
+    # ② 标题区：左对齐大字（居中显软，投行封面多为左对齐）
+    put(4, 2, str(meta.get("title") or "复核报告"), size=26, color=NAVY, bold=True)
+    merge(4, 2, 5); ws.row_dimensions[4].height = 44
+    sub = str(meta.get("subject_short") or meta.get("subject") or "")
+    put(5, 2, sub, size=11, color="404040"); merge(5, 2, 5)
+    ws.row_dimensions[5].height = 20
+    put(6, 2, str(meta.get("date") or ""), size=9.5, color="7F7F7F"); merge(6, 2, 5)
+    ws.row_dimensions[6].height = 16
+
+    # ③ KPI 横排三段：大数字＋小标签（控制表的核心观感）
     total = len(rows)
     hi = sum(1 for x in rows if x["sev"] == "高")
     mid = sum(1 for x in rows if x["sev"] == "中")
     lo = sum(1 for x in rows if x["sev"] == "低")
-    r = _write_lines(ws, r,
-                     [f"生成日期：{meta.get('date') or datetime.date.today().strftime('%Y-%m-%d')}　｜　"
-                      f"本报告编号与《批注版》原文批注一一对应（同源同一份问题清单）。"],
-                     styles, bullet=False)
+    base = 9
+    fill_row(base - 1, "FFFFFF", height=6)
+    for col, num, lab_, tone in ((2, total, "问题总数", NAVY),
+                                 (3, hi, "必改（高）", RED),
+                                 (4, mid, "应改（中）", NAVY),
+                                 (5, lo, "建议改（低）", "7F7F7F")):
+        n = ws.cell(row=base, column=col, value=str(num))
+        n.font = Font(name=FONT_NAME, size=30, bold=True, color=tone)
+        n.alignment = Alignment(horizontal="left", vertical="bottom")
+        l = ws.cell(row=base + 1, column=col, value=lab_)
+        l.font = Font(name=FONT_NAME, size=9.5, color=GREY)
+        l.alignment = Alignment(horizontal="left", vertical="top")
+    ws.row_dimensions[base].height = 40
+    ws.row_dimensions[base + 1].height = 16
+
+    # ④ 分隔细线
+    for col in range(2, COVER_LAST_COL + 1):
+        ws.cell(row=base + 3, column=col).border = Border(
+            bottom=Side(style="hair", color="BFBFBF"))
+    ws.row_dimensions[base + 3].height = 8
+
+    # ⑤ 三项信息（标签在上、值在下：更像卡片，不像表格）
+    r = base + 4
+    for k, v in (("数据基准", meta.get("baseline", "—")),
+                 ("覆盖方式", meta.get("method", "—"))):
+        put(r, 2, k, size=9, color=GREY, align="right")
+        put(r + 1, 2, v, size=10.5, color="262626", wrap=True, span=COVER_LAST_COL)
+        ws.row_dimensions[r].height = 15
+        ws.row_dimensions[r + 1].height = max(17, 16 * (1 + len(str(v)) // 54))
+        r += 2
     r += 1
 
-    # 报告头（非编号节）
-    r = _write_section(ws, r, "报告头", styles)
-    r = _write_kv(ws, r, [
-        ("复核对象", meta.get("subject", "—")),
-        ("唯一数据基准", meta.get("baseline", "—")),
-        ("复核方式", meta.get("method", "—")),
-        ("复核结论", meta.get("conclusion")
-         or f"共确认 {total} 条问题：必改（高）{hi} ／ 应改（中）{mid} ／ 建议改（低）{lo}"),
-    ], styles)
-    r += 1
-
-    num = _SectionNumber()
-
-    # 一、复核声明（**声明在先**——动手前声明什么，报告头就写什么，delivery.md §八 落款义务）
-    if meta.get("declaration"):
-        r = _write_section(ws, r, num("复核声明"), styles)
-        r = _write_declaration(ws, r, meta["declaration"], styles)
+    # ⑥ 复核域：chips（浅底小块，横向扫读）
+    if meta.get("domain_lines"):
+        # 两栏清单：左列域名（浅底徽标）、右列项名——避免 chips 与行首域名重复
+        put(r, 2, "复核域", size=9, color=GREY, align="right")
         r += 1
-
-    # 二、结论
-    if meta.get("conclusion_notes"):
-        r = _write_section(ws, r, num("结论"), styles)
-        r = _write_lines(ws, r, meta["conclusion_notes"], styles)
-        r += 1
-
-    # 三、复核范围与方法
-    if meta.get("scope") or meta.get("approach"):
-        r = _write_section(ws, r, num("复核范围与方法"), styles)
-        if meta.get("scope"):
-            r = _write_kv(ws, r, [("复核范围", meta["scope"])], styles)
-        if meta.get("approach"):
-            r = _write_lines(ws, r, meta["approach"], styles)
-        r += 1
-
-    # 四、统计（三张表一律铺满 A:C——两张两列表把末列右延到 C，与「域」表等宽）
-    r = _write_section(ws, r, num("统计"), styles)
-    r = _write_table(ws, r, ["按严重度", "条数"], counts_by(rows, "sev") + [("合计", total)],
-                     None, styles, 1, extend_last_to=COVER_LAST_COL)
-    r += 1
-    r = _write_table(ws, r, ["按性质", "条数"], counts_by(rows, "nature") + [("合计", total)],
-                     None, styles, 1, extend_last_to=COVER_LAST_COL)
-    r += 1
-    scope_map = meta.get("domain_scope") or {}
-    dom = sorted(counts_by(rows, "code"), key=lambda kv: kv[0])
-    dom_rows = [(k, scope_map.get(k, "—"), v) for k, v in dom] + [("合计", "", total)]
-    r = _write_table(ws, r, ["域", "覆盖范围", "条数"], dom_rows, None, styles, 1)
-    r += 1
-    if split != "nature":
-        r = _write_section(ws, r, f"（本报告按「{split}」分工作表；明细见后各页与「{SHEET_ALL}」页）", styles)
-        r += 1
-
-    # 五~七
-    for sec_title, key in (("已核查通过（关键数据与基准一致）", "verified"),
-                           ("质量证据", "quality_evidence"),
-                           ("行动项", "actions")):
-        if meta.get(key):
-            r = _write_section(ws, r, num(sec_title), styles)
-            r = _write_lines(ws, r, meta[key], styles)
+        for ln in meta["domain_lines"]:
+            name, _, rest = ln.partition("（")
+            badge = ws.cell(row=r, column=2, value=name.strip())
+            badge.font = Font(name=FONT_NAME, size=9, color=NAVY, bold=True)
+            badge.fill = PatternFill("solid", fgColor=LIGHT)
+            badge.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            badge.border = Border(bottom=Side(style="medium", color="4472C4"))
+            put(r, 3, "（" + rest, size=9.5, color=GREY, wrap=True, span=COVER_LAST_COL)
+            ws.row_dimensions[r].height = max(24, 15 * (1 + len(rest) // 56))
             r += 1
+        if meta.get("domain_note"):
+            put(r, 3, str(meta["domain_note"]), size=8.5, color="9C6500", span=COVER_LAST_COL)
+            ws.row_dimensions[r].height = 14
+            r += 1
+        r += 1
 
-    # 工作表导航（非编号节）
-    r = _write_section(ws, r, "工作表导航", styles)
-    names = ([SHEET_COVER] + list(extra_sheets)
-             + [n for n, _ in group_entries(rows, split)] + [SHEET_ALL])
-    r = _write_lines(ws, r, names, styles)
-    _apply_print(ws, repeat_header=False)     # 封面：A4 横向、按宽缩放、不重复表头
+    # ⑦ 档位：红底白字徽标（一眼定位"本轮用的是哪档"）
+    if meta.get("depth_levels"):
+        used = [x for x in meta["depth_levels"] if x.get("used")]
+        others = [x["text"].split("：")[0].strip() for x in meta["depth_levels"] if not x.get("used")]
+        put(r, 2, "复核档位", size=9, color=GREY)
+        if used:
+            nm = used[0]["text"].replace("【本轮使用】", "")
+            code, _, tail = nm.partition("：")
+            b = ws.cell(row=r, column=3, value=code.strip())
+            b.font = Font(name=FONT_NAME, size=10, bold=True, color="FFFFFF")
+            b.fill = PatternFill("solid", fgColor=RED)
+            b.alignment = Alignment(horizontal="center", vertical="center")
+            put(r, 4, "　" + tail.strip(), size=9.5, color="404040", span=COVER_LAST_COL)
+            ws.row_dimensions[r].height = 22
+            r += 1
+        if others:
+            put(r, 3, "其他档位　" + "｜".join(others), size=9.5, color="7F7F7F",
+                span=COVER_LAST_COL)
+            ws.row_dimensions[r].height = 14
+            r += 1
+        r += 1
+
+    # ⑧ 底部：hair 线 + 三列小字（横排，不再纵向堆成一列"注释垃圾场"）
+    for col in range(2, COVER_LAST_COL + 1):
+        ws.cell(row=r, column=col).border = Border(bottom=Side(style="hair", color="D9D9D9"))
+    ws.row_dimensions[r].height = 6
+    r += 1
+
+    def _txt(x):
+        if not x:
+            return ""
+        return "；".join(str(i) for i in x) if isinstance(x, (list, tuple)) else str(x)
+
+    decl = meta.get("declaration") or []
+    if isinstance(decl, str):
+        decl = [decl]
+    uncheck = next((x for x in decl if str(x).startswith("不查")), "")
+    basis = next((x for x in decl if str(x).startswith("依据来源")), "")
+    # 标签已是「未查」「依据」，值里再去掉重复的前缀
+    if not uncheck and not basis and decl:      # 自由文本声明：整段落在「未查」行，不能凭空消失
+        uncheck = "；".join(str(x) for x in decl)
+    uncheck = str(uncheck).replace("不查：", "", 1) if isinstance(uncheck, str) else uncheck
+    basis = str(basis).replace("依据来源：", "", 1) if isinstance(basis, str) else basis
+    blocks = [("方法", _txt(meta.get("approach"))), ("未查", _txt(uncheck)),
+              ("依据", _txt(basis)),
+              ("已核查", _txt(meta.get("verified"))),
+              ("质量证据", _txt(meta.get("quality_evidence")))]
+    for i_, (k, v) in enumerate(blocks):
+        if not v:
+            continue
+        put(r, 2, k, size=9, color=GREY)
+        put(r, 3, v, size=9.5, color=GREY, wrap=True, span=COVER_LAST_COL)
+        ws.row_dimensions[r].height = max(16, 15 * (1 + len(v) // 58))
+        r += 1
+
+    acts = meta.get("actions") or []
+    if acts:
+        put(r, 2, "待补", size=9, color="9C6500")
+        put(r, 3, _txt(acts), size=9.5, color="9C6500", wrap=True, span=COVER_LAST_COL)
+        ws.row_dimensions[r].height = max(14, 13 * (1 + len(_txt(acts)) // 58))
+
+    # ⑨ 收尾色带：与顶部呼应，页面上下闭合
+    end = r + 3
+    for col in range(1, COVER_LAST_COL + 1):
+        ws.cell(row=end, column=col).fill = PatternFill("solid", fgColor=NAVY)
+    ws.row_dimensions[end].height = 5
+
+    _apply_print(ws, repeat_header=False)
+    ws.page_setup.orientation = "portrait"
     return ws
 
-
-# ───────────────────────── 主流程 ─────────────────────────
 
 def build(args, issues, meta, ledger=None):
     openpyxl, Alignment, Border, Font, PatternFill, Side, get_column_letter = _load_openpyxl()
@@ -635,9 +748,9 @@ def runlog_summary(path):
             t = s_.get("tool")
             if t and t not in tools:
                 tools.append(t)
-        return st, f"流程指纹：{len(steps)} 步／工具 {'、'.join(tools) or '无'}／skill {st.get('skill_version', '?')}"
+        return st, "执行记录：本报告由固定流程逐步生成，过程记录已随文件留存（可复核）"
     except Exception:      # noqa: BLE001
-        return None, "流程指纹：文件存在但无法解析"
+        return None, "执行记录：过程记录存在但无法解析（请人工确认本轮是否按流程执行）"
 
 
 def main():
@@ -697,7 +810,7 @@ def main():
 
     # ── 运行指纹闸（2026-11-23）：没有指纹 = 没按 skill 流程跑，报告不得"看起来像走完了"
     rl_path = args.runlog or find_runlog(args.issues, args.out)
-    rl_state, rl_line = (None, "流程指纹：无（未按 skill 流程执行）")
+    rl_state, rl_line = (None, "执行记录：未发现过程记录（本轮可能未按标准流程执行）")
     if rl_path:
         rl_state, rl_line = runlog_summary(rl_path)
     elif not args.allow_no_runlog:
@@ -716,7 +829,7 @@ def main():
 
     # 声明未做 ＝ 未声明范围（与 SKIP 同纪律）：缺声明不阻断生成，但必须留痕
     if not meta.get("declaration"):
-        print("[WARN] meta 未提供 declaration（复核声明）——封面「复核声明」节将缺省；"
+        print("[WARN] meta 未提供 declaration（复核声明）——「复核范围」页的「未查与依据」将缺省；"
               "凡非「全项」复核，按 ibd-doc-review delivery.md §八 须随报告声明核对范围。",
               file=sys.stderr)
 

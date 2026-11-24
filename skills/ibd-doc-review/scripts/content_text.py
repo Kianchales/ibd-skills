@@ -666,3 +666,115 @@ def check_punct_usage(items):
                     "GB/T 15834 附录 A.1）", "MEDIUM")
 
     return issues
+
+# ---------------------------------------------------------------- 书名号引用名称
+# 《》里放的是"文件、法规、报告"的名字。错在这里，读者会照着错名去查，查不到。
+TITLE_SUFFIX = ("法", "办法", "规定", "规定（试行）", "准则", "细则", "指引", "章程", "条例",
+                "决定", "通知", "报告", "说明书", "协议", "合同", "意见", "函", "批复",
+                "规则", "制度", "方案", "守则", "标准", "目录", "清单", "表", "稿")
+LAW_WHITELIST = {
+    "公司法", "证券法", "民法典", "会计法", "审计法", "税收征收管理法", "劳动合同法",
+    "企业会计准则", "企业会计准则第14号——收入", "科创板首次公开发行股票注册管理办法",
+    "科创板上市公司持续监管办法", "上市公司信息披露管理办法", "证券发行与承销管理办法",
+    "上海证券交易所科创板股票上市规则", "公开发行证券的公司信息披露内容与格式准则",
+}
+
+
+# 外部法规 vs 内部制度：判错类别，报告的严重度就会错（法规简称业内惯用，制度名必须与释义一致）
+LAW_TAIL = ("法", "条例", "规定", "办法", "准则", "细则", "指引", "通知", "决定")
+INST_TAIL = ("章程", "议事规则", "管理制度", "制度", "守则", "工作细则", "实施细则")
+LAW_HINT = ("中华人民共和国", "国务院", "证监会", "财政部", "交易所", "中国人民银行")
+
+
+def _title_kind(name):
+    if name.startswith(LAW_HINT) or name.endswith(LAW_TAIL):
+        return "外部法规", "LOW", "法规简称属行业惯例，首次出现宜给全称"
+    if name.endswith(INST_TAIL):
+        return "内部制度", "MEDIUM", "制度名称须与释义及附件目录的全称一一对应"
+    return "文件名称", "MEDIUM", "名称须与释义或附件目录一致"
+
+
+def _norm_title(t):
+    """规范化：去空白、全角括号并半角、去「（草案）」「（修订）」等版本括注。"""
+    x = t.replace(" ", "").replace("\u3000", "")
+    x = x.replace("（", "(").replace("）", ")")
+    return re.sub(r"\((草案|修订|征求意见稿|试行)\)$", "", x)
+
+
+def check_titles(doc_text, law_names=None):
+    """书名号内的文件/法规名称。
+
+    默认只报**能站住的硬判据**（不成对／空号／同物异名）——
+    "法规名是否官方全称"需要权威清单，白名单永远不全，默认不报（传 law_names 才启用）。
+    """
+    law_names = set(law_names or ())
+    issues = []
+    opens, closes = doc_text.count("《"), doc_text.count("》")
+    if opens != closes:
+        issues.append(Issue(
+            "titles", "引用名称", "全文", f"《 {opens} 处／》 {closes} 处",
+            f"书名号不成对（差 {abs(opens - closes)} 处），必有漏写或多写",
+            "逐处补齐或删除书名号", "HIGH"))
+
+    spans = [(m.start(), m.group(1)) for m in re.finditer(r"《([^《》]*)》", doc_text)]
+
+    def ctx(pos, inner):
+        """位置给上下文片段（读者可 Ctrl+F 搜到），不给"字符偏移"这种没法用的坐标。"""
+        a = doc_text[max(0, pos - 12): pos]
+        return f"…{a}《{inner}》…"
+    groups = {}
+    for pos, inner in spans:
+        name = inner.strip()
+        if not name:
+            issues.append(Issue("titles", "引用名称", ctx(pos, ""), "《》",
+                                "空书名号", "删除或补入名称", "MEDIUM"))
+            continue
+        groups.setdefault(_norm_title(name), []).append((pos, name))
+
+    for key, items in sorted(groups.items()):
+        forms = {n for _, n in items}
+        if len(forms) > 1:
+            issues.append(Issue(
+                "titles", "引用名称", ctx(items[0][0], items[0][1]),
+                " / ".join(sorted(forms)[:4]),
+                f"同一名称出现 {len(forms)} 种写法，指向同一对象需统一",
+                "按首次出现或官方全称统一", "MEDIUM"))
+
+    # ---- 简称有没有释义 ----
+    # 判据：某个名称是另一个名称的子串（《公司法》⊂《中华人民共和国公司法》），
+    # 短的那个就是简称；文中若没给它做过释义（以下简称《X》/「X」/"X"），就要报。
+    all_names = {n for _, n in spans if n}
+    for key, items in sorted(groups.items()):
+        short = items[0][1]
+        kind0, _, _ = _title_kind(short)
+        # 只有法规与内部制度才有"简称"这回事；报告/协议/说明书常带年度或主体修饰
+        # （《2025年度审计报告》里有「审计报告」四个字，但那不是简称关系）。
+        if kind0 not in ("外部法规", "内部制度"):
+            continue
+        # 全称须以简称为结尾（《中华人民共和国公司法》⊃《公司法》），
+        # 「《公司借款协议之补充协议》」不算《公司借款协议》的全称。
+        longer = [f for f in all_names if f != short and f.endswith(short) and len(f) > len(short)]
+        if not longer:
+            continue
+        if re.search(r"以下简称\s*[《「“\"（(]?\s*" + re.escape(short), doc_text):
+            continue
+        kind, sev, why = _title_kind(short)
+        issues.append(Issue(
+            "titles", "引用名称", ctx(items[0][0], short), f"《{short}》",   # 片段用干净书名号，才回得到正文
+            f"{kind}使用了简称，但全文未作释义（建议「以下简称《{short}》」）；"
+            f"文中另有全称《{longer[0]}》",
+            "首次出现给全称＋释义，或全文统一改用全称", sev))
+
+    for key, items in sorted(groups.items()):
+        name = items[0][1]
+        core = _norm_title(name).replace("中华人民共和国", "")
+        core = re.sub(r"[（(].*?[）)]$", "", core)
+        if (law_names
+                and core.endswith(("法", "办法", "规定", "准则", "条例", "细则"))
+                and core not in law_names and _norm_title(name) not in law_names):
+            if len(name) <= 40:
+                issues.append(Issue(
+                    "titles", "引用名称", ctx(items[0][0], name), f"《{name}》",
+                    "法规名称不在常用清单内，请核对是否为官方全称",
+                    "对照官方发布名称校对（含「中华人民共和国」前缀等）", "LOW"))
+    return issues

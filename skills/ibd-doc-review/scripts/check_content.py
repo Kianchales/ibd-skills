@@ -71,6 +71,7 @@ from content_text import (
     check_punct_usage,
     check_spaces,
     check_terms,
+    check_titles,
     load_external_rules,
     load_geo_rules,
 )
@@ -89,6 +90,7 @@ CHECK_REGISTRY = [
     {"id": "punctuation", "group": "text", "name": "中英文标点（前后字符判定）", "severity": "HIGH"},
     {"id": "punct_usage", "group": "text", "name": "标点用法（数值范围浪纹线/省略号并禁/表下注末尾句号）", "severity": "MEDIUM"},
     {"id": "abbr", "group": "text", "name": "释义简称统一（含未定义使用检出）", "severity": "MEDIUM"},
+    {"id": "titles", "group": "text", "name": "引用名称（书名号内文件/法规名）", "severity": "MEDIUM"},
     {"id": "geo", "group": "text", "name": "国家/城市表述合规（外部清单）", "severity": "HIGH"},
     {"id": "table_font", "group": "table", "name": "表格字号体系（五号/小五）", "severity": "HIGH"},
     {"id": "table_align", "group": "table", "name": "表格数字右对齐", "severity": "MEDIUM"},
@@ -152,6 +154,7 @@ def run(input_path, check_ids, geo_file=None, terms_file=None):
         "punct_usage": lambda: check_punct_usage(items),
         "abbr": lambda: check_abbr(full_text),
         "geo": lambda: check_geo(full_text, geo_rules),
+        "titles": lambda: check_titles(full_text),
         "table_font": lambda: check_table_font(tables),
         "table_align": lambda: check_table_align(tables),
         "table_empty": lambda: check_table_empty(tables),

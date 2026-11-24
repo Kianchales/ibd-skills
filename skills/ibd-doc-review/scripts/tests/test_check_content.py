@@ -131,7 +131,7 @@ class ModuleContractTest(unittest.TestCase):
         expected_table = [c["id"] for c in check_content.CHECK_REGISTRY if c["group"] == "table"]
         self.assertEqual(check_content.GROUPS["text"], expected_text)
         self.assertEqual(check_content.GROUPS["table"], expected_table)
-        self.assertEqual(len(expected_text), 8, "文字类应为 8 项")
+        self.assertEqual(len(expected_text), 9, "文字类应为 9 项（含书名号引用名称）")
         self.assertEqual(len(expected_table), 4, "表格类应为 4 项")
 
     def test_04_runners_cover_all_registry_ids(self):
@@ -155,7 +155,7 @@ class ModuleContractTest(unittest.TestCase):
 
     def test_06_resolve_checks_group_and_id(self):
         """resolve_checks 支持 all / 组名 / 单 id / 混合，且保持登记表顺序。"""
-        self.assertEqual(len(check_content.resolve_checks("all")), 12)
+        self.assertEqual(len(check_content.resolve_checks("all")), 13)
         self.assertEqual(check_content.resolve_checks("table"),
                          ["table_font", "table_align", "table_empty", "table_na"])
         self.assertEqual(check_content.resolve_checks("geo,table_na"),
@@ -245,6 +245,26 @@ class TextChecksTest(unittest.TestCase):
         self.assertEqual(content_text.check_geo("任意文本 CPU 芯片", []), [])
 
 
+    def test_titles_abbrev_without_definition(self):
+        """简称未释义：法规报 LOW（行业惯例），内部制度报 MEDIUM。"""
+        from content_text import check_titles
+        law = check_titles("依据《中华人民共和国公司法》设立，并按《公司法》执行。")
+        self.assertTrue(any(i.severity == "LOW" and "简称" in i.problem for i in law), [i.problem for i in law])
+        inst = check_titles("依据《公司章程》治理，并按《章程》执行。")
+        self.assertTrue(any(i.severity == "MEDIUM" and "简称" in i.problem for i in inst), [i.problem for i in inst])
+
+    def test_titles_abbrev_with_definition_ok(self):
+        """有「以下简称《公司法》」即视为已释义，不再报。"""
+        from content_text import check_titles
+        got = check_titles("《中华人民共和国公司法》（以下简称《公司法》）规定，公司按《公司法》执行。")
+        self.assertFalse([i for i in got if "简称" in i.problem], [i.problem for i in got])
+
+    def test_titles_document_not_treated_as_abbrev(self):
+        """《2025年度审计报告》里有「审计报告」四字，但不是简称关系，不得误报。"""
+        from content_text import check_titles
+        got = check_titles("详见《审计报告》与《2025年度审计报告》，另见《公司借款协议》《公司借款协议之补充协议》。")
+        self.assertFalse([i for i in got if "简称" in i.problem], [i.problem for i in got])
+
 class TableChecksTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -331,3 +351,32 @@ class TableChecksTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+    def test_titles_unpaired_and_empty(self):
+        """书名号不成对／空号：必须报（这是硬错，读者会照着错处去查）。"""
+        from content_text import check_titles
+        got = check_titles("依据《公司法召开会议，另见《》。")
+        probs = " ".join(i.problem for i in got)
+        self.assertIn("不成对", probs)
+        self.assertIn("空书名号", probs)
+
+    def test_titles_same_name_two_forms(self):
+        """同一文件两种写法（含/不含「（草案）」）：报同物异名。"""
+        from content_text import check_titles
+        got = check_titles("详见《审计报告》与《审计报告（草案）》。")
+        self.assertTrue(any("不同写法" in i.problem for i in got), [i.problem for i in got])
+
+    def test_titles_no_false_positive_on_standards(self):
+        """《规范》《目录》《营业执照》是正常文件名，不得报「非文件名」。"""
+        from content_text import check_titles
+        got = check_titles("依据《公共安全视频监控技术要求》《营业执照》《国民经济行业分类》。")
+        self.assertEqual([i.problem for i in got], [])
+
+    def test_titles_law_check_only_with_list(self):
+        """法规全称核对默认不做（白名单不全）；给了清单才报。"""
+        from content_text import check_titles
+        text = "依据《某某管理条例》执行。"
+        self.assertEqual(len(check_titles(text)), 0)
+        self.assertTrue(check_titles(text, law_names={"公司法"}))
+
+

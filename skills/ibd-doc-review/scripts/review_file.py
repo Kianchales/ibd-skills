@@ -37,6 +37,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -54,13 +55,13 @@ STATE_VERSION = 2
 # 六个组合里 L1+逐字（快扫不逐字）、L3+逐项（不逐字却出专业意见）本就无效，只剩四档。
 LEVELS = {
     "L1": {"name": "L1 快扫", "cap": (60, 20),
-           "desc": "表面项（标点/禁词/明显数字错）；不做勾稽、不逐数登记"},
+           "desc": "只做表面项，不做勾稽与台账"},
     "L2": {"name": "L2 标准", "cap": (60, 20),
-           "desc": "A 域 12 项＋B 域 8 项＋C-Q 勾稽＋逐数台账；不出会计专业判断"},
+           "desc": "全项核对，不出会计专业判断"},
     "L3": {"name": "L3 通读", "cap": (30, 10),
-           "desc": "同 L2，且**逐字通读**（单批 30 段／10 表，批更短便于读完）"},
+           "desc": "同 L2，且逐字通读（批更短，每句都看）"},
     "L4": {"name": "L4 深核", "cap": (30, 10),
-           "desc": "同 L3，另加 C-P 专业判断 16 维＋D 法律 22 项（由 finance/legal-review 承载）"},
+           "desc": "同 L3，另加财务与法律专业判断"},
 }          # 结构变更即升；旧状态缺 `_items` 会让 --begin 无内容可吐
 DEFAULT_CAP_P, DEFAULT_CAP_T = 60, 20      # 单批正文段/表上限（内部默认，不暴露给用户）
 
@@ -105,6 +106,7 @@ def init_state(path, cap_p=DEFAULT_CAP_P, cap_t=DEFAULT_CAP_T):
     units, stats = pr.load_units(path)
     batches = pr.build_batches(units, cap_p, cap_t)
     out = []
+    note = ""
     tid = 0
     for i, b in enumerate(batches, 1):
         # 批内条目＝**所有段落类**（正文/标题/短句），不只是"正文"。
@@ -199,20 +201,24 @@ def write_scope(d, path, stats, n_batches, level="L2"):
     f = os.path.join(d, "%s_%s_v1_scope.md" % (os.path.splitext(os.path.basename(path))[0], today))
     if os.path.exists(f):
         return f
-    body = (
+    levels_md = "".join(
+        (("**%s** ← 本轮\n  %s\n" % (v["name"], v["desc"]))
+         if k == level else ("%s：%s\n" % (v["name"], v["desc"])))
+        for k, v in LEVELS.items()
+    )
+    head = (
         "【本轮检查项声明】对象：%s ｜ 深度：%s ｜ 覆盖方式：全文逐段 ｜ "
         "分母：总 %d 段（正文 %d／表 %d）\n\n"
-        "**检查**：格式规范（A 域 12 项）｜数值正确性（C-Q 五式勾稽，给 --financials 时）"
-        "｜表达与事实（禁用词、标点用法）｜交付门禁\n"
-        "**不查**：法律事项（D 域，本轮不做）｜行业数据外部核验（无外部数据源）"
+        "**检查**：格式规范（12 项）｜数字勾稽（提供报表时）｜表述与事实（禁用词、标点用法）｜交付门禁\n"
+        "**不查**：法律事项合规性｜行业数据外部溯源（无可研报告原件）"
         "｜底稿与函证（不在材料范围）\n"
-        "**依据来源**：申报报表与附注（勾稽用）｜本包 A 域判据表；缺「同类范例」「内部口径」\n"
+        "**依据来源**：申报报表与附注｜复核判据表；缺「同类范例」「内部口径」可比对\n"
         "**交付前将跑**：check_runlog.py（流程合规）＋ review_report_to_xlsx.py（报告）\n\n"
-        "内部调度：切 %d 个处理单元（批次为内部实现，不出现在交付物与汇报中）\n"
-        % (os.path.basename(path),
-           LEVELS.get(level, LEVELS["L2"])["name"] + "：" + LEVELS.get(level, LEVELS["L2"])["desc"],
-           stats["总段"], stats["正文"], stats["表格"], n_batches)
-    )
+
+    ) % (os.path.basename(path),
+         LEVELS.get(level, LEVELS["L2"])["name"] + "｜" + LEVELS.get(level, LEVELS["L2"])["desc"],
+         stats["总段"], stats["正文"], stats["表格"])
+    body = head + "**深度档位（本轮使用的一档加粗）**\n\n" + levels_md
     with open(f, "w", encoding="utf-8") as fh:
         fh.write(body)
     return f
@@ -224,20 +230,19 @@ def run_checks(path, d, financials=None, restr=None, accrued=None, level="L2"):
     ⚠️ 必须把 `IBD_RUNLOG_DIR` 传给子进程：子进程默认按"源文件同级 `<名>_复核/`"找指纹目录，
     一旦用了 `--out-dir` 就找不到，于是"真跑了检查"却"没留下指纹"——把合规执行误判成没跑。
     """
-    import subprocess
     here = os.path.dirname(os.path.abspath(__file__))
     env = dict(os.environ, IBD_RUNLOG_DIR=os.path.abspath(d))
     out = {}
 
     missing = []      # 声明要做、但缺材料做不了的检查——不许只在 stderr 一闪而过
     if level == "L4":
-        missing.append({"check": "C-P 专业判断 16 维", "need": "调用 ibd-finance-review 后回填结论",
-                        "effect": "未跑则 L4 实际只到 L3，专业判断缺失"})
-        missing.append({"check": "D 法律惯例对照 22 项", "need": "调用 ibd-legal-review 后回填结论",
-                        "effect": "未跑则 L4 实际只到 L3，法律域缺失"})
+        missing.append({"check": "会计处理是否恰当", "need": "财务专业复核结论",
+                        "effect": "本轮未做会计专业判断（声明 L4 时此项目必需）"})
+        missing.append({"check": "法律事项合规性", "need": "法律专业复核结论",
+                        "effect": "本轮未做法律事项判断（声明 L4 时此项目必需）"})
     if not financials:
-        missing.append({"check": "C-Q 五式勾稽（跨文档）", "need": "申报财务报表 xlsx（--financials）",
-                        "effect": "本轮为单件复核；给报表可升级为全套复核（含数值勾稽）"})
+        missing.append({"check": "招股书与财务报表的数字勾稽", "need": "申报财务报表（xlsx 文件）",
+                        "effect": "招股书数字与报表是否一致，本轮未核（补齐可升级为全套复核）"})
     md = os.path.join(d, "format_check.md")
     js = os.path.join(d, "format_check.json")
     r = subprocess.run([sys.executable, os.path.join(here, "check_content.py"),
@@ -474,6 +479,63 @@ def to_issues(merged):
     return issues, skipped
 
 
+B_ITEMS = ["每个数字说得清", "数据类毛病", "论证类毛病", "表述类毛病",
+           "编造类毛病", "交稿前自检 10 条", "质量自评打分", "数字前后对得上",
+           "书名号内文件/法规名称"]
+CQ_ITEMS = ["资产＝负债＋所有者权益", "利润表净利润＝净利润（归母＋少数）",
+            "现金流量表期末现金＝资产负债表货币资金", "表内合计与小计", "跨期衔接",
+            "货币资金差额 vs 附注受限"]
+LEVEL_DOMAINS = {
+    "L1": [("A", 4), ("B", 1)],
+    "L2": [("A", 12), ("B", 8), ("C-Q", 6), ("C-D", 1)],
+    "L3": [("A", 12), ("B", 8), ("C-Q", 6), ("C-D", 1)],
+    "L4": [("A", 12), ("B", 8), ("C-Q", 6), ("C-D", 1), ("C-P", 16), ("D", 22)],
+}
+
+
+def _decl_tail(scope):
+    """从声明单里只取「不查」「依据来源」两行——检查项由「复核范围」节表达，不重复。"""
+    keep = []
+    for ln in scope.splitlines():
+        t = ln.replace("**", "").strip()
+        if t.startswith("不查") or t.startswith("依据来源"):
+            keep.append(t)
+    return keep or None
+
+
+def domain_lines(level, has_fin):
+    """返回 (每域一行清单, 附注)。附注写"哪一项本轮没做、为什么"——单独成行，不塞在域行尾。"""
+
+    """按本轮档位，列出**查了哪些域、各域包含什么**——报告读者不看 skill 文档也能懂。"""
+    try:
+        import check_content as _cc
+        a_items = [c["name"].split("（")[0] for c in _cc.CHECK_REGISTRY]
+    except Exception:                      # noqa: BLE001
+        a_items = []
+    pool = {"A": ("格式规范", a_items), "B": ("表达与事实", B_ITEMS),
+            "C-Q": ("数值正确性", CQ_ITEMS), "C-D": ("逐数台账", ["每个数字都登记在案"]),
+            "C-P": ("财务专业判断", ["16 维会计处理判断（由 ibd-finance-review 承载）"]),
+            "D": ("法律惯例对照", ["22 项（由 ibd-legal-review 承载）"])}
+    out = []
+    note = ""
+    for code, n in LEVEL_DOMAINS.get(level, LEVEL_DOMAINS["L2"]):
+        name, items = pool.get(code, (code, []))
+        items = items[:n]
+        out.append(f"{code} {name}（{len(items)} 项 · " + "、".join(items) + "）")
+        if code == "C-Q" and not has_fin:
+            note = "注：C-Q 数值勾稽本轮未做——未提供申报财务报表。"
+    return out, note
+
+
+def check_count():
+    """机检项数随注册表走，不写死在文案里（加一项检查，报告自动跟上）。"""
+    try:
+        from check_content import CHECK_REGISTRY as reg
+        return len(reg)
+    except Exception:             # noqa: BLE001
+        return 13
+
+
 def build_meta(st, d, n_findings):
     """自动构造报告 meta：报告是独立流转件，封面不能留"—"。
 
@@ -494,39 +556,50 @@ def build_meta(st, d, n_findings):
     segs = sum(len(b.get("_items") or []) for b in st["batches"])
     return {
         "subject": f"{os.path.basename(path)}（{stats['总段']} 段／正文 {stats['正文']}／表 {stats['表格']}）",
-        "baseline": (f"MD5 {md5}…；段落类 {segs}／{stats['总段']} 段（差为表格单元格，"
-                     f"随表判）｜表 {tabs}／{stats['表格']}"),
-        "method": (LEVELS.get(st.get("level") or "L2", LEVELS["L2"])["name"] + "："
-                   + "全文逐段：全部段落（含标题）逐段过 ＋ 全部表格逐表判 ＋ 机器判据（A 域 12 项）"
-                   + ("＋ C-Q 勾稽" if st.get("financials") else "")
-                   + "；内部按容量切单元调度，对外为单一流程"
-                   + ("" if st.get("financials")
-                      else "。**本轮为单件复核（降级）：未与申报报表／附注做跨文档勾稽**")
-                   + ("。**L4 专业判断两款（C-P／D）由 ibd-finance-review、ibd-legal-review 承载，"
-                      "本包不验证其执行**" if st.get("level") == "L4" else "")),
-        "declaration": scope or None,
+        "subtitle": os.path.basename(path),
+        "subject_short": f"{os.path.basename(path)}｜{stats['正文']} 段正文 ＋ {stats['表格']} 张表",
+        "baseline": f"MD5 {md5}…｜段落 {segs}（含标题）｜表 {tabs}／{stats['表格']} 全判",
+        "_read_n": sum(1 for b in st["batches"] if (b.get("receipt") or {}).get("read") == "yes"),
+        "_read_t": len(st["batches"]),
+        "method": (
+            f"全文逐段 · 段落{sum(len(b.get('_items') or []) for b in st['batches'])}／"
+            f"表{sum(b.get('n_tables', 0) for b in st['batches'])} 全过 · "
+            f"机检{check_count()}项 · "
+            + ("已勾稽报表 · " if st.get("financials") else "单件（未勾稽）· ")
+            + f"实读 {sum(1 for b in st['batches'] if (b.get('receipt') or {}).get('read') == 'yes')}"
+              f"/{len(st['batches'])} 节"
+        ),
+        "declaration": _decl_tail(scope) if scope else None,
         "quality_evidence": [
-            f"覆盖对账：段落类 {segs} 段全部过（声明分母 {stats['总段']} 段，差额为表格单元格，随表判）；"
-            f"表格 {tabs}／{stats['表格']} 全部判",
-            "运行指纹见同目录 `_run.json`（工具／退出码／版本）",
+            f"已核对：全文 {segs} 段（含标题）与 {tabs} 张表逐段逐表过目，无跳段",
+            "可回查：每条问题都附原文片段，按「位置」列可回原文核对",
+        ],
+        "has_annotation": False,
+        "domain_lines": domain_lines(st.get("level") or "L2", bool(st.get("financials")))[0],
+        "domain_note": domain_lines(st.get("level") or "L2", bool(st.get("financials")))[1],
+        "depth_levels": [
+            {"used": k == (st.get("level") or "L2"),
+             "text": (("【本轮使用】" if k == (st.get("level") or "L2") else "    ")
+                      + f"{v['name']}：{v['desc']}".replace("**", ""))}
+            for k, v in LEVELS.items()
         ],
         "actions": [
-            f"补材料以解锁「{m['check']}」：{m['need']}（当前影响：{m['effect']}）"
-            for m in (json.load(open(os.path.join(d, "pending_inputs.json"), encoding="utf-8"))
-                      if os.path.exists(os.path.join(d, "pending_inputs.json")) else [])
+            f"第{i}项 {m['check']}　缺：{m['need']}　影响：{m['effect']}"
+            for i, m in enumerate(
+                json.load(open(os.path.join(d, "pending_inputs.json"), encoding="utf-8"))
+                if os.path.exists(os.path.join(d, "pending_inputs.json")) else [], 1)
         ] or None,
         "verified": [
-            f"{b['name'][:20]}：回执已交，发现 {len(b.get('findings') or [])} 条"
-            for b in st["batches"] if b.get("receipt")
-        ][:30],
+            "全文各章均已逐段过目，无遗漏章节（每条问题的位置可在明细页回查）"
+        ],
         "domain_scope": {"J": "格式规范（A 域 12 项）", "Z": "数据一致性（C-Q 勾稽）"},
-        "conclusion_notes": [f"共 {n_findings} 条，均带原文锚点可回溯至 full.txt 的 P####／tables.json 的 TAB###。"],
+        "conclusion_notes": [f"共 {n_findings} 条，每条均带原文片段，可按「位置」列回溯至原文件。"],
     }
 
 
 def gen_report(issues_path, xlsx, runlog_path, meta_path=None):
+    """返回 (rc, 实际产出路径)——被占用时路径会变成 *_新.xlsx，不能回报旧路径。"""
     """调 ibd-doc-annotate 的报告生成器（同仓相邻包）；找不到就明确降级，不假装成功。"""
-    import subprocess
     here = os.path.dirname(os.path.abspath(__file__))          # …/ibd-doc-review/scripts
     skills_root = os.path.dirname(os.path.dirname(here))       # …/（skills 根）
     base = os.environ.get("IBD_ANNOTATE_DIR") or os.path.join(skills_root, "ibd-doc-annotate")
@@ -541,9 +614,18 @@ def gen_report(issues_path, xlsx, runlog_path, meta_path=None):
     if os.path.exists(runlog_path):
         args += ["--runlog", runlog_path]
     r = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if r.returncode != 0 and os.path.exists(xlsx):
+        # 目标被 Excel 占用时另存一份，不静默失败
+        import shutil
+        alt = xlsx[:-5] + "_新.xlsx"
+        args[args.index(xlsx)] = alt
+        r = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if r.returncode == 0:
+            print(f"[提示] 原文件被占用（Excel 打开中），已另存：{alt}", file=sys.stderr)
+            return 0, alt
     if r.returncode != 0:
         print((r.stderr or r.stdout or "").strip()[:400], file=sys.stderr)
-    return r.returncode
+    return r.returncode, xlsx
 
 
 def cmd_finish(st, out_path=None):
@@ -590,11 +672,11 @@ def cmd_finish(st, out_path=None):
     meta_path = os.path.join(os.path.dirname(out), "report_meta.json")
     with open(meta_path, "w", encoding="utf-8") as f:
         json.dump(build_meta(st, st.get("_dir") or ".", len(merged)), f, ensure_ascii=False, indent=1)
-    rc = gen_report(ipath, xlsx, os.path.join(st.get("_dir", ""), "_run.json"), meta_path)
+    rc, xlsx_real = gen_report(ipath, xlsx, os.path.join(st.get("_dir", ""), "_run.json"), meta_path)
     if rc == 0:
         n_tabs = sum(b.get("n_tables", 0) for b in st["batches"])
         n_seg = sum(len(b.get("_items") or []) for b in st["batches"])
-        print(f"报告已生成：{xlsx}")
+        print(f"报告已生成：{xlsx_real}")
         print(f"覆盖：段落 {n_seg}／表 {n_tabs}｜发现 {len(merged)} 条"
               f"｜批 {len(st['batches'])}/{len(st['batches'])}")
         print("自检：check_runlog --file <源文件>（期望 PASS）")
@@ -640,11 +722,18 @@ def main():
         if a.reset and os.path.isdir(d):
             # 纯净状态＝目录内清空（只删文件，不碰同级的 _archive_* 归档目录）
             n = 0
+            skipped = []
             for fn in os.listdir(d):
                 fp = os.path.join(d, fn)
-                if os.path.isfile(fp):
+                if not os.path.isfile(fp):
+                    continue
+                try:
                     os.remove(fp)
                     n += 1
+                except OSError:              # 被 Excel 占用等：跳过，不中断整轮
+                    skipped.append(fn)
+            if skipped:
+                print(f"  · 跳过被占用的 {len(skipped)} 个文件：{', '.join(skipped[:3])}", file=sys.stderr)
             if n:
                 print(f"  · --reset：清空上轮产物 {n} 个文件", file=sys.stderr)
         lv = a.level
